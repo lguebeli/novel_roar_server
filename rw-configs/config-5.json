@@ -1,0 +1,6 @@
+{
+	"algo": "AES-CBC",
+	"burst_duration": "s1",
+	"burst_pause": "5",
+	"burst_rate": "0"
+}
