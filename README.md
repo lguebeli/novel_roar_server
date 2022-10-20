@@ -1,2 +1,2 @@
-# ROAR
-Master Thesis on Ransomware Optimized with AI (RL) for Raspberries
+# ROAR - Server
+Master Thesis on Ransomware Optimized with AI for Resource-constrained devices

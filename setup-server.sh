@@ -1,6 +1,8 @@
 #!/bin/bash
 
-pip install --editable .
+sudo python3 setup.py install
 
 virtualenv venv
-. venv/Scripts/activate
+./venv/Scripts/activate
+
+python3 server.py
