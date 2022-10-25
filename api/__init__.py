@@ -2,7 +2,7 @@ import os
 
 from flask import Flask
 
-from . import status, fingerprint
+from . import status, fingerprint, ransomware
 
 
 def create_app():
@@ -17,5 +17,6 @@ def create_app():
 
     app.register_blueprint(status.status_bp)
     app.register_blueprint(fingerprint.fp_bp)
+    app.register_blueprint(ransomware.rw_bp)
 
     return app
