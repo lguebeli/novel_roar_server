@@ -4,6 +4,7 @@ from setuptools import setup, find_packages
 requirements = [
     "logbook",
     "Flask==2.2.2",
+    "pyod",
     "virtualenv"
 ]
 
