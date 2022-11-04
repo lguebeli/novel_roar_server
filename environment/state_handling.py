@@ -1,7 +1,17 @@
 import os
 
+COLLECT_MULTIPLE_FP = False
 FP_READY = False
 RW_DONE = False
+
+
+def is_multi_fp_collection():
+    return COLLECT_MULTIPLE_FP
+
+
+def set_multi_fp_collection(is_multi):
+    global COLLECT_MULTIPLE_FP
+    COLLECT_MULTIPLE_FP = is_multi
 
 
 def is_fp_ready():
@@ -23,7 +33,8 @@ def set_rw_done():
 
 
 def get_fp_path():
-    return os.path.abspath(os.path.join(os.curdir, "./fingerprint"))
+    dir_name = "./fingerprints" if is_multi_fp_collection() else "./fingerprint"
+    return os.path.abspath(os.path.join(os.curdir, dir_name))
 
 
 def collect_fingerprint():
