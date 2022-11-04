@@ -1,6 +1,7 @@
 AGENT = None
 
 
+# TODO: technically more Model class than Agent class as the Agent should be the wrapper
 class Agent(object):
     def __init__(self):
         pass

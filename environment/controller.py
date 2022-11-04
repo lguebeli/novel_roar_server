@@ -6,8 +6,9 @@ from api.configurations import map_to_ransomware_configuration, send_config
 from reward import compute_reward
 from state_handling import is_fp_ready, set_fp_ready, is_rw_done, collect_fingerprint
 
-FP_READY = False
-RW_DONE = False
+# TODO: check functionality through state handling and remove comments
+# FP_READY = False
+# RW_DONE = False
 
 
 def transform_fp(fp):
