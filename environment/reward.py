@@ -1,4 +1,4 @@
-from anomaly_detection import detect_anomaly
+from anomaly_detection import get_classifier, detect_anomaly
 
 
 def compute_reward(fp, done, action):

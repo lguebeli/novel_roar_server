@@ -11,6 +11,10 @@ CSV_FILES_FOLDER = os.path.abspath(os.path.curdir)
 CONTAMINATION_FACTOR = 0.05
 
 
+def get_classifier():
+    return IForest(random_state=42, contamination=CONTAMINATION_FACTOR)
+
+
 def preprocess_dataset(dataset):
     # Remove duplicates: 'qdisc:qdisc_dequeue', 'skb:consume_skb', 'skb:kfree_skb'
     dataset.drop(["qdisc:qdisc_dequeue.1", "skb:consume_skb.1", "skb:kfree_skb.1"], inplace=True, axis=1)
@@ -74,7 +78,7 @@ def train_anomaly_detection():
     train_set, test_set = prepare_training_test_sets(dataset=normal_data)
 
     # Instantiate ML Isolation Forest instance
-    clf = IForest(random_state=42, contamination=CONTAMINATION_FACTOR)
+    clf = get_classifier()
 
     # Train model
     clf.fit(train_set)
