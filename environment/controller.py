@@ -17,6 +17,7 @@ def transform_fp(fp):
 
 def loop_episode(agent):
     # accept initial FP
+    print("Wait for FP...")
     # global FP_READY  # TODO: check functionality through state handling and remove comments
     # while not FP_READY:
     while not is_fp_ready():
@@ -27,6 +28,7 @@ def loop_episode(agent):
 
     last_action = None
 
+    print("Loop episode...")
     while True:
         # transform FP into np array
         state = transform_fp(curr_fp)
@@ -42,6 +44,7 @@ def loop_episode(agent):
 
         # TODO: store action in reward module?
         # receive next FP
+        print("Wait for FP...")
         # while not FP_READY:  # TODO: check functionality through state handling and remove comments
         while not is_fp_ready():
             sleep(.5)
@@ -68,6 +71,9 @@ def loop_episode(agent):
 def run_c2():
     print("==============================\nPrepare Reward Computation\n==============================")
     prepare_reward_computation()
-    print("\n==============================\nStart C2 Server\n==============================")
-    agent = get_agent()
-    loop_episode(agent)
+
+    cont = input("Results ok? Start C2 Server? [y/n]\n")
+    if cont.lower() == "y":
+        print("\n==============================\nStart C2 Server\n==============================")
+        agent = get_agent()
+        loop_episode(agent)
