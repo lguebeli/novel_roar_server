@@ -1,13 +1,16 @@
-from anomaly_detection import get_classifier, detect_anomaly
+from environment.anomaly_detection import train_anomaly_detection, detect_anomaly
+
+
+def prepare_reward_computation():
+    train_anomaly_detection()
 
 
 def compute_reward(fp, done, action):
     if done:
         return 1
 
-    clf = get_classifier()
-    anomalous = detect_anomaly(clf, fp)
-    if anomalous:
+    anomalous = detect_anomaly(fp)  # int [0 1]
+    if bool(anomalous):
         return -1
     else:
         return 0
