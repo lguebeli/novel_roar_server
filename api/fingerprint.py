@@ -5,7 +5,7 @@ import os
 
 from flask import Blueprint, request
 
-from environment.state_handling import is_multi_fp_collection, get_fp_path
+from environment.state_handling import is_multi_fp_collection, get_fp_path, set_fp_ready
 
 
 fp_bp = Blueprint("fingerprint", __name__, url_prefix="/fp")
@@ -17,6 +17,7 @@ def write_fingerprint_to_file(fp, storage_path, is_multi):
     fp_path = os.path.join(storage_path, file_name)
     with open(fp_path, "x" if is_multi else "w") as file:
         file.write(fp)
+    set_fp_ready(True)
 
 
 @fp_bp.route("/<mac>", methods=["POST"])

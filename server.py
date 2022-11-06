@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 
 from api import create_app
+from environment.controller import run_c2
 from environment.state_handling import set_multi_fp_collection
 
 
@@ -18,6 +19,8 @@ if __name__ == "__main__":
     args = parse_args()
     collect = args.collect or False
     set_multi_fp_collection(collect)
+
+    run_c2()
 
     # Start API
     app = create_app()

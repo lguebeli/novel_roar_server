@@ -3,8 +3,8 @@ from time import sleep
 
 from agent.agent import get_agent
 from api.configurations import map_to_ransomware_configuration, send_config
-from reward import compute_reward
-from state_handling import is_fp_ready, set_fp_ready, is_rw_done, collect_fingerprint
+from environment.reward import compute_reward, prepare_reward_computation
+from environment.state_handling import is_fp_ready, set_fp_ready, is_rw_done, collect_fingerprint
 
 # TODO: check functionality through state handling and remove comments
 # FP_READY = False
@@ -65,7 +65,9 @@ def loop_episode(agent):
             break
 
 
-def handle_input():
+def run_c2():
+    print("==============================\nPrepare Reward Computation\n==============================")
+    prepare_reward_computation()
+    print("\n==============================\nStart C2 Server\n==============================")
     agent = get_agent()
-
     loop_episode(agent)
