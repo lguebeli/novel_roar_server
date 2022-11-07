@@ -9,7 +9,7 @@ class Agent(object):
     def predict(self, fingerprint):
         pass
 
-    def update_weights(self):
+    def update_weights(self, reward):
         pass
 
 

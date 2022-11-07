@@ -36,7 +36,6 @@ def get_fp_path():
 def collect_fingerprint():
     with open(get_fp_path() + "/fp.txt", "r") as file:
         fp = file.readline().replace("[", "").replace("]", "").replace(" ", "")
-    print("Collected FP:", fp)
     return fp
 
 

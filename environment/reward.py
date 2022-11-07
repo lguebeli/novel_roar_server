@@ -10,6 +10,7 @@ def compute_reward(fp, done, action):
         return 1
 
     anomalous = detect_anomaly(fp)  # int [0 1]
+    print("Detected {} FP.".format("anomalous" if anomalous else "normal"))
     if bool(anomalous):
         return -1
     else:

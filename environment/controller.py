@@ -8,7 +8,8 @@ from environment.state_handling import is_fp_ready, set_fp_ready, is_rw_done, co
 
 
 def transform_fp(fp):
-    return np.asarray(fp)
+    split_to_floats = list(map(lambda feat: float(feat), fp.split(",")))
+    return np.asarray(split_to_floats)
 
 
 def loop_episode(agent):
@@ -28,10 +29,12 @@ def loop_episode(agent):
         state = transform_fp(curr_fp)
 
         # agent selects action based on state
+        print("Predict next action.")
         selected_action = agent.predict(state)
 
         # convert action to config and send to client
         if selected_action != last_action:
+            print("Sending new action {} to client.".format(selected_action))
             config = map_to_ransomware_configuration(selected_action)
             send_config(config)
         last_action = selected_action
@@ -46,8 +49,8 @@ def loop_episode(agent):
         set_fp_ready(False)
 
         # compute reward based on FP
-        # reward = compute_reward(next_fp, RW_DONE, selected_action)  # TODO: including action required?
-        reward = compute_reward(next_fp, is_rw_done(), selected_action)  # TODO: including action required?
+        print("Computing reward for FP.")
+        reward = compute_reward(transform_fp(next_fp), is_rw_done(), selected_action)  # TODO: including action required?
 
         # send reward to agent, update weights accordingly
         agent.update_weights(reward)
