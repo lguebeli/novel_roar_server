@@ -6,10 +6,6 @@ from api.configurations import map_to_ransomware_configuration, send_config
 from environment.reward import compute_reward, prepare_reward_computation
 from environment.state_handling import is_fp_ready, set_fp_ready, is_rw_done, collect_fingerprint
 
-# TODO: check functionality through state handling and remove comments
-# FP_READY = False
-# RW_DONE = False
-
 
 def transform_fp(fp):
     return np.asarray(fp)
@@ -17,9 +13,7 @@ def transform_fp(fp):
 
 def loop_episode(agent):
     # accept initial FP
-    print("Wait for FP...")
-    # global FP_READY  # TODO: check functionality through state handling and remove comments
-    # while not FP_READY:
+    print("Wait for initial FP...")
     while not is_fp_ready():
         sleep(.5)
     curr_fp = collect_fingerprint()
@@ -45,7 +39,6 @@ def loop_episode(agent):
         # TODO: store action in reward module?
         # receive next FP
         print("Wait for FP...")
-        # while not FP_READY:  # TODO: check functionality through state handling and remove comments
         while not is_fp_ready():
             sleep(.5)
         next_fp = collect_fingerprint()

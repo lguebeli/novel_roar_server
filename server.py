@@ -2,7 +2,7 @@ from argparse import ArgumentParser
 
 from api import create_app
 from environment.controller import run_c2
-from environment.state_handling import set_multi_fp_collection
+from environment.state_handling import is_multi_fp_collection, set_multi_fp_collection, initialize_storage
 
 
 def parse_args():
@@ -15,6 +15,9 @@ def parse_args():
 
 
 if __name__ == "__main__":
+    print("==============================\nInstantiate Storage\n")
+    initialize_storage()
+
     # Parse arguments
     args = parse_args()
     collect = args.collect or False

@@ -1,5 +1,7 @@
 # Project files
+fingerprint/
 fingerprints/
+storage.json
 
 # IDE files
 .idea/
