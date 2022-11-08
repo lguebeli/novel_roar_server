@@ -3,13 +3,14 @@ from time import sleep
 
 import numpy as np
 
+from agent.abstract_agent import AbstractAgent
 from api.configurations import map_to_ransomware_configuration, send_config
 from environment.reward import compute_reward
 from environment.state_handling import is_fp_ready, set_fp_ready, is_rw_done, collect_fingerprint
 from v1.agent.model import Model
 
 
-class Agent(object):
+class Agent1(AbstractAgent):
     def __init__(self):
         self.model = Model()
         self.next_action = 0

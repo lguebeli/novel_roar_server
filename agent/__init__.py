@@ -1,5 +1,5 @@
-from v1.agent.agent import Agent as Agent1
-# from v2.agent.agent import Agent as Agent1
+from v1.agent.agent import Agent1
+# from v2.agent.agent import Agent2
 from environment.state_handling import get_prototype
 
 AGENT = None
