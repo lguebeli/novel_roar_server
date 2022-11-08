@@ -4,14 +4,19 @@ from time import sleep
 
 from api import create_app
 from environment.controller import run_c2
-from environment.state_handling import is_multi_fp_collection, set_multi_fp_collection, initialize_storage
+from environment.state_handling import is_multi_fp_collection, set_multi_fp_collection, initialize_storage, set_prototype
 
 
 def parse_args():
     parser = ArgumentParser(description='C2 Server')
     parser.add_argument('-c', '--collect',
                         help='Indicator to only collect incoming fingerprints instead of running the full C2 server.',
+                        default=False,
                         action="store_true")
+    parser.add_argument('-p', '--proto',
+                        help='Prototype selection.',
+                        default=0,
+                        action="store")
 
     return parser.parse_args()
 
@@ -33,8 +38,10 @@ if __name__ == "__main__":
 
     # Parse arguments
     args = parse_args()
-    collect = args.collect or False
+    collect = args.collect
     set_multi_fp_collection(collect)
+    proto = args.proto
+    set_prototype(proto)
 
     # Start API listener
     print("\n==============================\nStart API\n==============================")

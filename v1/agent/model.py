@@ -15,7 +15,7 @@ class Model(object):
         )
 
         # Display model summary (requires stating Input shape)
-        self.model.sumary()
+        self.model.summary()
 
     def forward(self, inputs):
         return self.model(inputs)
