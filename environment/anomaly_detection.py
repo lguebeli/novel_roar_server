@@ -15,7 +15,7 @@ CONTAMINATION_FACTOR = 0.05
 ALL_CSV_HEADERS = "time,timestamp,seconds,connectivity,cpu_us,cpu_sy,cpu_ni,cpu_id,cpu_wa,cpu_hi,cpu_si,tasks_total,tasks_running,tasks_sleeping,tasks_stopped,tasks_zombie,mem_free,mem_used,mem_cache,swap_avail,net_lo_rx,net_lo_tx,net_eth_rx,net_eth_tx,cpu_temp,alarmtimer:alarmtimer_fired,alarmtimer:alarmtimer_start,block:block_bio_backmerge,block:block_bio_remap,block:block_dirty_buffer,block:block_getrq,block:block_touch_buffer,block:block_unplug,cachefiles:cachefiles_create,cachefiles:cachefiles_lookup,cachefiles:cachefiles_mark_active,clk:clk_set_rate,cpu-migrations,cs,dma_fence:dma_fence_init,fib:fib_table_lookup,filemap:mm_filemap_add_to_page_cache,gpio:gpio_value,ipi:ipi_raise,irq:irq_handler_entry,irq:softirq_entry,jbd2:jbd2_handle_start,jbd2:jbd2_start_commit,kmem:kfree,kmem:kmalloc,kmem:kmem_cache_alloc,kmem:kmem_cache_free,kmem:mm_page_alloc,kmem:mm_page_alloc_zone_locked,kmem:mm_page_free,kmem:mm_page_pcpu_drain,mmc:mmc_request_start,net:net_dev_queue,net:net_dev_xmit,net:netif_rx,page-faults,pagemap:mm_lru_insertion,preemptirq:irq_enable,qdisc:qdisc_dequeue,qdisc:qdisc_dequeue,random:get_random_bytes,random:mix_pool_bytes_nolock,random:urandom_read,raw_syscalls:sys_enter,raw_syscalls:sys_exit,rpm:rpm_resume,rpm:rpm_suspend,sched:sched_process_exec,sched:sched_process_free,sched:sched_process_wait,sched:sched_switch,sched:sched_wakeup,signal:signal_deliver,signal:signal_generate,skb:consume_skb,skb:consume_skb,skb:kfree_skb,skb:kfree_skb,skb:skb_copy_datagram_iovec,sock:inet_sock_set_state,task:task_newtask,tcp:tcp_destroy_sock,tcp:tcp_probe,timer:hrtimer_start,timer:timer_start,udp:udp_fail_queue_rcv_skb,workqueue:workqueue_activate_work,writeback:global_dirty_state,writeback:sb_clear_inode_writeback,writeback:wbc_writepage,writeback:writeback_dirty_inode,writeback:writeback_dirty_inode_enqueue,writeback:writeback_dirty_page,writeback:writeback_mark_inode_dirty,writeback:writeback_pages_written,writeback:writeback_single_inode,writeback:writeback_write_inode,writeback:writeback_written"
 DUPLICATE_HEADERS = ["qdisc:qdisc_dequeue", "skb:consume_skb", "skb:kfree_skb"]
 
-# TODO: remove for RPi
+# TODO: remove list for RPi
 cut_events_for_vm = ["cachefiles:cachefiles_create", "cachefiles:cachefiles_lookup", "cachefiles:cachefiles_mark_active", "ipi:ipi_raise", "preemptirq:irq_enable", "random:get_random_bytes", "random:mix_pool_bytes_nolock", "random:urandom_read"]
 
 # ========================================
@@ -69,7 +69,7 @@ def preprocess_dataset(dataset):
 def prepare_training_test_sets(dataset):
     # Split into training and test sets
     train_set, test_set = train_test_split(dataset, test_size=0.10, random_state=42, shuffle=False)
-    print(train_set.shape, test_set.shape)
+    # print(train_set.shape, test_set.shape)
 
     # Remove train data with Z-score higher than 3
     train_set = train_set[(np.abs(stats.zscore(train_set)) < 3).all(axis=1)]
@@ -91,22 +91,22 @@ def evaluate_dataset(name, dataset):
 
 def train_anomaly_detection():
     # Load data
-    print("Loading CSV data.")
+    # print("Loading CSV data.")
     csv_path_template = os.path.join(CSV_FILES_FOLDER, "{}-behavior.csv")
     df_normal = pd.read_csv(csv_path_template.format("normal"))
     # df_inf_c0 = pd.read_csv(csv_path_template.format("infected-c0"))
     df_inf_c1 = pd.read_csv(csv_path_template.format("infected-c1"))
 
     # Preprocess data for ML
-    print("Preprocessing datasets.")
+    # print("Preprocessing datasets.")
     normal_data = preprocess_dataset(df_normal)
     infected_c1_data = preprocess_dataset(df_inf_c1)
 
-    print("Split normal behavior data into training and test set.")
+    # print("Split normal behavior data into training and test set.")
     train_set, test_set = prepare_training_test_sets(dataset=normal_data)
 
     # Scale the datasets, turning them into ndarrays
-    print("Scaling dataset features to fit training set.")
+    # print("Scaling dataset features to fit training set.")
     __init_scaler(train_set)
     scaler = __get_scaler()
     train_set = scale_dataset(scaler, train_set)
@@ -114,11 +114,11 @@ def train_anomaly_detection():
     infected_c1_data = scale_dataset(scaler, infected_c1_data)
 
     # Instantiate ML Isolation Forest instance
-    print("Instantiate classifier.")
+    # print("Instantiate classifier.")
     clf = __get_classifier()
 
     # Train model
-    print("Train classifier on training set.")
+    # print("Train classifier on training set.")
     clf.fit(train_set)
 
     # Evaluate model
@@ -128,7 +128,7 @@ def train_anomaly_detection():
     evaluate_dataset("inf-c1", infected_c1_data)
 
 
-# TODO: remove for RPi
+# TODO: remove method for RPi
 def adjust_data_from_vm(fp_data):
     for event in cut_events_for_vm:
         idx = ALL_CSV_HEADERS.split(",").index(event)
@@ -137,11 +137,11 @@ def adjust_data_from_vm(fp_data):
 
 
 def detect_anomaly(fingerprint):  # string
-    print("Detecting anomaly.")
+    # print("Detecting anomaly.")
     clf = __get_classifier()
 
     # Transforming FP string to pandas DataFrame
-    fp_data = adjust_data_from_vm(fingerprint)  # TODO: remove for RPi
+    fp_data = adjust_data_from_vm(fingerprint)  # TODO: remove line for RPi
 
     fp_data = fp_data.reshape(1, -1)
 
@@ -156,7 +156,7 @@ def detect_anomaly(fingerprint):  # string
     preprocessed = preprocess_dataset(df_fp)
     scaler = __get_scaler()
     scaled = scale_dataset(scaler, preprocessed)
-    print("Scaled FP to", scaled.shape)
+    # print("Scaled FP to", scaled.shape)
 
     # Evaluate fingerprint
     pred = clf.predict(scaled)

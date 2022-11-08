@@ -36,6 +36,7 @@ def get_fp_path():
 def collect_fingerprint():
     with open(get_fp_path() + "/fp.txt", "r") as file:
         fp = file.readline().replace("[", "").replace("]", "").replace(" ", "")
+    # print("Collected FP.")
     return fp
 
 
@@ -60,4 +61,4 @@ def __query_flag(key):
 
 def __set_flag(key, value):
     __get_storage().update(set("value", value), Query().key == str(key))
-    print("set {} to {}".format(key, value))
+    # print("Set {} to {}".format(key, value))

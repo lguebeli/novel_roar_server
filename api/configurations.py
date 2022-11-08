@@ -9,7 +9,7 @@ def send_config(config):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.connect((CLIENT_IP, 42666))
         sock.sendall(bytes(config, encoding="utf-8"))
-        print("sent", config)
+        print("Sent config", config)
 
 
 def map_to_ransomware_configuration(action):

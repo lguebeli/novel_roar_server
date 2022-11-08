@@ -22,7 +22,7 @@ def start_api():
 
 
 def kill_process(proc):
-    print("kill Process", proc)
+    print("Kill Process", proc)
     proc.kill()
     proc.join()
 
