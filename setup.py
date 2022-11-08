@@ -5,6 +5,7 @@ requirements = [
     "logbook",
     "Flask==2.2.2",
     "pyod",
+    "tensorflow",
     "tinydb",
     "virtualenv"
 ]

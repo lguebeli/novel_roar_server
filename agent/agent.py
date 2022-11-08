@@ -1,17 +1,22 @@
+import os
+
+from agent.model import Model
+
 AGENT = None
 
 
-# TODO: Agent should be the wrapper and contain a Model (pass through where necessary)
 class Agent(object):
     def __init__(self):
-        self.model = None
-        self.selected_action = None
-        self.best_action = None  # TODO: check if required, maybe only local in predict stored in one var
-        pass
+        self.model = Model()
+        self.next_action = 0
+
+        nr_of_configs = len(os.listdir(os.path.join(os.path.abspath(os.path.curdir), "rw-configs")))
+        self.actions = list(range(nr_of_configs))
 
     def predict(self, fingerprint):
-        # TODO: later on for off-policy, return both the selected and the predicted best action
-        pass
+        next = self.next_action
+        self.next_action += 1
+        return next
 
     def update_weights(self, reward):
         pass
