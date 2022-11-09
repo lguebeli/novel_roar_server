@@ -1,4 +1,3 @@
-import os
 from time import sleep
 
 import numpy as np
@@ -21,7 +20,8 @@ class Agent1(AbstractAgent):
     def predict(self, fingerprint):
         next = self.next_action
         self.next_action += 1
-        return next
+        is_last = self.next_action > self.num_actions  # we return the last valid action
+        return next, is_last
 
     def update_weights(self, reward):
         pass
@@ -43,7 +43,7 @@ class Agent1(AbstractAgent):
 
             # agent selects action based on state
             # print("Predict next action.")
-            selected_action = self.predict(state)
+            selected_action, is_last = self.predict(state)
 
             # convert action to config and send to client
             if selected_action != last_action:
@@ -55,31 +55,24 @@ class Agent1(AbstractAgent):
 
             # receive next FP and compute reward based on FP
             # print("Wait for FP...")
-            while not (is_fp_ready() or is_rw_done()):
+            while not (is_fp_ready()):
                 sleep(.5)
 
-            if is_rw_done():
-                # print("Computing reward for current FP.")
-                # TODO: including action required?
-                reward = compute_reward(transform_fp(curr_fp), is_rw_done(), selected_action)
-                set_fp_ready(False)
-            else:
-                next_fp = collect_fingerprint()
-                set_fp_ready(False)
+            next_fp = collect_fingerprint()
+            set_fp_ready(False)
 
-                # print("Computing reward for next FP.")
-                # TODO: including action required?
-                reward = compute_reward(transform_fp(next_fp), is_rw_done(), selected_action)
+            # print("Computing reward for next FP.")
+            # TODO: including action required?
+            reward = compute_reward(transform_fp(next_fp), is_rw_done(), selected_action)
 
             # send reward to agent, update weights accordingly
             self.update_weights(reward)
 
-            if not is_rw_done():
-                # set next_fp to curr_fp for next iteration
-                curr_fp = next_fp
-            else:
+            if is_last:
                 # terminate episode instantly
                 break
+            # set next_fp to curr_fp for next iteration
+            curr_fp = next_fp
 
 
 def transform_fp(fp):
