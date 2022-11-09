@@ -6,7 +6,7 @@ import numpy as np
 from agent.abstract_agent import AbstractAgent
 from api.configurations import map_to_ransomware_configuration, send_config
 from environment.reward import compute_reward
-from environment.state_handling import is_fp_ready, set_fp_ready, is_rw_done, collect_fingerprint
+from environment.state_handling import is_fp_ready, set_fp_ready, is_rw_done, get_num_configs, collect_fingerprint
 from v1.agent.model import Model
 
 
@@ -15,8 +15,8 @@ class Agent1(AbstractAgent):
         self.model = Model()
         self.next_action = 0
 
-        nr_of_configs = len(os.listdir(os.path.join(os.path.abspath(os.path.curdir), "rw-configs")))
-        self.actions = list(range(nr_of_configs))
+        self.num_actions = get_num_configs()
+        self.actions = list(range(self.num_actions))
 
     def predict(self, fingerprint):
         next = self.next_action

@@ -48,6 +48,10 @@ def set_prototype(proto):
     __set_value("PROTOTYPE", proto)
 
 
+def get_num_configs():
+    return len(os.listdir(os.path.join(os.path.abspath(os.path.curdir), "rw-configs")))
+
+
 def initialize_storage():
     db = __get_storage()
     db.drop_tables()  # reset database to start from scratch
