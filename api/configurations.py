@@ -10,7 +10,7 @@ CLIENT_IP = "<Client-IP>"
 def send_config(config):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.connect((CLIENT_IP, 42666))
-        sock.sendall(bytes(config, encoding="utf-8"))
+        sock.send(bytes(json.dumps(config), encoding="utf-8"))
         print("Sent config", config)
 
 
