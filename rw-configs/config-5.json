@@ -1,5 +1,5 @@
 {
-	"algo": "AES-CBC",
+	"algo": "AES-CTR",
 	"burst_duration": "s1",
 	"burst_pause": "5",
 	"burst_rate": "0"
