@@ -20,7 +20,8 @@ class Agent1(AbstractAgent):
     def predict(self, fingerprint):
         next = self.next_action
         self.next_action += 1
-        is_last = self.next_action > self.num_actions  # we return the last valid action
+        # we return the last valid action; next_action zero-based, num_actions one-based
+        is_last = self.next_action >= self.num_actions
         return next, is_last
 
     def update_weights(self, reward):
