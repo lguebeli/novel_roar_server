@@ -33,7 +33,7 @@ def kill_process(proc):
 
 
 if __name__ == "__main__":
-    print("==============================\nInstantiate Storage\n")
+    print("==============================\nInstantiate Storage\n==============================")
     initialize_storage()
 
     # Parse arguments

@@ -3,9 +3,18 @@ import os
 
 # FP directories
 fp_dir = "C:/Users/jluec/Desktop/fingerprints"
-normal_fp_dir = os.path.join(fp_dir, "normal")
-infected_c1_fp_dir = os.path.join(fp_dir, "infected-c1")
-fp_dirs = [normal_fp_dir, infected_c1_fp_dir]
+rpi_model_prefix = "mod4-"
+normal_fp_dir = os.path.join(fp_dir, rpi_model_prefix + "normal")
+infected_c0_fp_dir = os.path.join(fp_dir, rpi_model_prefix + "infected-c0")
+infected_c1_fp_dir = os.path.join(fp_dir, rpi_model_prefix + "infected-c1")
+infected_c2_fp_dir = os.path.join(fp_dir, rpi_model_prefix + "infected-c2")
+infected_c3_fp_dir = os.path.join(fp_dir, rpi_model_prefix + "infected-c3")
+infected_c4_fp_dir = os.path.join(fp_dir, rpi_model_prefix + "infected-c4")
+infected_c5_fp_dir = os.path.join(fp_dir, rpi_model_prefix + "infected-c5")
+infected_c6_fp_dir = os.path.join(fp_dir, rpi_model_prefix + "infected-c6")
+infected_c7_fp_dir = os.path.join(fp_dir, rpi_model_prefix + "infected-c7")
+fp_dirs = [normal_fp_dir, infected_c0_fp_dir, infected_c1_fp_dir, infected_c2_fp_dir, infected_c3_fp_dir,
+           infected_c4_fp_dir, infected_c5_fp_dir, infected_c6_fp_dir, infected_c7_fp_dir]
 
 # headers based on FP script fingerprinter.sh
 CPU_HEADERS = "cpu_us,cpu_sy,cpu_ni,cpu_id,cpu_wa,cpu_hi,cpu_si"  # 2,4,6,8,10,12,14 of [2-us,sy,ni,id,wa,hi,14-si,st]
