@@ -154,7 +154,6 @@ def train_anomaly_detection():
 
 def detect_anomaly(fingerprint):  # string
     # print("Detecting anomaly.")
-    clf = __get_classifier()
 
     # Transforming FP string to pandas DataFrame
     fp_data = fingerprint.reshape(1, -1)
@@ -173,6 +172,7 @@ def detect_anomaly(fingerprint):  # string
     # print("Scaled FP to", scaled.shape)
 
     # Evaluate fingerprint
-    pred = clf.predict(scaled)
+    clf = __get_classifier()
+    pred = clf.predict(scaled)  # FIXME: currently even normal behavior from fingerprinter.sh is detected as anomalous
     assert type(pred) == np.ndarray and len(pred) == 1
     return pred[0]

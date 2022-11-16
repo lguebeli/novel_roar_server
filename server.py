@@ -3,7 +3,7 @@ from multiprocessing import Process
 from time import sleep
 
 from api import create_app
-from environment.controller import run_c2
+from environment import get_controller
 from environment.state_handling import is_multi_fp_collection, set_multi_fp_collection, initialize_storage, set_prototype
 
 
@@ -53,7 +53,8 @@ if __name__ == "__main__":
     # Start C2 server
     try:
         if not is_multi_fp_collection():
-            run_c2()
+            controller = get_controller()
+            controller.run_c2()
         else:
             while True:
                 sleep(600)  # sleep until process is terminated by user keyboard interrupt
