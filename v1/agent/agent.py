@@ -2,7 +2,7 @@ from agent.abstract_agent import AbstractAgent
 from environment.state_handling import get_num_configs
 
 
-class Agent1(AbstractAgent):
+class Agent1Manual(AbstractAgent):
     def __init__(self):
         self.next_action = 0
         self.num_actions = get_num_configs()
@@ -14,5 +14,6 @@ class Agent1(AbstractAgent):
         is_last = self.next_action >= self.num_actions
         return next, is_last
 
-    def update_weights(self, reward):
+    def update_weights(self, fingerprint, reward):
+        # not required in version 1
         pass

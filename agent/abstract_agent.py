@@ -7,9 +7,5 @@ class AbstractAgent(ABC):
         pass
 
     @abstractmethod
-    def update_weights(self, reward):
-        pass
-
-    @abstractmethod
-    def loop_episodes(self):
+    def update_weights(self, fingerprint, reward):
         pass

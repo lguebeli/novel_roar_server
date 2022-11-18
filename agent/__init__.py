@@ -1,5 +1,5 @@
-from v1.agent.agent import Agent1
-# from v2.agent.agent import Agent2
+from v1.agent.agent import Agent1Manual
+from v2.agent.agent import Agent2QLearning
 from environment.state_handling import get_prototype
 
 AGENT = None
@@ -9,10 +9,10 @@ def get_agent():
     global AGENT
     if not AGENT:
         proto = get_prototype()
-        if proto == 1:
-            AGENT = Agent1()
-        # elif proto == 2:
-        #     AGENT = Agent2()
+        if proto == "1":
+            AGENT = Agent1Manual()
+        elif proto == "2":
+            AGENT = Agent2QLearning()
         else:
-            AGENT = Agent1()
+            AGENT = Agent1Manual()
     return AGENT

@@ -173,6 +173,6 @@ def detect_anomaly(fingerprint):  # string
 
     # Evaluate fingerprint
     clf = __get_classifier()
-    pred = clf.predict(scaled)  # FIXME: currently even normal behavior from fingerprinter.sh is detected as anomalous
+    pred = clf.predict(scaled)
     assert type(pred) == np.ndarray and len(pred) == 1
     return pred[0]
