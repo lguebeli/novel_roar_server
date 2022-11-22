@@ -10,7 +10,7 @@ Adjust constants in the following files:
 | `api/configurations.py`            | - Client IP address                                               |
 | `environment/anomaly-detection.py` | - CSV folder path<br>- Contamination factor                       |
 
-# Versions
+# Prototypes
 
 ***Preliminary!***
 

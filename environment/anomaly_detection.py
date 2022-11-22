@@ -66,8 +66,8 @@ def preprocess_dataset(dataset):
 
 def prepare_training_test_sets(dataset):
     # Split into training and test sets
-    train_set, test_set = train_test_split(dataset, test_size=0.10, random_state=42, shuffle=False)
-    # print(train_set.shape, test_set.shape)
+    train_set, test_set = train_test_split(dataset, test_size=0.10, random_state=42, shuffle=True)
+    # print("prep", train_set.shape, test_set.shape)
 
     # Remove train data with Z-score higher than 3
     train_set = train_set[(np.abs(stats.zscore(train_set)) < 3).all(axis=1)]
@@ -100,6 +100,7 @@ def train_anomaly_detection():
     df_inf_c5 = pd.read_csv(csv_path_template.format("infected-c5"))
     df_inf_c6 = pd.read_csv(csv_path_template.format("infected-c6"))
     df_inf_c7 = pd.read_csv(csv_path_template.format("infected-c7"))
+    # print("load", df_normal.shape)
 
     # Preprocess data for ML
     # print("Preprocessing datasets.")
@@ -112,9 +113,11 @@ def train_anomaly_detection():
     infected_c5_data = preprocess_dataset(df_inf_c5)
     infected_c6_data = preprocess_dataset(df_inf_c6)
     infected_c7_data = preprocess_dataset(df_inf_c7)
+    # print("proc", normal_data.shape)
 
     # print("Split normal behavior data into training and test set.")
     train_set, test_set = prepare_training_test_sets(dataset=normal_data)
+    # print("sets", train_set.shape, test_set.shape)
 
     # Scale the datasets, turning them into ndarrays
     # print("Scaling dataset features to fit training set.")
@@ -130,6 +133,7 @@ def train_anomaly_detection():
     infected_c5_data = scale_dataset(scaler, infected_c5_data)
     infected_c6_data = scale_dataset(scaler, infected_c6_data)
     infected_c7_data = scale_dataset(scaler, infected_c7_data)
+    # print("scaled", train_set.shape, test_set.shape)
 
     # Instantiate ML Isolation Forest instance
     # print("Instantiate classifier.")

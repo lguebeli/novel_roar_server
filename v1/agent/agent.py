@@ -8,11 +8,11 @@ class Agent1Manual(AbstractAgent):
         self.num_actions = get_num_configs()
 
     def predict(self, fingerprint):
-        next = self.next_action
+        next_a = self.next_action
         self.next_action += 1
         # we return the last valid action; next_action zero-based, num_actions one-based
         is_last = self.next_action >= self.num_actions
-        return next, is_last
+        return next_a, is_last
 
     def update_weights(self, fingerprint, reward):
         # not required in version 1

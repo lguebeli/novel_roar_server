@@ -18,7 +18,7 @@ class Controller2(AbstractController):
         curr_fp = collect_fingerprint()
         set_fp_ready(False)
 
-        last_action = 0
+        last_action = -1
         reward_store = []
 
         print("Loop episode...")
@@ -33,6 +33,7 @@ class Controller2(AbstractController):
             # agent selects action based on state
             print("Predict next action.")
             selected_action = agent.predict(state)
+            print("Predicted action", selected_action)
 
             # ==============================
             # Take step and observe new state

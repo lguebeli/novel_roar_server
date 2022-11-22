@@ -10,5 +10,6 @@ def simulate_sending_fp(config):
     config_fp_dir = os.path.join(FP_DIR, RPI_MODEL_PREFIX + "infected-c{}".format(config))
     fp_files = os.listdir(config_fp_dir)
     with open(os.path.join(config_fp_dir, random.choice(fp_files))) as file:
+        # print("SIM:", file.name)
         fp = file.read()
     post(url="http://127.0.0.1:5000/fp/somemac", json={"fp": fp})
