@@ -48,6 +48,14 @@ def set_prototype(proto):
     __set_value("PROTOTYPE", proto)
 
 
+def is_simulation():
+    return __query_key("SIMULATION")
+
+
+def set_simulation(simulated):
+    __set_value("SIMULATION", simulated)
+
+
 def get_num_configs():
     return len(os.listdir(os.path.join(os.path.abspath(os.path.curdir), "rw-configs")))
 
@@ -59,6 +67,7 @@ def initialize_storage():
     db.insert({"key": "FP_READY", "value": False})
     db.insert({"key": "RW_DONE", "value": False})
     db.insert({"key": "PROTOTYPE", "value": 0})
+    db.insert({"key": "SIMULATION", "value": False})
 
 
 def __get_storage():

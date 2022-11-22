@@ -4,7 +4,8 @@ from time import sleep
 
 from api import create_app
 from environment import get_controller
-from environment.state_handling import is_multi_fp_collection, set_multi_fp_collection, initialize_storage, set_prototype
+from environment.state_handling import is_multi_fp_collection, set_multi_fp_collection, initialize_storage, \
+    set_prototype, set_simulation
 
 
 def parse_args():
@@ -17,6 +18,10 @@ def parse_args():
                         help='Prototype selection.',
                         default=0,
                         action="store")
+    parser.add_argument('-s', '--simulation',
+                        help='Indicator for simulation of sensor behavior.',
+                        default=False,
+                        action="store_true")
 
     return parser.parse_args()
 
@@ -42,6 +47,8 @@ if __name__ == "__main__":
     set_multi_fp_collection(collect)
     proto = args.proto
     set_prototype(proto)
+    simulated = args.simulation
+    set_simulation(simulated)
 
     # Start API listener
     print("\n==============================\nStart API\n==============================")
