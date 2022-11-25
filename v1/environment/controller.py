@@ -52,3 +52,5 @@ class Controller1(AbstractController):
                 break
             # set next_fp to curr_fp for next iteration
             curr_fp = next_fp
+
+        return []

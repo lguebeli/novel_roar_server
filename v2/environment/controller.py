@@ -99,3 +99,6 @@ class Controller2(AbstractController):
 
             # update current state
             curr_fp = next_fp
+            print("==================================================")
+
+        return reward_store

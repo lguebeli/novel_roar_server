@@ -19,8 +19,9 @@ class AbstractController(ABC):
         if cont.lower() == "y":
             print("\n==============================\nStart C2 Server\n==============================")
             agent = get_agent()
-            self.loop_episodes(agent)
+            rewards = self.loop_episodes(agent)
             print("\n==============================\n! Done !\n==============================")
+            print(rewards)
 
     @staticmethod
     def transform_fp(fp):
