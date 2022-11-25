@@ -44,8 +44,7 @@ class Controller1(AbstractController):
             set_fp_ready(False)
 
             print("Computing reward for next FP.")
-            # TODO: including action required?
-            reward = compute_reward(AbstractController.transform_fp(next_fp), is_rw_done(), selected_action)
+            reward = compute_reward(AbstractController.transform_fp(next_fp), is_rw_done())
 
             if is_last:
                 # terminate episode instantly

@@ -5,7 +5,7 @@ def prepare_reward_computation():
     train_anomaly_detection()
 
 
-def compute_reward(fp, done, action):
+def compute_reward(fp, done):
     if done:
         return 1
 

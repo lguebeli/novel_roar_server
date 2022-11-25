@@ -67,7 +67,7 @@ class Controller2(AbstractController):
             # ==============================
 
             print("Computing reward for next FP.")
-            reward = compute_reward(next_state, is_rw_done(), selected_action)
+            reward = compute_reward(next_state, is_rw_done())
             reward_store.append(reward)
 
             # ==============================
