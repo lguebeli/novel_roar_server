@@ -7,11 +7,11 @@ def prepare_reward_computation():
 
 def compute_reward(fp, done):
     if done:
-        return 1
+        return +10
 
     anomalous = detect_anomaly(fp)  # int [0 1]
-    # print("Detected {} FP.".format("anomalous" if anomalous else "normal"))
+    print("--- Detected {} FP.".format("anomalous" if anomalous else "normal"))
     if bool(anomalous):
-        return -1
+        return -10
     else:
-        return 0
+        return +5

@@ -4,7 +4,7 @@ from api.configurations import map_to_ransomware_configuration, send_config
 from environment.abstract_controller import AbstractController
 from environment.reward import compute_reward
 from environment.state_handling import is_fp_ready, set_fp_ready, is_rw_done, collect_fingerprint, is_simulation
-from simulate import simulate_sending_fp
+from simulate import simulate_sending_fp, simulate_sending_rw_done
 
 
 class Controller2(AbstractController):
@@ -21,6 +21,8 @@ class Controller2(AbstractController):
         last_action = -1
         reward_store = []
 
+        sim_steps = 0
+
         print("Loop episode...")
         while not is_rw_done():
             # ==============================
@@ -31,8 +33,8 @@ class Controller2(AbstractController):
             state = AbstractController.transform_fp(curr_fp)
 
             # agent selects action based on state
-            print("Predict next action.")
-            selected_action = agent.predict(state)
+            print("Predict action.")
+            selected_action, _, q_values = agent.predict(state)
             print("Predicted action", selected_action)
 
             # ==============================
@@ -46,6 +48,8 @@ class Controller2(AbstractController):
                 if not is_simulation():  # cannot send if no socket listening during simulation
                     send_config(config)
             last_action = selected_action
+
+            sim_steps += 1
 
             # receive next FP and compute reward based on FP
             print("Wait for FP...")
@@ -74,21 +78,30 @@ class Controller2(AbstractController):
             # Next Q-values, error, and learning
             # ==============================
 
+            if is_simulation() and sim_steps >= 50:
+                simulate_sending_rw_done()
+
             # initialize error
             error = agent.init_error()
 
             if is_rw_done():
                 # update error based on observed reward
-                error = agent.update_error(error, None, reward, True)
+                error = agent.update_error(error=error, reward=reward, is_done=True,
+                                           selected_action=selected_action, selected_q_value=q_values[selected_action],
+                                           best_next_action=None, best_next_q_value=None)
 
                 # send error to agent, update weights accordingly
                 agent.update_weights(state, error)
             else:
                 # predict next Q-values
-                next_action = agent.predict(next_state)
+                print("Predict next action.")
+                next_selected_action, best_next_action, next_q_values = agent.predict(next_state)
+                print("Predicted next action", next_selected_action)
 
                 # update error based on observed reward
-                error = agent.update_error(error, next_action, reward, False)
+                error = agent.update_error(error=error, reward=reward, is_done=False,
+                                           selected_action=selected_action, selected_q_value=q_values[selected_action],
+                                           best_next_action=best_next_action, best_next_q_value=next_q_values[best_next_action])
 
                 # send error to agent, update weights accordingly
                 agent.update_weights(state, error)
