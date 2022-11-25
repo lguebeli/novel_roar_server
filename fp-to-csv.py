@@ -2,7 +2,7 @@ from copy import deepcopy
 import os
 
 # FP directories
-fp_dir = "C:/Users/jluec/Desktop/fingerprints"
+fp_dir = "<local-path-to-collected-fingerprints-folder>"
 rpi_model_prefix = "mod4-"
 normal_fp_dir = os.path.join(fp_dir, rpi_model_prefix + "normal")
 infected_c0_fp_dir = os.path.join(fp_dir, rpi_model_prefix + "infected-c0")
