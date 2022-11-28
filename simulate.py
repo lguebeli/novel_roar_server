@@ -2,12 +2,11 @@ import os
 import random
 from requests import post, put
 
-FP_DIR = os.path.abspath("<local-path-to-collected-fingerprints-folders>")
-RPI_MODEL_PREFIX = "mod4-"
+from environment.settings import CSV_FOLDER_PATH, RPI_MODEL_PREFIX
 
 
 def simulate_sending_fp(config):
-    config_fp_dir = os.path.join(FP_DIR, RPI_MODEL_PREFIX + "infected-c{}".format(config))
+    config_fp_dir = os.path.join(CSV_FOLDER_PATH, RPI_MODEL_PREFIX + "infected-c{}".format(config))
     fp_files = os.listdir(config_fp_dir)
     with open(os.path.join(config_fp_dir, random.choice(fp_files))) as file:
         # print("SIM:", file.name)

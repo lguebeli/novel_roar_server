@@ -3,6 +3,7 @@ import os
 import numpy as np
 
 from agent.abstract_agent import AbstractAgent
+from environment.settings import CSV_FOLDER_PATH, RPI_MODEL_PREFIX
 from environment.state_handling import get_num_configs
 from v2.agent.model import Model
 
@@ -10,9 +11,6 @@ EPSILON = 0.2
 LEARN_RATE = 0.05  # 0.0035
 DECAY_RATE = 0.01  # 0.0005
 DISCOUNT_FACTOR = 0.5  # 0.85
-
-CSV_FOLDER_PATH = "<local-path-to-collected-fingerprints-folders>"
-RPI_MODEL_PREFIX = "mod4-"
 
 
 class Agent2QLearning(AbstractAgent):

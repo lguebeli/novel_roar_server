@@ -1,18 +1,18 @@
 from copy import deepcopy
 import os
 
+from environment.settings import CSV_FOLDER_PATH, RPI_MODEL_PREFIX
+
 # FP directories
-fp_dir = "<local-path-to-collected-fingerprints-folder>"
-rpi_model_prefix = "mod4-"
-normal_fp_dir = os.path.join(fp_dir, rpi_model_prefix + "normal")
-infected_c0_fp_dir = os.path.join(fp_dir, rpi_model_prefix + "infected-c0")
-infected_c1_fp_dir = os.path.join(fp_dir, rpi_model_prefix + "infected-c1")
-infected_c2_fp_dir = os.path.join(fp_dir, rpi_model_prefix + "infected-c2")
-infected_c3_fp_dir = os.path.join(fp_dir, rpi_model_prefix + "infected-c3")
-infected_c4_fp_dir = os.path.join(fp_dir, rpi_model_prefix + "infected-c4")
-infected_c5_fp_dir = os.path.join(fp_dir, rpi_model_prefix + "infected-c5")
-infected_c6_fp_dir = os.path.join(fp_dir, rpi_model_prefix + "infected-c6")
-infected_c7_fp_dir = os.path.join(fp_dir, rpi_model_prefix + "infected-c7")
+normal_fp_dir = os.path.join(CSV_FOLDER_PATH, RPI_MODEL_PREFIX + "normal")
+infected_c0_fp_dir = os.path.join(CSV_FOLDER_PATH, RPI_MODEL_PREFIX + "infected-c0")
+infected_c1_fp_dir = os.path.join(CSV_FOLDER_PATH, RPI_MODEL_PREFIX + "infected-c1")
+infected_c2_fp_dir = os.path.join(CSV_FOLDER_PATH, RPI_MODEL_PREFIX + "infected-c2")
+infected_c3_fp_dir = os.path.join(CSV_FOLDER_PATH, RPI_MODEL_PREFIX + "infected-c3")
+infected_c4_fp_dir = os.path.join(CSV_FOLDER_PATH, RPI_MODEL_PREFIX + "infected-c4")
+infected_c5_fp_dir = os.path.join(CSV_FOLDER_PATH, RPI_MODEL_PREFIX + "infected-c5")
+infected_c6_fp_dir = os.path.join(CSV_FOLDER_PATH, RPI_MODEL_PREFIX + "infected-c6")
+infected_c7_fp_dir = os.path.join(CSV_FOLDER_PATH, RPI_MODEL_PREFIX + "infected-c7")
 fp_dirs = [normal_fp_dir, infected_c0_fp_dir, infected_c1_fp_dir, infected_c2_fp_dir, infected_c3_fp_dir,
            infected_c4_fp_dir, infected_c5_fp_dir, infected_c6_fp_dir, infected_c7_fp_dir]
 
@@ -39,7 +39,7 @@ def find_duplicate_headers():
 
 def prepare_csv_file(behavior):
     csv_file_name = "{}-behavior.csv".format(behavior)
-    csv_file_path = os.path.join(fp_dir, csv_file_name)
+    csv_file_path = os.path.join(CSV_FOLDER_PATH, csv_file_name)
 
     if os.path.exists(csv_file_path):
         print("Removing existing CSV file", csv_file_name)

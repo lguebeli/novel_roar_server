@@ -2,9 +2,8 @@ import json
 import os
 import socket
 
+from environment.settings import CLIENT_IP
 from environment.state_handling import get_num_configs
-
-CLIENT_IP = "<Client-IP>"
 
 
 def send_config(config):

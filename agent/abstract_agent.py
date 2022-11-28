@@ -3,8 +3,7 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
-CSV_FOLDER_PATH = "<local-path-to-collected-fingerprints-folders>"
-RPI_MODEL_PREFIX = "mod4-"
+from environment.settings import CSV_FOLDER_PATH, RPI_MODEL_PREFIX
 
 
 class AbstractAgent(ABC):
