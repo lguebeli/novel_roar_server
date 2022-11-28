@@ -1,5 +1,5 @@
 {
-	"algo": "ChaCha20",
+	"algo": "Salsa20",
 	"rate": "0",
 	"burst_duration": "s0",
 	"burst_pause": "0"

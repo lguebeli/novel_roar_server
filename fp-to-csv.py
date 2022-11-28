@@ -13,8 +13,9 @@ infected_c4_fp_dir = os.path.join(CSV_FOLDER_PATH, RPI_MODEL_PREFIX + "infected-
 infected_c5_fp_dir = os.path.join(CSV_FOLDER_PATH, RPI_MODEL_PREFIX + "infected-c5")
 infected_c6_fp_dir = os.path.join(CSV_FOLDER_PATH, RPI_MODEL_PREFIX + "infected-c6")
 infected_c7_fp_dir = os.path.join(CSV_FOLDER_PATH, RPI_MODEL_PREFIX + "infected-c7")
+infected_c8_fp_dir = os.path.join(CSV_FOLDER_PATH, RPI_MODEL_PREFIX + "infected-c8")
 fp_dirs = [normal_fp_dir, infected_c0_fp_dir, infected_c1_fp_dir, infected_c2_fp_dir, infected_c3_fp_dir,
-           infected_c4_fp_dir, infected_c5_fp_dir, infected_c6_fp_dir, infected_c7_fp_dir]
+           infected_c4_fp_dir, infected_c5_fp_dir, infected_c6_fp_dir, infected_c7_fp_dir, infected_c8_fp_dir]
 
 # headers based on FP script fingerprinter.sh
 CPU_HEADERS = "cpu_us,cpu_sy,cpu_ni,cpu_id,cpu_wa,cpu_hi,cpu_si"  # 2,4,6,8,10,12,14 of [2-us,sy,ni,id,wa,hi,14-si,st]

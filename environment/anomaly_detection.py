@@ -98,6 +98,7 @@ def train_anomaly_detection():
     df_inf_c5 = pd.read_csv(csv_path_template.format("infected-c5"))
     df_inf_c6 = pd.read_csv(csv_path_template.format("infected-c6"))
     df_inf_c7 = pd.read_csv(csv_path_template.format("infected-c7"))
+    df_inf_c8 = pd.read_csv(csv_path_template.format("infected-c8"))
     # print("load", df_normal.shape)
 
     # Preprocess data for ML
@@ -111,6 +112,7 @@ def train_anomaly_detection():
     infected_c5_data = preprocess_dataset(df_inf_c5)
     infected_c6_data = preprocess_dataset(df_inf_c6)
     infected_c7_data = preprocess_dataset(df_inf_c7)
+    infected_c8_data = preprocess_dataset(df_inf_c8)
     # print("proc", normal_data.shape)
 
     # print("Split normal behavior data into training and test set.")
@@ -131,6 +133,7 @@ def train_anomaly_detection():
     infected_c5_data = scale_dataset(scaler, infected_c5_data)
     infected_c6_data = scale_dataset(scaler, infected_c6_data)
     infected_c7_data = scale_dataset(scaler, infected_c7_data)
+    infected_c8_data = scale_dataset(scaler, infected_c8_data)
     # print("scaled", train_set.shape, test_set.shape)
 
     # Instantiate ML Isolation Forest instance
@@ -152,6 +155,7 @@ def train_anomaly_detection():
     evaluate_dataset("inf-c5", infected_c5_data)
     evaluate_dataset("inf-c6", infected_c6_data)
     evaluate_dataset("inf-c7", infected_c7_data)
+    evaluate_dataset("inf-c8", infected_c8_data)
 
 
 def detect_anomaly(fingerprint):  # string
