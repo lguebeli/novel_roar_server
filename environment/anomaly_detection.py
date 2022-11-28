@@ -8,6 +8,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
 from environment.settings import CSV_FOLDER_PATH, RPI_MODEL_PREFIX, ALL_CSV_HEADERS, DUPLICATE_HEADERS
+from environment.state_handling import get_num_configs
 
 # ========================================
 # ==========   CONFIG   ==========
@@ -46,7 +47,6 @@ def preprocess_dataset(dataset):
     dataset.drop(["time", "timestamp", "seconds"], inplace=True, axis=1)
 
     # Remove highly-correlated features
-    # corr = df_normal.corr()
     correlated = ["cpu_ni", "cpu_hi", "tasks_stopped", "alarmtimer:alarmtimer_fired", "alarmtimer:alarmtimer_start",
                   "cachefiles:cachefiles_create", "cachefiles:cachefiles_lookup", "cachefiles:cachefiles_mark_active",
                   "dma_fence:dma_fence_init", "udp:udp_fail_queue_rcv_skb"]
@@ -86,33 +86,19 @@ def evaluate_dataset(name, dataset):
 
 
 def train_anomaly_detection():
+    # ==============================
+    # LOAD, PROCESS, EVALUATE NORMAL DATA
+    # ==============================
+
     # Load data
     # print("Loading CSV data.")
     csv_path_template = os.path.join(CSV_FOLDER_PATH, RPI_MODEL_PREFIX + "{}-behavior.csv")
     df_normal = pd.read_csv(csv_path_template.format("normal"))
-    df_inf_c0 = pd.read_csv(csv_path_template.format("infected-c0"))
-    df_inf_c1 = pd.read_csv(csv_path_template.format("infected-c1"))
-    df_inf_c2 = pd.read_csv(csv_path_template.format("infected-c2"))
-    df_inf_c3 = pd.read_csv(csv_path_template.format("infected-c3"))
-    df_inf_c4 = pd.read_csv(csv_path_template.format("infected-c4"))
-    df_inf_c5 = pd.read_csv(csv_path_template.format("infected-c5"))
-    df_inf_c6 = pd.read_csv(csv_path_template.format("infected-c6"))
-    df_inf_c7 = pd.read_csv(csv_path_template.format("infected-c7"))
-    df_inf_c8 = pd.read_csv(csv_path_template.format("infected-c8"))
     # print("load", df_normal.shape)
 
     # Preprocess data for ML
     # print("Preprocessing datasets.")
     normal_data = preprocess_dataset(df_normal)
-    infected_c0_data = preprocess_dataset(df_inf_c0)
-    infected_c1_data = preprocess_dataset(df_inf_c1)
-    infected_c2_data = preprocess_dataset(df_inf_c2)
-    infected_c3_data = preprocess_dataset(df_inf_c3)
-    infected_c4_data = preprocess_dataset(df_inf_c4)
-    infected_c5_data = preprocess_dataset(df_inf_c5)
-    infected_c6_data = preprocess_dataset(df_inf_c6)
-    infected_c7_data = preprocess_dataset(df_inf_c7)
-    infected_c8_data = preprocess_dataset(df_inf_c8)
     # print("proc", normal_data.shape)
 
     # print("Split normal behavior data into training and test set.")
@@ -125,15 +111,6 @@ def train_anomaly_detection():
     scaler = __get_scaler()
     train_set = scale_dataset(scaler, train_set)
     test_set = scale_dataset(scaler, test_set)
-    infected_c0_data = scale_dataset(scaler, infected_c0_data)
-    infected_c1_data = scale_dataset(scaler, infected_c1_data)
-    infected_c2_data = scale_dataset(scaler, infected_c2_data)
-    infected_c3_data = scale_dataset(scaler, infected_c3_data)
-    infected_c4_data = scale_dataset(scaler, infected_c4_data)
-    infected_c5_data = scale_dataset(scaler, infected_c5_data)
-    infected_c6_data = scale_dataset(scaler, infected_c6_data)
-    infected_c7_data = scale_dataset(scaler, infected_c7_data)
-    infected_c8_data = scale_dataset(scaler, infected_c8_data)
     # print("scaled", train_set.shape, test_set.shape)
 
     # Instantiate ML Isolation Forest instance
@@ -147,15 +124,16 @@ def train_anomaly_detection():
     # Evaluate model
     print("Evaluate test set and infected behavior datasets.")
     evaluate_dataset("normal", test_set)
-    evaluate_dataset("inf-c0", infected_c0_data)
-    evaluate_dataset("inf-c1", infected_c1_data)
-    evaluate_dataset("inf-c2", infected_c2_data)
-    evaluate_dataset("inf-c3", infected_c3_data)
-    evaluate_dataset("inf-c4", infected_c4_data)
-    evaluate_dataset("inf-c5", infected_c5_data)
-    evaluate_dataset("inf-c6", infected_c6_data)
-    evaluate_dataset("inf-c7", infected_c7_data)
-    evaluate_dataset("inf-c8", infected_c8_data)
+
+    # ==============================
+    # REPEAT FOR INFECTED SAMPLES
+    # ==============================
+
+    for conf_nr in range(get_num_configs()):
+        df_inf = pd.read_csv(csv_path_template.format("infected-c{}".format(conf_nr)))
+        inf_data = preprocess_dataset(df_inf)
+        inf_data = scale_dataset(scaler, inf_data)
+        evaluate_dataset("inf-c{}".format(conf_nr), inf_data)
 
 
 def detect_anomaly(fingerprint):  # string
