@@ -1,0 +1,6 @@
+{
+	"algo": "Salsa20",
+	"rate": "50000",
+	"burst_duration": "s10",
+	"burst_pause": "20"
+}
