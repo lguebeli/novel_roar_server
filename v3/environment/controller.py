@@ -8,7 +8,7 @@ from environment.state_handling import is_fp_ready, set_fp_ready, is_rw_done, co
 from simulate import simulate_sending_fp, simulate_sending_rw_done
 
 
-class Controller2(AbstractController):
+class Controller3(AbstractController):
     def loop_episodes(self, agent):
         # setup
         reward_system = RewardSystem(+10, +5, -10)

@@ -5,7 +5,7 @@ import numpy as np
 from agent.abstract_agent import AbstractAgent
 from environment.settings import CSV_FOLDER_PATH, RPI_MODEL_PREFIX
 from environment.state_handling import get_num_configs
-from v2.agent.model import Model
+from v3.agent.model import Model
 
 EPSILON = 0.2
 LEARN_RATE = 0.05  # 0.0035
@@ -13,7 +13,7 @@ DECAY_RATE = 0.01  # 0.0005
 DISCOUNT_FACTOR = 0.5  # 0.85
 
 
-class Agent2QLearning(AbstractAgent):
+class Agent3QLearning(AbstractAgent):
     def __init__(self):
         self.model = Model(epsilon=EPSILON, learn_rate=LEARN_RATE, decay_rate=DECAY_RATE)
         self.steps = 0
