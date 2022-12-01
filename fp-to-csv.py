@@ -2,20 +2,14 @@ from copy import deepcopy
 import os
 
 from environment.settings import CSV_FOLDER_PATH, RPI_MODEL_PREFIX
+from environment.state_handling import get_num_configs
 
 # FP directories
 normal_fp_dir = os.path.join(CSV_FOLDER_PATH, RPI_MODEL_PREFIX + "normal")
-infected_c0_fp_dir = os.path.join(CSV_FOLDER_PATH, RPI_MODEL_PREFIX + "infected-c0")
-infected_c1_fp_dir = os.path.join(CSV_FOLDER_PATH, RPI_MODEL_PREFIX + "infected-c1")
-infected_c2_fp_dir = os.path.join(CSV_FOLDER_PATH, RPI_MODEL_PREFIX + "infected-c2")
-infected_c3_fp_dir = os.path.join(CSV_FOLDER_PATH, RPI_MODEL_PREFIX + "infected-c3")
-infected_c4_fp_dir = os.path.join(CSV_FOLDER_PATH, RPI_MODEL_PREFIX + "infected-c4")
-infected_c5_fp_dir = os.path.join(CSV_FOLDER_PATH, RPI_MODEL_PREFIX + "infected-c5")
-infected_c6_fp_dir = os.path.join(CSV_FOLDER_PATH, RPI_MODEL_PREFIX + "infected-c6")
-infected_c7_fp_dir = os.path.join(CSV_FOLDER_PATH, RPI_MODEL_PREFIX + "infected-c7")
-infected_c8_fp_dir = os.path.join(CSV_FOLDER_PATH, RPI_MODEL_PREFIX + "infected-c8")
-fp_dirs = [normal_fp_dir, infected_c0_fp_dir, infected_c1_fp_dir, infected_c2_fp_dir, infected_c3_fp_dir,
-           infected_c4_fp_dir, infected_c5_fp_dir, infected_c6_fp_dir, infected_c7_fp_dir, infected_c8_fp_dir]
+fp_dirs = [normal_fp_dir]
+for conf_nr in range(get_num_configs()):
+    infected_conf_fp_dir = os.path.join(CSV_FOLDER_PATH, RPI_MODEL_PREFIX + "infected-c{}".format(conf_nr))
+    fp_dirs.append(infected_conf_fp_dir)
 
 # headers based on FP script fingerprinter.sh
 CPU_HEADERS = "cpu_us,cpu_sy,cpu_ni,cpu_id,cpu_wa,cpu_hi,cpu_si"  # 2,4,6,8,10,12,14 of [2-us,sy,ni,id,wa,hi,14-si,st]
