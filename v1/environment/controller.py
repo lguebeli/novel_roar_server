@@ -2,13 +2,17 @@ from time import sleep
 
 from api.configurations import map_to_ransomware_configuration, send_config
 from environment.abstract_controller import AbstractController
-from environment.reward import compute_reward
+from environment.reward import RewardSystem
 from environment.state_handling import is_fp_ready, set_fp_ready, is_rw_done, collect_fingerprint, is_simulation
 from simulate import simulate_sending_fp
 
 
 class Controller1(AbstractController):
     def loop_episodes(self, agent):
+        # setup
+        reward_system = RewardSystem(+1, 0, -1)
+        last_action = None
+
         # accept initial FP
         print("Wait for initial FP...")
         if is_simulation():
@@ -17,8 +21,6 @@ class Controller1(AbstractController):
             sleep(.5)
         curr_fp = collect_fingerprint()
         set_fp_ready(False)
-
-        last_action = None
 
         # print("Loop episode...")
         while True:
@@ -50,7 +52,7 @@ class Controller1(AbstractController):
             set_fp_ready(False)
 
             print("Computing reward for next FP.")
-            reward = compute_reward(AbstractController.transform_fp(next_fp), is_rw_done())
+            reward = reward_system.compute_reward(AbstractController.transform_fp(next_fp), is_rw_done())
 
             if is_last:
                 # terminate episode instantly

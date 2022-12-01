@@ -2,7 +2,7 @@ from time import sleep
 
 from api.configurations import map_to_ransomware_configuration, send_config
 from environment.abstract_controller import AbstractController
-from environment.reward import compute_reward
+from environment.reward import RewardSystem
 from environment.settings import MAX_STEPS_V2
 from environment.state_handling import is_fp_ready, set_fp_ready, is_rw_done, collect_fingerprint, is_simulation
 from simulate import simulate_sending_fp, simulate_sending_rw_done
@@ -10,6 +10,13 @@ from simulate import simulate_sending_fp, simulate_sending_rw_done
 
 class Controller2(AbstractController):
     def loop_episodes(self, agent):
+        # setup
+        reward_system = RewardSystem(+10, +5, -10)
+        last_action = -1
+        reward_store = []
+
+        sim_step = 0
+
         # accept initial FP
         print("Wait for initial FP...")
         if is_simulation():
@@ -18,11 +25,6 @@ class Controller2(AbstractController):
             sleep(.5)
         curr_fp = collect_fingerprint()
         set_fp_ready(False)
-
-        last_action = -1
-        reward_store = []
-
-        sim_steps = 0
 
         print("Loop episode...")
         while not is_rw_done():
@@ -44,13 +46,13 @@ class Controller2(AbstractController):
 
             # convert action to config and send to client
             if selected_action != last_action:
-                print("Sending new action {} to client.".format(selected_action))
+                print("Sending new action {} to client. Step {}.".format(selected_action, sim_step))
                 config = map_to_ransomware_configuration(selected_action)
                 if not is_simulation():  # cannot send if no socket listening during simulation
                     send_config(config)
             last_action = selected_action
 
-            sim_steps += 1
+            sim_step += 1
 
             # receive next FP and compute reward based on FP
             print("Wait for FP...")
@@ -72,14 +74,14 @@ class Controller2(AbstractController):
             # ==============================
 
             print("Computing reward for next FP.")
-            reward = compute_reward(next_state, is_rw_done())
+            reward = reward_system.compute_reward(next_state, is_rw_done())
             reward_store.append(reward)
 
             # ==============================
             # Next Q-values, error, and learning
             # ==============================
 
-            if is_simulation() and sim_steps >= MAX_STEPS_V2:
+            if is_simulation() and sim_step >= MAX_STEPS_V2:
                 simulate_sending_rw_done()
 
             # initialize error
@@ -93,6 +95,7 @@ class Controller2(AbstractController):
 
                 # send error to agent, update weights accordingly
                 agent.update_weights(state, error)
+                print("Final Q-Values:", q_values)
             else:
                 # predict next Q-values
                 print("Predict next action.")
