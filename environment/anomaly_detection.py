@@ -64,7 +64,7 @@ def preprocess_dataset(dataset):
 
 def prepare_training_test_sets(dataset):
     # Split into training and test sets
-    train_set, test_set = train_test_split(dataset, test_size=0.10, random_state=42, shuffle=True)
+    train_set, test_set = train_test_split(dataset, test_size=0.20, random_state=42, shuffle=True)
     # print("prep", train_set.shape, test_set.shape)
 
     # Remove train data with Z-score higher than 3
