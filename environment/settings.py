@@ -14,3 +14,9 @@ DUPLICATE_HEADERS = ["qdisc:qdisc_dequeue", "skb:consume_skb", "skb:kfree_skb"]
 # ==============================
 
 CLIENT_IP = "<Client-IP>"
+
+# ==============================
+# C2 SIMULATION
+# ==============================
+
+MAX_STEPS_V2 = 500
