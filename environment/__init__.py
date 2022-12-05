@@ -1,4 +1,5 @@
 from v1.environment.controller import Controller1
+from v2.environment.controller import Controller2
 from v3.environment.controller import Controller3
 from environment.state_handling import get_prototype
 
@@ -11,6 +12,8 @@ def get_controller():
         proto = get_prototype()
         if proto == "1":
             CONTROLLER = Controller1()
+        elif proto == "2":
+            CONTROLLER = Controller2()
         elif proto == "3":
             CONTROLLER = Controller3()
         else:
