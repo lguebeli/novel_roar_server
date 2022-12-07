@@ -13,9 +13,6 @@ class Controller2(AbstractController):
         reward_system = RewardSystem(0, +1, -1)
         last_action = None
 
-        weights = []
-        all_weights = []
-
         # accept initial FP
         print("Wait for initial FP...")
         if is_simulation():
@@ -55,15 +52,13 @@ class Controller2(AbstractController):
 
             print("Computing reward for next FP.")
             reward = reward_system.compute_reward(AbstractController.transform_fp(next_fp), is_rw_done())
-            weights = agent.update_weights(None, reward)
+            rewards = agent.update_weights(None, reward)
 
             if is_last:
                 # terminate episode instantly
                 print("Terminate episode.")
-                all_weights.append(weights.copy())
-                print("Weights", all_weights, sep="\n")
                 break
             # set next_fp to curr_fp for next iteration
             curr_fp = next_fp
 
-        return []
+        return rewards.copy()
