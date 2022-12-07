@@ -4,11 +4,13 @@ Master Thesis on Ransomware Optimized with AI for Resource-constrained devices
 ## Configuration
 Adjust constants in the following files:
 
-| File                               | Constant                                                          |
-|------------------------------------|-------------------------------------------------------------------|
-| `fp-to-csv.py`                     | - CSV directory path<br>- CSV file names<br>- Verify CSV headers  |
-| `api/configurations.py`            | - Client IP address                                               |
-| `environment/anomaly-detection.py` | - CSV folder path<br>- Contamination factor                       |
+| File                               | Constant                                                                                                                 |
+|------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
+| `fp-to-csv.py`                     | - CSV file names<br>- Verify CSV headers                                                                                 |
+| `environment/anomaly-detection.py` | - Contamination factor                                                                                                   |
+| `environment/settings.py`          | - CSV folder path<br>- Raspberry model prefix<br>- Verify CSV headers<br>- C2 simulation settings<br>- Client IP address |
+| `vX/agent.py`                      | - Agent specific constants and starting values                                                                           |
+| `vX/model.py`                      | - Model specific constants and starting values                                                                           |
 
 # Prototypes
 
