@@ -3,7 +3,7 @@ from time import sleep
 from api.configurations import map_to_ransomware_configuration, send_config
 from environment.abstract_controller import AbstractController
 from environment.reward import RewardSystem
-from environment.settings import MAX_STEPS_V2
+from environment.settings import MAX_STEPS_V3
 from environment.state_handling import is_fp_ready, set_fp_ready, is_rw_done, collect_fingerprint, is_simulation
 from simulate import simulate_sending_fp, simulate_sending_rw_done
 
@@ -81,7 +81,7 @@ class Controller3(AbstractController):
             # Next Q-values, error, and learning
             # ==============================
 
-            if is_simulation() and sim_step >= MAX_STEPS_V2:
+            if is_simulation() and sim_step >= MAX_STEPS_V3:
                 simulate_sending_rw_done()
 
             # initialize error

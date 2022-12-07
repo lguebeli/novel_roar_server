@@ -1,6 +1,7 @@
 import numpy as np
 
 from agent.abstract_agent import AbstractAgent
+from environment.settings import MAX_STEPS_V2
 from environment.state_handling import get_num_configs
 
 
@@ -11,7 +12,7 @@ class Agent2BruteForce(AbstractAgent):
         self.step = 1
         # max constants
         self.num_actions = get_num_configs()
-        self.max_steps = 500
+        self.max_steps = MAX_STEPS_V2
 
         self.weights = np.zeros(self.num_actions)
 

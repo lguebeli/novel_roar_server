@@ -20,3 +20,4 @@ CLIENT_IP = "<Client-IP>"
 # ==============================
 
 MAX_STEPS_V2 = 500
+MAX_STEPS_V3 = 500
