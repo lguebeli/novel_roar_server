@@ -26,4 +26,4 @@ class AbstractController(ABC):
     @staticmethod
     def transform_fp(fp):
         split_to_floats = list(map(lambda feat: float(feat), fp.split(",")))
-        return np.asarray(split_to_floats).reshape(-1, 1)
+        return np.asarray(split_to_floats).reshape(-1, 1)  # shape (F, 1)

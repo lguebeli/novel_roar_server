@@ -9,8 +9,9 @@ Adjust constants in the following files:
 | `fp-to-csv.py`                     | - CSV file names<br>- Verify CSV headers                                                                                 |
 | `environment/anomaly-detection.py` | - Contamination factor                                                                                                   |
 | `environment/settings.py`          | - CSV folder path<br>- Raspberry model prefix<br>- Verify CSV headers<br>- C2 simulation settings<br>- Client IP address |
-| `vX/agent.py`                      | - Agent specific constants and starting values                                                                           |
-| `vX/model.py`                      | - Model specific constants and starting values                                                                           |
+| `vX/agent/agent.py`                | - Agent specific constants and starting values                                                                           |
+| `vX/agent/model.py`                | - Model specific constants and starting values                                                                           |
+| `vX/environment/controller.py`     | - Episode specific constants and values                                                                                  |
 
 # Prototypes
 

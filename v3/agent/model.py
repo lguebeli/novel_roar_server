@@ -61,7 +61,7 @@ class Model(object):
         # self.q = h2 * (h2 > 0)  # ReLU activation, x2
         self.q = 1 / (1 + np.exp(-h2))  # logistic activation, x2
 
-        print("MODEL: Q", self.q.shape, "\n", self.q)
+        # print("MODEL: Q", self.q.shape, "\n", self.q)
 
         # ==============================
         # POLICY

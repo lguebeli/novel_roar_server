@@ -3,3 +3,4 @@ pyod==1.0.6
 requests
 tensorflow
 tinydb
+tqdm

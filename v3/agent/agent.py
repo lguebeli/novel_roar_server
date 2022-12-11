@@ -51,10 +51,10 @@ class Agent3QLearning(AbstractAgent):
         return np.zeros((self.output_size, 1))
 
     def update_error(self, error, reward, is_done, selected_action, selected_q_value, best_next_action, best_next_q_value):
-        print("AGENT: R sel selval best bestval", reward, selected_action, selected_q_value, best_next_action, best_next_q_value)
+        # print("AGENT: R sel selval best bestval", reward, selected_action, selected_q_value, best_next_action, best_next_q_value)
         if is_done:
             error[selected_action] = reward - selected_q_value
         else:
-            error[selected_action] = reward + (DISCOUNT_FACTOR * best_next_q_value) - selected_q_value
-        print("AGENT: err\n", error.T)
+            error[selected_action] = reward + (DISCOUNT_FACTOR * best_next_q_value) - selected_q_value  # off-policy
+        # print("AGENT: err\n", error.T)
         return error

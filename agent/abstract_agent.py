@@ -22,9 +22,9 @@ class AbstractAgent(ABC):
         return std
 
     @abstractmethod
-    def predict(self, fingerprint):
+    def predict(self, *args):
         pass
 
     @abstractmethod
-    def update_weights(self, fingerprint, reward):
+    def update_weights(self, *args):
         pass

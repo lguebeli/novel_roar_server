@@ -5,6 +5,10 @@ from requests import post, put
 from environment.settings import CSV_FOLDER_PATH, RPI_MODEL_PREFIX
 
 
+# ==============================
+# SIMULATE CLIENT BEHAVIOR
+# ==============================
+
 def simulate_sending_fp(config):
     config_fp_dir = os.path.join(CSV_FOLDER_PATH, RPI_MODEL_PREFIX + "infected-c{}".format(config))
     fp_files = os.listdir(config_fp_dir)

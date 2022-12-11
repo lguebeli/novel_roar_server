@@ -97,7 +97,7 @@ class Controller3(AbstractController):
                 agent.update_weights(state, error)
                 print("Final Q-Values:", q_values)
             else:
-                # predict next Q-values
+                # predict next Q-values and action
                 print("Predict next action.")
                 next_selected_action, best_next_action, next_q_values = agent.predict(next_state)
                 print("Predicted next action", next_selected_action)
