@@ -83,7 +83,8 @@ def evaluate_dataset(name, dataset):
     clf = __get_classifier()
     pred = clf.predict(dataset)
     unique_elements, counts_elements = np.unique(pred, return_counts=True)
-    print(name, "\t", unique_elements, "\t", counts_elements)
+    print(name, unique_elements, counts_elements,
+          "%.3f" % (counts_elements[0] / (counts_elements[0] + counts_elements[1]) * 100), sep="\t")
 
 
 def train_anomaly_detection():
