@@ -1,5 +1,5 @@
 {
-	"algo": "Salsa20",
+	"algo": "AES-CBC",
 	"rate": "0",
 	"burst_duration": "s0",
 	"burst_pause": "0"

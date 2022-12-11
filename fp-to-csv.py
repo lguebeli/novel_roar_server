@@ -23,13 +23,13 @@ CSV_HEADERS = "time,timestamp,seconds,connectivity,{},{},{},{},{},cpu_temp,alarm
 
 def find_duplicate_headers():
     headers = CSV_HEADERS.split(",")
-    print("original:", len(headers))
+    print("- original:", len(headers))
     unique = set(headers)
-    print("unique:", len(unique))
+    print("- unique:", len(unique))
     diff = deepcopy(headers)
     for head in unique:
         diff.remove(head)
-    print(len(diff), diff)
+    print("- duplicates:", len(diff), diff)
 
 
 def prepare_csv_file(behavior):

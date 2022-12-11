@@ -1,6 +1,6 @@
 {
 	"algo": "ChaCha20",
-	"rate": "0",
-	"burst_duration": "s0",
-	"burst_pause": "0"
+	"rate": "200",
+	"burst_duration": "s20",
+	"burst_pause": "40"
 }

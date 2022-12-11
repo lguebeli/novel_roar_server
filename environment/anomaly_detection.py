@@ -53,7 +53,8 @@ def preprocess_dataset(dataset):
     dataset.drop(correlated, inplace=True, axis=1)
 
     # Remove vectors generated when the rasp did not have connectivity
-    dataset = dataset.loc[(dataset['connectivity'] == 1)]
+    if len(dataset) > 1:  # avoid dropping single entries causing empty dataset
+        dataset = dataset.loc[(dataset['connectivity'] == 1)]
     # Remove the connectivity feature because now it is constant
     dataset.drop(['connectivity'], inplace=True, axis=1)
 

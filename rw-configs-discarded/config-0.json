@@ -1,6 +1,6 @@
 {
 	"algo": "AES-CTR",
-	"rate": "500",
-	"burst_duration": "s10",
+	"rate": "0",
+	"burst_duration": "f1",
 	"burst_pause": "5"
 }

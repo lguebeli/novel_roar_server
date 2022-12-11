@@ -1,6 +1,6 @@
 {
-	"algo": "AES-CTR",
-	"rate": "0",
+	"algo": "ChaCha20",
+	"rate": "16",
 	"burst_duration": "f1",
-	"burst_pause": "5"
+	"burst_pause": "60"
 }
