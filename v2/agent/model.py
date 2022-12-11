@@ -9,7 +9,7 @@ HIDDEN_NEURONS = 10  # TODO: v3 - remove simplification
 NUM_CONFIGS = get_num_configs()
 
 
-class Model(object):
+class ModelQLearning(object):
     def __init__(self, epsilon, learn_rate, decay_rate):
         # Initialize random seed for reproducibility
         np.random.seed(42)

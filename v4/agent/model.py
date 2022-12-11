@@ -7,7 +7,7 @@ HIDDEN_NEURONS = 200
 NUM_CONFIGS = get_num_configs()
 
 
-class Model(object):
+class ModelSarsa(object):
     def __init__(self, learn_rate):
         # Initialize random seed for reproducibility
         np.random.seed(42)

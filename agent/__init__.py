@@ -1,7 +1,7 @@
-from v1.agent.agent import Agent1Manual
-from v2.agent.agent import Agent2BruteForce
-from v3.agent.agent import Agent3QLearning
-from v5.agent.agent import Agent5Sarsa
+from v1.agent.agent import AgentManual
+from v2.agent.agent import AgentQLearning
+from v4.agent.agent import AgentSarsa
+from v99.agent.agent import AgentBruteForce
 from environment.state_handling import get_prototype
 
 AGENT = None
@@ -12,14 +12,14 @@ def get_agent():
     if not AGENT:
         proto = get_prototype()
         if proto == "1":
-            AGENT = Agent1Manual()
+            AGENT = AgentManual()
         elif proto == "2":
-            AGENT = Agent2BruteForce()
-        elif proto == "3":
-            AGENT = Agent3QLearning()
-        elif proto == "5":
-            AGENT = Agent5Sarsa()
+            AGENT = AgentQLearning()
+        elif proto == "4":
+            AGENT = AgentSarsa()
+        elif proto == "99":
+            AGENT = AgentBruteForce()
         else:
             print("WARNING: Falling back to default agent v1!")
-            AGENT = Agent1Manual()
+            AGENT = AgentManual()
     return AGENT

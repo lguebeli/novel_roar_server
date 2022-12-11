@@ -5,7 +5,7 @@ from tqdm import tqdm  # add progress bar to episodes
 from api.configurations import map_to_ransomware_configuration, send_config
 from environment.abstract_controller import AbstractController
 from environment.reward import RewardSystem
-from environment.settings import MAX_EPISODES_V5, MAX_STEPS_V5
+from environment.settings import MAX_EPISODES_V4, MAX_STEPS_V4
 from environment.state_handling import is_fp_ready, set_fp_ready, is_rw_done, collect_fingerprint, is_simulation
 from simulate import simulate_sending_fp, simulate_sending_rw_done
 
@@ -13,11 +13,11 @@ EPSILON = 0.2
 DECAY_RATE = 0.01  # 0.0005
 
 
-class Controller5(AbstractController):
+class ControllerSarsa(AbstractController):
     def loop_episodes(self, agent):
         all_rewards = []
 
-        for n in tqdm(range(MAX_EPISODES_V5)):
+        for n in tqdm(range(MAX_EPISODES_V4)):
             # ==============================
             # Setup
             # ==============================
@@ -94,7 +94,7 @@ class Controller5(AbstractController):
                 # Next Q-values, error, and learning
                 # ==============================
 
-                if is_simulation() and sim_step >= MAX_STEPS_V5:
+                if is_simulation() and sim_step >= MAX_STEPS_V4:
                     simulate_sending_rw_done()
 
                 # initialize error

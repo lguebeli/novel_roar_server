@@ -1,43 +1,60 @@
+import os
+
 import numpy as np
 
 from agent.abstract_agent import AbstractAgent
-from environment.settings import MAX_STEPS_V2
+from environment.settings import CSV_FOLDER_PATH, RPI_MODEL_PREFIX
 from environment.state_handling import get_num_configs
+from v2.agent.model import ModelQLearning
+
+EPSILON = 0.2
+LEARN_RATE = 0.05  # 0.0035
+DECAY_RATE = 0.01  # 0.0005
+DISCOUNT_FACTOR = 0.5  # 0.85
 
 
-class Agent2BruteForce(AbstractAgent):
+class AgentQLearning(AbstractAgent):
     def __init__(self):
-        # counters
-        self.action = 0
-        self.step = 1
-        # max constants
-        self.num_actions = get_num_configs()
-        self.max_steps = MAX_STEPS_V2
+        self.model = ModelQLearning(epsilon=EPSILON, learn_rate=LEARN_RATE, decay_rate=DECAY_RATE)
+        self.steps = 0
 
-        self.weights = np.zeros(self.num_actions)
+        num_configs = get_num_configs()
+        self.actions = list(range(num_configs))
+        self.output_size = num_configs
+
+    def __crop_fp(self, fp):  # TODO: v3 - remove simplification
+        with open(os.path.join(CSV_FOLDER_PATH, RPI_MODEL_PREFIX + "normal-behavior.csv"), "r") as csv_normal:
+            csv_headers = csv_normal.read().split(",")
+        # headers = ["cpu_id", "tasks_running", "mem_free", "cpu_temp", "block:block_bio_remap",
+        #            "sched:sched_process_exec", "writeback:writeback_pages_written"]
+        headers = ["cpu_id", "tasks_running", "mem_free", "cpu_temp"]
+        indexes = []
+        for header in headers:
+            indexes.append(csv_headers.index(header))
+        return fp[indexes]
 
     def predict(self, fingerprint):
-        print("AGENT: action-step", self.action, self.step)
-        # take action N=step times
-        next_a = self.action
-        self.step += 1
+        std_fp = AbstractAgent.standardize_inputs(fingerprint)
+        cropped_fp = self.__crop_fp(std_fp)  # TODO: v3 - remove simplification
+        self.steps += 1
+        selected_action, q_values = self.model.forward(cropped_fp, self.steps)
+        best_action = np.argmax(q_values)
 
-        # take next action and reset steps
-        if self.step > self.max_steps:
-            self.action += 1
-            self.step = 1
+        return selected_action, best_action, q_values
 
-        # after the last step of the last action, we increase action over num_actions
-        is_last = self.action >= self.num_actions
-        return next_a, is_last
+    def update_weights(self, fingerprint, error):
+        std_fp = AbstractAgent.standardize_inputs(fingerprint)
+        cropped_fp = self.__crop_fp(std_fp)  # TODO: v3 - remove simplification
+        self.model.backward(cropped_fp, error)
 
-    def update_weights(self, _, reward):
-        if self.action >= self.num_actions:  # last action was chosen
-            idx = self.num_actions - 1
-        elif self.step == 1:  # action just changed
-            idx = self.action - 1
+    def init_error(self):
+        return np.zeros((self.output_size, 1))
+
+    def update_error(self, error, reward, is_done, selected_action, selected_q_value, best_next_action, best_next_q_value):
+        # print("AGENT: R sel selval best bestval", reward, selected_action, selected_q_value, best_next_action, best_next_q_value)
+        if is_done:
+            error[selected_action] = reward - selected_q_value
         else:
-            idx = self.action
-
-        self.weights[idx] += reward
-        return self.weights
+            error[selected_action] = reward + (DISCOUNT_FACTOR * best_next_q_value) - selected_q_value  # off-policy
+        # print("AGENT: err\n", error.T)
+        return error

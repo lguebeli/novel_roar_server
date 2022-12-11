@@ -2,15 +2,15 @@ import numpy as np
 
 from agent.abstract_agent import AbstractAgent
 from environment.state_handling import get_num_configs
-from v5.agent.model import Model
+from v4.agent.model import ModelSarsa
 
 LEARN_RATE = 0.05  # 0.0035
 DISCOUNT_FACTOR = 0.5  # 0.85
 
 
-class Agent5Sarsa(AbstractAgent):
+class AgentSarsa(AbstractAgent):
     def __init__(self):
-        self.model = Model(learn_rate=LEARN_RATE)
+        self.model = ModelSarsa(learn_rate=LEARN_RATE)
         self.output_size = get_num_configs()
 
     def predict(self, fingerprint, epsilon):

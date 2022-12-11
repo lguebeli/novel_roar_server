@@ -2,7 +2,7 @@ from agent.abstract_agent import AbstractAgent
 from environment.state_handling import get_num_configs
 
 
-class Agent1Manual(AbstractAgent):
+class AgentManual(AbstractAgent):
     def __init__(self):
         self.next_action = 0
         self.num_actions = get_num_configs()

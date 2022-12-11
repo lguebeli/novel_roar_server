@@ -7,10 +7,10 @@ from environment.state_handling import is_fp_ready, set_fp_ready, is_rw_done, co
 from simulate import simulate_sending_fp
 
 
-class ControllerManual(AbstractController):
+class ControllerBruteForce(AbstractController):
     def loop_episodes(self, agent):
         # setup
-        reward_system = RewardSystem(+1, 0, -1)
+        reward_system = RewardSystem(0, +1, -1)
         last_action = None
 
         # accept initial FP
@@ -52,6 +52,7 @@ class ControllerManual(AbstractController):
 
             print("Computing reward for next FP.")
             reward = reward_system.compute_reward(AbstractController.transform_fp(next_fp), is_rw_done())
+            rewards = agent.update_weights(None, reward)
 
             if is_last:
                 # terminate episode instantly
@@ -60,4 +61,4 @@ class ControllerManual(AbstractController):
             # set next_fp to curr_fp for next iteration
             curr_fp = next_fp
 
-        return []
+        return rewards.copy()

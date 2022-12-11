@@ -1,7 +1,7 @@
-from v1.environment.controller import Controller1
-from v2.environment.controller import Controller2
-from v3.environment.controller import Controller3
-from v5.environment.controller import Controller5
+from v1.environment.controller import ControllerManual
+from v2.environment.controller import ControllerQLearning
+from v4.environment.controller import ControllerSarsa
+from v99.environment.controller import ControllerBruteForce
 from environment.state_handling import get_prototype
 
 CONTROLLER = None
@@ -12,14 +12,14 @@ def get_controller():
     if not CONTROLLER:
         proto = get_prototype()
         if proto == "1":
-            CONTROLLER = Controller1()
+            CONTROLLER = ControllerManual()
         elif proto == "2":
-            CONTROLLER = Controller2()
-        elif proto == "3":
-            CONTROLLER = Controller3()
-        elif proto == "5":
-            CONTROLLER = Controller5()
+            CONTROLLER = ControllerQLearning()
+        elif proto == "4":
+            CONTROLLER = ControllerSarsa()
+        elif proto == "99":
+            CONTROLLER = ControllerBruteForce()
         else:
             print("WARNING: Falling back to default controller v1!")
-            CONTROLLER = Controller1()
+            CONTROLLER = ControllerManual()
     return CONTROLLER
