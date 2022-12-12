@@ -11,11 +11,11 @@ from simulate import simulate_sending_fp, simulate_sending_rw_done
 class ControllerQLearning(AbstractController):
     def loop_episodes(self, agent):
         # setup
-        reward_system = RewardSystem(+10, +5, -10)
+        reward_system = RewardSystem(+50, +10, -30)  # simpl: +10/+5/-10; full: +50/+10/-30
         last_action = -1
         reward_store = []
 
-        sim_step = 0
+        sim_step = 1
 
         # accept initial FP
         print("Wait for initial FP...")
@@ -38,7 +38,7 @@ class ControllerQLearning(AbstractController):
             # agent selects action based on state
             print("Predict next action.")
             selected_action, _, q_values = agent.predict(state)
-            print("Predicted action", selected_action)
+            print("Predicted action {}. Step {}.".format(selected_action, sim_step))
 
             # ==============================
             # Take step and observe new state
@@ -46,7 +46,7 @@ class ControllerQLearning(AbstractController):
 
             # convert action to config and send to client
             if selected_action != last_action:
-                print("Sending new action {} to client. Step {}.".format(selected_action, sim_step))
+                print("Sending new action {} to client.".format(selected_action))
                 config = map_to_ransomware_configuration(selected_action)
                 if not is_simulation():  # cannot send if no socket listening during simulation
                     send_config(config)
@@ -95,7 +95,7 @@ class ControllerQLearning(AbstractController):
 
                 # send error to agent, update weights accordingly
                 agent.update_weights(state, error)
-                print("Final Q-Values:", q_values)
+                print("Final Q-Values:\n", q_values)
             else:
                 # predict next Q-values and action
                 print("Predict next action.")

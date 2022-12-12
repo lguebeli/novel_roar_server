@@ -19,7 +19,7 @@ CLIENT_IP = "<Client-IP>"
 # C2 SIMULATION
 # ==============================
 
-MAX_STEPS_V2 = 500
+MAX_STEPS_V2 = 1000
 MAX_EPISODES_V4 = 3
 MAX_STEPS_V4 = 5
 MAX_STEPS_V99 = 500
