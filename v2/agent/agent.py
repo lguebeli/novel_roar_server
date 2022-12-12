@@ -7,12 +7,13 @@ from environment.settings import CSV_FOLDER_PATH, RPI_MODEL_PREFIX, ALL_CSV_HEAD
 from environment.state_handling import get_num_configs
 from v2.agent.model import ModelQLearning
 
-EPSILON = 0.2
-LEARN_RATE = 0.005  # simpl: 0.05; full: 0.005
-DISCOUNT_FACTOR = 0.75  # simpl: 0.5; full: 0.75
+USE_SIMPLE_FP = False
+FP_DIMS = 7 if USE_SIMPLE_FP else 86
+HIDDEN_NEURONS = 10 if USE_SIMPLE_FP else 50
 
-FP_DIMS = 86  # simpl: 7; full: 86
-HIDDEN_NEURONS = 50  # simpl: 10; full: 50
+EPSILON = 0.2
+LEARN_RATE = 0.05 if USE_SIMPLE_FP else 0.005
+DISCOUNT_FACTOR = 0.5 if USE_SIMPLE_FP else 0.75
 
 
 class AgentQLearning(AbstractAgent):
@@ -52,7 +53,7 @@ class AgentQLearning(AbstractAgent):
 
         return fp[indexes]
 
-    def __crop_fp(self, fp):  # TODO: v3 - remove simplification
+    def __crop_fp(self, fp):
         with open(os.path.join(CSV_FOLDER_PATH, RPI_MODEL_PREFIX + "normal-behavior.csv"), "r") as csv_normal:
             csv_headers = csv_normal.read().split(",")
         headers = ["cpu_id", "tasks_running", "mem_free", "cpu_temp", "block:block_bio_remap",
@@ -73,15 +74,19 @@ class AgentQLearning(AbstractAgent):
 
     def predict(self, weights1, weights2, bias_weights1, bias_weights2, state):
         std_fp = AbstractAgent.standardize_fp(state)
-        ready_fp = self.__preprocess_fp(std_fp)
-        cropped_fp = self.__crop_fp(std_fp)  # TODO: v3 - remove simplification
+        if USE_SIMPLE_FP:
+            ready_fp = self.__crop_fp(std_fp)
+        else:
+            ready_fp = self.__preprocess_fp(std_fp)
         hidden, q_values, selected_action = self.model.forward(weights1, weights2, bias_weights1, bias_weights2, inputs=ready_fp)
         return hidden, q_values, selected_action
 
     def update_weights(self, q_values, error, state, hidden, weights1, weights2, bias_weights1, bias_weights2):
         std_fp = AbstractAgent.standardize_fp(state)
-        ready_fp = self.__preprocess_fp(std_fp)
-        cropped_fp = self.__crop_fp(std_fp)  # TODO: v3 - remove simplification
+        if USE_SIMPLE_FP:
+            ready_fp = self.__crop_fp(std_fp)
+        else:
+            ready_fp = self.__preprocess_fp(std_fp)
         self.model.backward(q_values, error, hidden, weights1, weights2, bias_weights1, bias_weights2, inputs=ready_fp)
 
     def init_error(self):

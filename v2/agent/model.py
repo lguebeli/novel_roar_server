@@ -1,5 +1,7 @@
 import numpy as np
 
+USE_SIMPLE_FP = False
+
 
 class ModelQLearning(object):
     def __init__(self, epsilon, learn_rate, num_configs):
@@ -20,7 +22,7 @@ class ModelQLearning(object):
         # ==============================
         # Q-VALUES
         # ==============================
-        # simpl: Log/Log; full: ReLU/Log
+        # simpl: Log/Log; full: Log/ReLU
 
         # Forward pass through neural network to compute Q-values
         # print("MODEL: w1", weights1.shape, weights1)
@@ -39,8 +41,10 @@ class ModelQLearning(object):
         adaline2 = np.dot(weights2.T, hidden1) + bias_weights2
         # print("MODEL: ad2 dot", np.dot(weights2.T, hidden1))
         # print("MODEL: ad2 min/max", adaline2.shape, np.min(adaline2), np.argmin(adaline2), np.max(adaline2), np.argmax(adaline2))
-        q = adaline2 * (adaline2 > 0)  # ReLU activation, h2
-        # q = 1 / (1 + np.exp(-adaline2))  # logistic activation, h2
+        if USE_SIMPLE_FP:
+            q = 1 / (1 + np.exp(-adaline2))  # logistic activation, h2
+        else:
+            q = adaline2 * (adaline2 > 0)  # ReLU activation, h2
 
         print("MODEL: Q", q.shape, "\n", q)
 
@@ -69,11 +73,13 @@ class ModelQLearning(object):
         # ==============================
         # COMPUTE DELTA
         # ==============================
-        # simpl: Log/Log; full: Log/ReLU
+        # simpl: Log/Log; full: ReLU/Log
 
         # print("MODEL back: inputs err", inputs.shape, q_err.shape, inputs.T, q_err.T, sep="\n")
-        delta2 = (q > 0) * q_err  # derivative ReLU: 1 if q > 0 else 0
-        # delta2 = q * (1 - q) * q_err  # derivative logistic: f(x) * (1 - f(x))
+        if USE_SIMPLE_FP:
+            delta2 = q * (1 - q) * q_err  # derivative logistic: f(x) * (1 - f(x))
+        else:
+            delta2 = (q > 0) * q_err  # derivative ReLU: 1 if q > 0 else 0
         delta_weights2 = np.outer(hidden, delta2.T)
         # print("MODEL back: d2", delta2.shape, delta2)
         # print("MODEL back: d2 min/max", delta2.shape, np.min(delta2), np.argmin(delta2), np.max(delta2), np.argmax(delta2))

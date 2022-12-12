@@ -7,6 +7,8 @@ from environment.settings import MAX_STEPS_V2
 from environment.state_handling import is_fp_ready, set_fp_ready, is_rw_done, collect_fingerprint, is_simulation
 from simulate import simulate_sending_fp, simulate_sending_rw_done
 
+USE_SIMPLE_FP = False
+
 
 class ControllerQLearning(AbstractController):
     def loop_episodes(self, agent):
@@ -20,7 +22,7 @@ class ControllerQLearning(AbstractController):
         # Setup environment
         # ==============================
 
-        reward_system = RewardSystem(+50, +20, -20)  # simpl: +10/+5/-10; full: +50/+20/-20
+        reward_system = RewardSystem(+10, +5, -10) if USE_SIMPLE_FP else RewardSystem(+50, +20, -20)
         last_action = -1
         reward_store = []
 
