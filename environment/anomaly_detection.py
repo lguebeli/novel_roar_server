@@ -41,7 +41,7 @@ def __get_scaler():
 
 
 def preprocess_dataset(dataset):
-    # Remove duplicates: 'qdisc:qdisc_dequeue', 'skb:consume_skb', 'skb:kfree_skb'
+    # Remove duplicates
     dataset.drop(list(map(lambda header: header+".1", DUPLICATE_HEADERS)), inplace=True, axis=1)  # read_csv adds the .1
     # Remove temporal features
     dataset.drop(["time", "timestamp", "seconds"], inplace=True, axis=1)

@@ -1,4 +1,4 @@
-from time import sleep
+from time import sleep, time
 
 from api.configurations import map_to_ransomware_configuration, send_config
 from environment.abstract_controller import AbstractController
@@ -20,14 +20,15 @@ class ControllerQLearning(AbstractController):
         # Setup environment
         # ==============================
 
-        reward_system = RewardSystem(+50, +10, -30)  # simpl: +10/+5/-10; full: +50/+10/-30
+        reward_system = RewardSystem(+50, +20, -20)  # simpl: +10/+5/-10; full: +50/+20/-20
         last_action = -1
         reward_store = []
 
         sim_step = 1
+        sim_start = time()
 
         # accept initial FP
-        print("Wait for initial FP...")
+        # print("Wait for initial FP...")
         if is_simulation():
             simulate_sending_fp(0)
         while not is_fp_ready():
@@ -35,8 +36,9 @@ class ControllerQLearning(AbstractController):
         curr_fp = collect_fingerprint()
         set_fp_ready(False)
 
-        print("Loop episode...")
+        # print("Loop episode...")
         while not is_rw_done():
+            print("==================================================")
             # ==============================
             # Predict action
             # ==============================
@@ -45,8 +47,8 @@ class ControllerQLearning(AbstractController):
             state = AbstractController.transform_fp(curr_fp)
 
             # agent selects action based on state
-            print("Predict next action.")
-            curr_hidden, curr_q_values, selected_action = agent.predict(weights1, weights2, bias_weights1, bias_weights2, inputs=state)
+            # print("Predict action.")
+            curr_hidden, curr_q_values, selected_action = agent.predict(weights1, weights2, bias_weights1, bias_weights2, state=state)
             print("Predicted action {}. Step {}.".format(selected_action, sim_step))
 
             # ==============================
@@ -55,7 +57,7 @@ class ControllerQLearning(AbstractController):
 
             # convert action to config and send to client
             if selected_action != last_action:
-                print("Sending new action {} to client.".format(selected_action))
+                # print("Sending new action {} to client.".format(selected_action))
                 config = map_to_ransomware_configuration(selected_action)
                 if not is_simulation():  # cannot send if no socket listening during simulation
                     send_config(config)
@@ -64,7 +66,7 @@ class ControllerQLearning(AbstractController):
             sim_step += 1
 
             # receive next FP and compute reward based on FP
-            print("Wait for FP...")
+            # print("Wait for FP...")
             if is_simulation():
                 simulate_sending_fp(selected_action)
             while not (is_fp_ready() or is_rw_done()):
@@ -83,7 +85,7 @@ class ControllerQLearning(AbstractController):
             # Observe reward for new state
             # ==============================
 
-            print("Computing reward for next FP.")
+            # print("Computing reward for next FP.")
             reward = reward_system.compute_reward(next_state, is_rw_done())
             reward_store.append(reward)
 
@@ -106,9 +108,9 @@ class ControllerQLearning(AbstractController):
                 print("Final Q-Values:\n", curr_q_values)
             else:
                 # predict next Q-values and action
-                print("Predict next action.")
-                next_hidden, next_q_values, next_action = agent.predict(weights1, weights2, bias_weights1, bias_weights2, inputs=next_state)
-                print("Predicted next action", next_action)
+                # print("Predict next action.")
+                next_hidden, next_q_values, next_action = agent.predict(weights1, weights2, bias_weights1, bias_weights2, state=next_state)
+                # print("Predicted next action", next_action)
 
                 # update error based on observed reward
                 error = agent.update_error(error, reward, selected_action, curr_q_values, next_q_values, is_done=False)
@@ -122,6 +124,7 @@ class ControllerQLearning(AbstractController):
 
             # update current state
             curr_fp = next_fp
-            print("==================================================")
 
+        sim_end = time()
+        print("Took: {}s, roughly {}min.".format("%.3f" % (sim_end - sim_start), "%.1f" % ((sim_end - sim_start) / 60)))
         return reward_store
