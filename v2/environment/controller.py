@@ -10,7 +10,16 @@ from simulate import simulate_sending_fp, simulate_sending_rw_done
 
 class ControllerQLearning(AbstractController):
     def loop_episodes(self, agent):
-        # setup
+        # ==============================
+        # Setup agent
+        # ==============================
+
+        weights1, weights2, bias_weights1, bias_weights2 = agent.initialize_network()
+
+        # ==============================
+        # Setup environment
+        # ==============================
+
         reward_system = RewardSystem(+50, +10, -30)  # simpl: +10/+5/-10; full: +50/+10/-30
         last_action = -1
         reward_store = []
@@ -37,7 +46,7 @@ class ControllerQLearning(AbstractController):
 
             # agent selects action based on state
             print("Predict next action.")
-            selected_action, _, q_values = agent.predict(state)
+            curr_hidden, curr_q_values, selected_action = agent.predict(weights1, weights2, bias_weights1, bias_weights2, inputs=state)
             print("Predicted action {}. Step {}.".format(selected_action, sim_step))
 
             # ==============================
@@ -66,6 +75,7 @@ class ControllerQLearning(AbstractController):
             else:
                 next_fp = collect_fingerprint()
 
+            # transform FP into np array
             next_state = AbstractController.transform_fp(next_fp)
             set_fp_ready(False)
 
@@ -81,7 +91,7 @@ class ControllerQLearning(AbstractController):
             # Next Q-values, error, and learning
             # ==============================
 
-            if is_simulation() and sim_step >= MAX_STEPS_V2:
+            if is_simulation() and sim_step > MAX_STEPS_V2:
                 simulate_sending_rw_done()
 
             # initialize error
@@ -89,26 +99,22 @@ class ControllerQLearning(AbstractController):
 
             if is_rw_done():
                 # update error based on observed reward
-                error = agent.update_error(error=error, reward=reward, is_done=True,
-                                           selected_action=selected_action, selected_q_value=q_values[selected_action],
-                                           best_next_action=None, best_next_q_value=None)
+                error = agent.update_error(error, reward, selected_action, curr_q_values, next_q_values=None, is_done=True)
 
                 # send error to agent, update weights accordingly
-                agent.update_weights(state, error)
-                print("Final Q-Values:\n", q_values)
+                agent.update_weights(curr_q_values, error, state, curr_hidden, weights1, weights2, bias_weights1, bias_weights2)
+                print("Final Q-Values:\n", curr_q_values)
             else:
                 # predict next Q-values and action
                 print("Predict next action.")
-                next_selected_action, best_next_action, next_q_values = agent.predict(next_state)
-                print("Predicted next action", next_selected_action)
+                next_hidden, next_q_values, next_action = agent.predict(weights1, weights2, bias_weights1, bias_weights2, inputs=next_state)
+                print("Predicted next action", next_action)
 
                 # update error based on observed reward
-                error = agent.update_error(error=error, reward=reward, is_done=False,
-                                           selected_action=selected_action, selected_q_value=q_values[selected_action],
-                                           best_next_action=best_next_action, best_next_q_value=next_q_values[best_next_action])
+                error = agent.update_error(error, reward, selected_action, curr_q_values, next_q_values, is_done=False)
 
                 # send error to agent, update weights accordingly
-                agent.update_weights(state, error)
+                agent.update_weights(curr_q_values, error, state, curr_hidden, weights1, weights2, bias_weights1, bias_weights2)
 
             # ==============================
             # Prepare next step
