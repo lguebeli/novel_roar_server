@@ -8,7 +8,7 @@ from environment.settings import CSV_FOLDER_PATH, RPI_MODEL_PREFIX
 
 class AbstractAgent(ABC):
     @staticmethod
-    def standardize_inputs(inputs):
+    def standardize_fp(inputs):
         csv_normal = np.loadtxt(fname=os.path.join(CSV_FOLDER_PATH, RPI_MODEL_PREFIX + "normal-behavior.csv"), delimiter=",", skiprows=1)
         norm_min = np.min(csv_normal, axis=0).reshape(-1, 1)
         norm_max = np.max(csv_normal, axis=0).reshape(-1, 1)

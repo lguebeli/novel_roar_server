@@ -14,14 +14,14 @@ class AgentSarsa(AbstractAgent):
         self.output_size = get_num_configs()
 
     def predict(self, fingerprint, epsilon):
-        std_fp = AbstractAgent.standardize_inputs(fingerprint)
+        std_fp = AbstractAgent.standardize_fp(fingerprint)
         selected_action, q_values = self.model.forward(std_fp, epsilon)
         best_action = np.argmax(q_values)
 
         return selected_action, best_action, q_values
 
     def update_weights(self, fingerprint, error):
-        std_fp = AbstractAgent.standardize_inputs(fingerprint)
+        std_fp = AbstractAgent.standardize_fp(fingerprint)
         self.model.backward(std_fp, error)
 
     def init_error(self):
