@@ -1,14 +1,14 @@
 from copy import deepcopy
 import os
 
-from environment.settings import CSV_FOLDER_PATH, RPI_MODEL_PREFIX
+from environment.settings import CSV_FOLDER_PATH
 from environment.state_handling import get_num_configs
 
 # FP directories
-normal_fp_dir = os.path.join(CSV_FOLDER_PATH, RPI_MODEL_PREFIX + "normal")
+normal_fp_dir = os.path.join(CSV_FOLDER_PATH, "normal")
 fp_dirs = [normal_fp_dir]
 for conf_nr in range(get_num_configs()):
-    infected_conf_fp_dir = os.path.join(CSV_FOLDER_PATH, RPI_MODEL_PREFIX + "infected-c{}".format(conf_nr))
+    infected_conf_fp_dir = os.path.join(CSV_FOLDER_PATH, "infected-c{}".format(conf_nr))
     fp_dirs.append(infected_conf_fp_dir)
 
 # headers based on FP script fingerprinter.sh
