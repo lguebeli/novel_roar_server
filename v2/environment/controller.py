@@ -2,7 +2,7 @@ from time import sleep, time
 
 from api.configurations import map_to_ransomware_configuration, send_config
 from environment.abstract_controller import AbstractController
-from environment.reward import RewardSystem
+from environment.reward.standard_reward import StandardReward
 from environment.settings import MAX_STEPS_V2
 from environment.state_handling import is_fp_ready, set_fp_ready, is_rw_done, collect_fingerprint, is_simulation
 from simulate import simulate_sending_fp, simulate_sending_rw_done
@@ -22,7 +22,7 @@ class ControllerQLearning(AbstractController):
         # Setup environment
         # ==============================
 
-        reward_system = RewardSystem(+10, +5, -10) if USE_SIMPLE_FP else RewardSystem(+50, +20, -20)
+        reward_system = StandardReward(+10, +5, -10) if USE_SIMPLE_FP else StandardReward(+50, +20, -20)
         last_action = -1
         reward_store = []
 

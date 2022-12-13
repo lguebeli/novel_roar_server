@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 
 from agent import get_agent
-from environment.reward import RewardSystem
+from environment.reward.abstract_reward import AbstractReward
 
 
 class AbstractController(ABC):
@@ -13,7 +13,7 @@ class AbstractController(ABC):
 
     def run_c2(self):
         print("==============================\nPrepare Reward Computation\n==============================")
-        RewardSystem.prepare_reward_computation()
+        AbstractReward.prepare_reward_computation()
 
         cont = input("Results ok? Start C2 Server? [y/n]\n")
         if cont.lower() == "y":

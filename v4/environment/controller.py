@@ -4,7 +4,7 @@ from tqdm import tqdm  # add progress bar to episodes
 
 from api.configurations import map_to_ransomware_configuration, send_config
 from environment.abstract_controller import AbstractController
-from environment.reward import RewardSystem
+from environment.reward.standard_reward import StandardReward
 from environment.settings import MAX_EPISODES_V4, MAX_STEPS_V4
 from environment.state_handling import is_fp_ready, set_fp_ready, is_rw_done, collect_fingerprint, is_simulation
 from simulate import simulate_sending_fp, simulate_sending_rw_done
@@ -24,7 +24,7 @@ class ControllerSarsa(AbstractController):
 
             epsilon_episode = EPSILON / (1 + DECAY_RATE * n)  # decay epsilon
 
-            reward_system = RewardSystem(+10, +5, -10)
+            reward_system = StandardReward(+10, +5, -10)
             last_action = -1
             reward_store = []
 
