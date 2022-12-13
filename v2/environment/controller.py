@@ -87,6 +87,9 @@ class ControllerQLearning(AbstractController):
             # Observe reward for new state
             # ==============================
 
+            if is_simulation() and sim_step > MAX_STEPS_V2:
+                simulate_sending_rw_done()
+
             # print("Computing reward for next FP.")
             reward = reward_system.compute_reward(next_state, is_rw_done())
             reward_store.append(reward)
@@ -94,9 +97,6 @@ class ControllerQLearning(AbstractController):
             # ==============================
             # Next Q-values, error, and learning
             # ==============================
-
-            if is_simulation() and sim_step > MAX_STEPS_V2:
-                simulate_sending_rw_done()
 
             # initialize error
             error = agent.init_error()
