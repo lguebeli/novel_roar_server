@@ -33,7 +33,7 @@ class ModelQLearning(object):
         # print("MODEL: ad1 min/max", adaline1.shape, np.min(adaline1), np.argmin(adaline1), np.max(adaline1), np.argmax(adaline1))
         # hidden1 = adaline1 * (adaline1 > 0)  # ReLU activation, x if a > 0 else 0
         hidden1 = 1 / (1 + np.exp(-adaline1))  # logistic activation
-        print("MODEL: hidden1 min/max", hidden1.shape, np.min(hidden1), np.argmin(hidden1), np.max(hidden1), np.argmax(hidden1))
+        # print("MODEL: hidden1 min/max", hidden1.shape, np.min(hidden1), np.argmin(hidden1), np.max(hidden1), np.argmax(hidden1))
 
         # print("MODEL: w2", weights2.shape, weights2)
         # print("MODEL: w2 min/max", weights2.shape, np.min(weights2), np.argmin(weights2), np.max(weights2), np.argmax(weights2))
@@ -46,7 +46,7 @@ class ModelQLearning(object):
         else:
             q = adaline2 * (adaline2 > 0)  # ReLU activation, h2
 
-        print("MODEL: Q", q.shape, "\n", q)
+        # print("MODEL: Q", q.shape, "\n", q)
 
         # ==============================
         # POLICY
@@ -58,12 +58,12 @@ class ModelQLearning(object):
 
         if np.random.random() < self.epsilon:  # explore randomly
             sel_a = possible_a[np.random.randint(possible_a.size)]
-            print("MODEL: random action", sel_a)
+            # print("MODEL: random action", sel_a)
         else:  # exploit greedily
             argmax = np.argmax(q_a)
             # print("MODEL: argmax", argmax, "of", q_a, "for", possible_a)
             sel_a = possible_a[argmax]
-            print("MODEL: greedy action", sel_a)
+            # print("MODEL: greedy action", sel_a)
 
         return hidden1, q, sel_a
 

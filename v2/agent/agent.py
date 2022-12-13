@@ -8,7 +8,7 @@ from environment.state_handling import get_num_configs
 from v2.agent.model import ModelQLearning
 
 USE_SIMPLE_FP = False
-FP_DIMS = 7 if USE_SIMPLE_FP else 86
+FP_DIMS = 7 if USE_SIMPLE_FP else 97
 HIDDEN_NEURONS = 10 if USE_SIMPLE_FP else 50
 
 EPSILON = 0.2
@@ -31,15 +31,20 @@ class AgentQLearning(AbstractAgent):
     def __preprocess_fp(self, fp):
         headers = ALL_CSV_HEADERS.split(",")
 
-        # all features dropped in anomaly detection
-        duplicates = set(DUPLICATE_HEADERS)
+        duplicates = set(DUPLICATE_HEADERS)  # 3 features
         duplicates_included = []
-        dropped_features = ["time", "timestamp", "seconds", "connectivity", "cpu_ni", "cpu_hi", "tasks_stopped",
-                            "alarmtimer:alarmtimer_fired", "alarmtimer:alarmtimer_start",
-                            "cachefiles:cachefiles_create", "cachefiles:cachefiles_lookup",
-                            "cachefiles:cachefiles_mark_active", "dma_fence:dma_fence_init",
-                            "udp:udp_fail_queue_rcv_skb"]
-        # 17 features dropped, leaves 103 - 17 = 86 features
+
+        # only time metrics and duplicates
+        # 3+3 features dropped, leaves 103 - 6 = 97 features
+        dropped_features = ["time", "timestamp", "seconds"]
+
+        # all features dropped in anomaly detection
+        # 3+14 features dropped, leaves 103 - 17 = 86 features
+        # dropped_features = ["time", "timestamp", "seconds", "connectivity", "cpu_ni", "cpu_hi", "tasks_stopped",
+        #                     "alarmtimer:alarmtimer_fired", "alarmtimer:alarmtimer_start",
+        #                     "cachefiles:cachefiles_create", "cachefiles:cachefiles_lookup",
+        #                     "cachefiles:cachefiles_mark_active", "dma_fence:dma_fence_init",
+        #                     "udp:udp_fail_queue_rcv_skb"]
 
         indexes = []
         for header, value in zip(headers, fp):
