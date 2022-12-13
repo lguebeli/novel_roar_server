@@ -92,7 +92,7 @@ class ControllerQLearning(AbstractController):
 
             # print("Computing reward for next FP.")
             reward = reward_system.compute_reward(next_state, is_rw_done())
-            reward_store.append(reward)
+            reward_store.append((selected_action, reward))
 
             # ==============================
             # Next Q-values, error, and learning
