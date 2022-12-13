@@ -1,8 +1,9 @@
 import os
 import random
-from requests import post, put
 
 from environment.settings import CSV_FOLDER_PATH, RPI_MODEL_PREFIX
+from environment.state_handling import get_fp_path, set_rw_done
+from utilities import write_fingerprint_to_file
 
 
 # ==============================
@@ -15,8 +16,8 @@ def simulate_sending_fp(config):
     with open(os.path.join(config_fp_dir, random.choice(fp_files))) as file:
         # print("SIM:", file.name)
         fp = file.read()
-    post(url="http://127.0.0.1:5000/fp/somemac", json={"fp": fp})
+    write_fingerprint_to_file(fp=fp, storage_path=get_fp_path(), is_multi=False)
 
 
 def simulate_sending_rw_done():
-    put(url="http://127.0.0.1:5000/rw/done")
+    set_rw_done()

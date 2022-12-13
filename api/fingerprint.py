@@ -1,23 +1,12 @@
-from datetime import datetime
-from http import HTTPStatus
 import json
-import os
+from http import HTTPStatus
 
 from flask import Blueprint, request
 
-from environment.state_handling import is_multi_fp_collection, get_fp_path, set_fp_ready
-
+from environment.state_handling import is_multi_fp_collection, get_fp_path
+from utilities import write_fingerprint_to_file
 
 fp_bp = Blueprint("fingerprint", __name__, url_prefix="/fp")
-
-
-def write_fingerprint_to_file(fp, storage_path, is_multi):
-    os.makedirs(storage_path, exist_ok=True)
-    file_name = "fp-{time}.txt".format(time=datetime.now().strftime("%Y-%m-%d--%H-%M-%S")) if is_multi else "fp.txt"
-    fp_path = os.path.join(storage_path, file_name)
-    with open(fp_path, "x" if is_multi else "w") as file:
-        file.write(fp)
-    set_fp_ready(True)
 
 
 @fp_bp.route("/<mac>", methods=["POST"])
