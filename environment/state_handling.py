@@ -34,10 +34,17 @@ def get_fp_path():
 
 
 def collect_fingerprint():
-    with open(get_fp_path() + "/fp.txt", "r") as file:
-        fp = file.readline().replace("[", "").replace("]", "").replace(" ", "")
+    with open(os.path.join(get_fp_path(), "fp.txt"), "r") as file:
+        fp = file.readline()[1:-1].replace(" ", "")
     # print("Collected FP.")
     return fp
+
+
+def collect_rate():
+    with open(os.path.join(get_fp_path(), "rate.txt"), "r") as file:
+        rate = float(file.readline())
+    # print("Collected rate.")
+    return rate
 
 
 def get_prototype():
