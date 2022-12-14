@@ -5,7 +5,7 @@ import numpy as np
 
 from agent import get_agent
 from environment.reward.abstract_reward import AbstractReward
-from environment.state_handling import is_api_running
+from environment.state_handling import is_api_running, is_simulation
 
 WAIT_FOR_CONFIRM = False
 
@@ -16,9 +16,10 @@ class AbstractController(ABC):
         pass
 
     def __start_training(self):
-        print("\nWaiting for API...")
-        while not is_api_running():
-            sleep(1)
+        if not is_simulation():
+            print("\nWaiting for API...")
+            while not is_api_running():
+                sleep(1)
 
         print("\n==============================\nStart C2 Server\n==============================")
         agent = get_agent()

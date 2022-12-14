@@ -5,7 +5,7 @@ from time import sleep
 from api import create_app
 from environment import get_controller
 from environment.state_handling import is_multi_fp_collection, set_multi_fp_collection, initialize_storage, \
-    set_prototype, set_simulation, set_api_running
+    set_prototype, is_simulation, set_simulation, set_api_running
 
 
 def parse_args():
@@ -54,9 +54,10 @@ if __name__ == "__main__":
 
     # Start API listener
     procs = []
-    proc_api = Process(target=start_api)
-    procs.append(proc_api)
-    proc_api.start()
+    if not is_simulation():
+        proc_api = Process(target=start_api)
+        procs.append(proc_api)
+        proc_api.start()
 
     # Start C2 server
     try:
