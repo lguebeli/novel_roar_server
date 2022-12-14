@@ -4,14 +4,9 @@ from tinydb import TinyDB, Query
 from tinydb.operations import set
 
 
-def is_multi_fp_collection():
-    return __query_key("COLLECT_MULTIPLE_FP")
-
-
-def set_multi_fp_collection(is_multi):
-    __set_value("COLLECT_MULTIPLE_FP", is_multi)
-
-
+# ==============================
+# EXECUTION
+# ==============================
 def is_fp_ready():
     return __query_key("FP_READY")
 
@@ -24,8 +19,12 @@ def is_rw_done():
     return __query_key("RW_DONE")
 
 
-def set_rw_done():
-    __set_value("RW_DONE", True)
+def set_rw_done(done=True):
+    __set_value("RW_DONE", done)
+
+
+def get_num_configs():
+    return len(os.listdir(os.path.join(os.path.abspath(os.path.curdir), "rw-configs")))
 
 
 def get_fp_path():
@@ -47,6 +46,17 @@ def collect_rate():
     return rate
 
 
+# ==============================
+# ORCHESTRATION
+# ==============================
+def is_multi_fp_collection():
+    return __query_key("COLLECT_MULTIPLE_FP")
+
+
+def set_multi_fp_collection(is_multi):
+    __set_value("COLLECT_MULTIPLE_FP", is_multi)
+
+
 def get_prototype():
     return __query_key("PROTOTYPE")
 
@@ -63,8 +73,12 @@ def set_simulation(simulated):
     __set_value("SIMULATION", simulated)
 
 
-def get_num_configs():
-    return len(os.listdir(os.path.join(os.path.abspath(os.path.curdir), "rw-configs")))
+def is_api_running():
+    return __query_key("API")
+
+
+def set_api_running():
+    __set_value("API", True)
 
 
 def initialize_storage():
@@ -75,6 +89,7 @@ def initialize_storage():
     db.insert({"key": "RW_DONE", "value": False})
     db.insert({"key": "PROTOTYPE", "value": 0})
     db.insert({"key": "SIMULATION", "value": False})
+    db.insert({"key": "API", "value": False})
 
 
 def __get_storage():

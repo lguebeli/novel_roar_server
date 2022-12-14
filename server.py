@@ -5,7 +5,7 @@ from time import sleep
 from api import create_app
 from environment import get_controller
 from environment.state_handling import is_multi_fp_collection, set_multi_fp_collection, initialize_storage, \
-    set_prototype, set_simulation
+    set_prototype, set_simulation, set_api_running
 
 
 def parse_args():
@@ -28,6 +28,8 @@ def parse_args():
 
 def start_api():
     app = create_app()
+    print("==============================\nStart API\n==============================")
+    set_api_running()
     app.run(host="0.0.0.0", port=5000)
 
 
@@ -51,7 +53,6 @@ if __name__ == "__main__":
     set_simulation(simulated)
 
     # Start API listener
-    print("\n==============================\nStart API\n==============================")
     procs = []
     proc_api = Process(target=start_api)
     procs.append(proc_api)
