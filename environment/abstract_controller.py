@@ -5,7 +5,7 @@ import numpy as np
 
 from agent import get_agent
 from environment.reward.abstract_reward import AbstractReward
-from environment.state_handling import is_api_running, is_simulation
+from environment.state_handling import is_api_running, is_simulation, get_prototype
 
 WAIT_FOR_CONFIRM = False
 
@@ -23,9 +23,10 @@ class AbstractController(ABC):
 
         print("\n==============================\nStart C2 Server\n==============================")
         agent = get_agent()
-        rewards = self.loop_episodes(agent)
+        q_values, rewards = self.loop_episodes(agent)
+        if int(get_prototype()) > 1:
+            print("==============================", "Rewards:", rewards, "\nFinal Q-Values:", q_values, sep="\n")
         print("\n==============================\n! Done !\n==============================")
-        print(rewards)
 
     def run_c2(self):
         print("==============================\nPrepare Reward Computation\n==============================")

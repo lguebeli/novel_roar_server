@@ -25,6 +25,7 @@ class ControllerQLearning(AbstractController):
         reward_system = StandardReward(+10, +5, -10) if USE_SIMPLE_FP else StandardReward(+50, +20, -20)
         last_action = -1
         reward_store = []
+        last_q_values = []
 
         sim_step = 1
         sim_start = time()
@@ -107,7 +108,7 @@ class ControllerQLearning(AbstractController):
 
                 # send error to agent, update weights accordingly
                 agent.update_weights(curr_q_values, error, state, curr_hidden, weights1, weights2, bias_weights1, bias_weights2)
-                print("Final Q-Values:\n", curr_q_values)
+                last_q_values = curr_q_values
             else:
                 # predict next Q-values and action
                 # print("Predict next action.")
@@ -129,4 +130,4 @@ class ControllerQLearning(AbstractController):
 
         sim_end = time()
         print("Took: {}s, roughly {}min.".format("%.3f" % (sim_end - sim_start), "%.1f" % ((sim_end - sim_start) / 60)))
-        return reward_store
+        return last_q_values, reward_store

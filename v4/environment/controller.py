@@ -16,6 +16,7 @@ DECAY_RATE = 0.01  # 0.0005
 class ControllerSarsa(AbstractController):
     def loop_episodes(self, agent):
         all_rewards = []
+        last_q_values = []
 
         for n in tqdm(range(MAX_EPISODES_V4)):
             # ==============================
@@ -108,7 +109,7 @@ class ControllerSarsa(AbstractController):
 
                     # send error to agent, update weights accordingly
                     agent.update_weights(state, error)
-                    print("Final Q-Values:", q_values)
+                    last_q_values = q_values
                 else:
                     # predict next Q-values and action
                     print("Predict next action.")
@@ -137,4 +138,4 @@ class ControllerSarsa(AbstractController):
             all_rewards.append(reward_store)
 
         # ========== END OF TRAINING ==========
-        return all_rewards
+        return last_q_values, all_rewards

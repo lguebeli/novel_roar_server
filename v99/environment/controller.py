@@ -61,4 +61,4 @@ class ControllerBruteForce(AbstractController):
             # set next_fp to curr_fp for next iteration
             curr_fp = next_fp
 
-        return rewards.copy()
+        return [], rewards.copy()
