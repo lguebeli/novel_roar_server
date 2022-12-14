@@ -4,7 +4,7 @@ from api.configurations import map_to_ransomware_configuration, send_config
 from environment.abstract_controller import AbstractController
 from environment.reward.standard_reward import StandardReward
 from environment.state_handling import is_fp_ready, set_fp_ready, is_rw_done, collect_fingerprint, is_simulation
-from simulate import simulate_sending_fp
+from utilities.simulate import simulate_sending_fp
 
 
 class ControllerBruteForce(AbstractController):
