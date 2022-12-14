@@ -1,131 +1,176 @@
 from time import sleep, time
 
+from tqdm import tqdm  # add progress bar to episodes
+
 from api.configurations import map_to_ransomware_configuration, send_config
 from environment.abstract_controller import AbstractController
 from environment.reward.performance_reward import PerformanceReward
-from environment.settings import MAX_STEPS_V3
-from environment.state_handling import is_fp_ready, set_fp_ready, is_rw_done, collect_fingerprint, is_simulation
+from environment.settings import MAX_EPISODES_V3, MAX_STEPS_V3
+from environment.state_handling import is_fp_ready, set_fp_ready, is_rw_done, collect_fingerprint, is_simulation, \
+    set_rw_done
 from utilities.simulate import simulate_sending_fp, simulate_sending_rw_done
+
+REPORT_TIMING = False
+
+EPSILON = 0.2
+DECAY_RATE = 0.01
 
 
 class ControllerAdvancedQLearning(AbstractController):
     def loop_episodes(self, agent):
-        # ==============================
-        # Setup agent
-        # ==============================
-
+        reward_system = PerformanceReward(+50, +20, -1)
         weights1, weights2, bias_weights1, bias_weights2 = agent.initialize_network()
 
-        # ==============================
-        # Setup environment
-        # ==============================
+        all_rewards = []
+        last_q_values = []
+        num_steps = 0
+        all_start = time()
 
-        reward_system = PerformanceReward(+50, +20, -20)
-        last_action = -1
-        reward_store = []
-
-        sim_step = 1
-        sim_start = time()
-
-        # accept initial FP
-        # print("Wait for initial FP...")
-        if is_simulation():
-            simulate_sending_fp(0)
-        while not is_fp_ready():
-            sleep(.5)
-        curr_fp = collect_fingerprint()
-        set_fp_ready(False)
-
-        # print("Loop episode...")
-        while not is_rw_done():
-            print("==================================================")
+        eps_iter = range(1, MAX_EPISODES_V3 + 1) if REPORT_TIMING else tqdm(range(1, MAX_EPISODES_V3 + 1))
+        for episode in eps_iter:
             # ==============================
-            # Predict action
+            # Setup environment
             # ==============================
 
-            # transform FP into np array
-            state = AbstractController.transform_fp(curr_fp)
+            set_rw_done(False)
 
-            # agent selects action based on state
-            # print("Predict action.")
-            curr_hidden, curr_q_values, selected_action = agent.predict(weights1, weights2, bias_weights1, bias_weights2, state=state)
-            print("Predicted action {}. Step {}.".format(selected_action, sim_step))
+            epsilon_episode = EPSILON / (1 + DECAY_RATE * episode)  # decay epsilon
 
-            # ==============================
-            # Take step and observe new state
-            # ==============================
+            last_action = -1
+            reward_store = []
 
-            # convert action to config and send to client
-            if selected_action != last_action:
-                # print("Sending new action {} to client.".format(selected_action))
-                config = map_to_ransomware_configuration(selected_action)
-                if not is_simulation():  # cannot send if no socket listening during simulation
-                    send_config(config)
-            last_action = selected_action
+            steps = 1
+            sim_step = 1
+            eps_start = time()
 
-            sim_step += 1
-
-            # receive next FP and compute reward based on FP
-            # print("Wait for FP...")
+            # accept initial FP
+            # log("Wait for initial FP...")
             if is_simulation():
-                simulate_sending_fp(selected_action)
-            while not (is_fp_ready() or is_rw_done()):
+                simulate_sending_fp(0)
+            while not is_fp_ready():
                 sleep(.5)
-
-            if is_rw_done():
-                next_fp = curr_fp
-            else:
-                next_fp = collect_fingerprint()
-
-            # transform FP into np array
-            next_state = AbstractController.transform_fp(next_fp)
+            curr_fp = collect_fingerprint()
             set_fp_ready(False)
 
-            # ==============================
-            # Observe reward for new state
-            # ==============================
+            # log("Loop episode...")
+            while not is_rw_done():
+                # log("==================================================")
+                # ==============================
+                # Predict action
+                # ==============================
 
-            if is_simulation() and sim_step > MAX_STEPS_V3:
-                simulate_sending_rw_done()
+                # transform FP into np array
+                state = AbstractController.transform_fp(curr_fp)
 
-            # print("Computing reward for next FP.")
-            reward = reward_system.compute_reward(next_state, is_rw_done())
-            print("Computed reward", reward)
-            reward_store.append((selected_action, reward))
+                # agent selects action based on state
+                # log("Predict action.")
+                curr_hidden, curr_q_values, selected_action = agent.predict(weights1, weights2, bias_weights1,
+                                                                            bias_weights2, epsilon_episode, state=state)
+                log("Predicted action {}. Episode {} step {}.".format(selected_action, episode, sim_step))
 
-            # ==============================
-            # Next Q-values, error, and learning
-            # ==============================
+                # ==============================
+                # Take step and observe new state
+                # ==============================
 
-            # initialize error
-            error = agent.init_error()
+                # convert action to config and send to client
+                if selected_action != last_action:
+                    # log("Sending new action {} to client.".format(selected_action))
+                    config = map_to_ransomware_configuration(selected_action)
+                    if not is_simulation():  # cannot send if no socket listening during simulation
+                        send_config(config)
+                last_action = selected_action
 
-            if is_rw_done():
-                # update error based on observed reward
-                error = agent.update_error(error, reward, selected_action, curr_q_values, next_q_values=None, is_done=True)
+                sim_step += 1
+                steps += 1
 
-                # send error to agent, update weights accordingly
-                agent.update_weights(curr_q_values, error, state, curr_hidden, weights1, weights2, bias_weights1, bias_weights2)
-                print("Final Q-Values:\n", curr_q_values)
-            else:
-                # predict next Q-values and action
-                # print("Predict next action.")
-                next_hidden, next_q_values, next_action = agent.predict(weights1, weights2, bias_weights1, bias_weights2, state=next_state)
-                # print("Predicted next action", next_action)
+                # receive next FP and compute reward based on FP
+                # log("Wait for FP...")
+                if is_simulation():
+                    simulate_sending_fp(selected_action)
+                while not (is_fp_ready() or is_rw_done()):
+                    sleep(.5)
 
-                # update error based on observed reward
-                error = agent.update_error(error, reward, selected_action, curr_q_values, next_q_values, is_done=False)
+                if is_rw_done():
+                    next_fp = curr_fp
+                else:
+                    next_fp = collect_fingerprint()
 
-                # send error to agent, update weights accordingly
-                agent.update_weights(curr_q_values, error, state, curr_hidden, weights1, weights2, bias_weights1, bias_weights2)
+                # transform FP into np array
+                next_state = AbstractController.transform_fp(next_fp)
+                set_fp_ready(False)
 
-            # ==============================
-            # Prepare next step
-            # ==============================
+                # ==============================
+                # Observe reward for new state
+                # ==============================
 
-            # update current state
-            curr_fp = next_fp
+                if is_simulation() and sim_step > MAX_STEPS_V3:
+                    simulate_sending_rw_done()
 
-        sim_end = time()
-        print("Took: {}s, roughly {}min.".format("%.3f" % (sim_end - sim_start), "%.1f" % ((sim_end - sim_start) / 60)))
-        return []
+                # log("Computing reward for next FP.")
+                reward, detected = reward_system.compute_reward(next_state, is_rw_done())
+                # log("Computed reward", reward)
+                reward_store.append((selected_action, reward))
+                if detected:
+                    set_rw_done()  # terminate episode
+
+                # ==============================
+                # Next Q-values, error, and learning
+                # ==============================
+
+                # initialize error
+                error = agent.init_error()
+
+                if is_rw_done():
+                    # update error based on observed reward
+                    error = agent.update_error(error, reward, selected_action, curr_q_values,
+                                               next_q_values=None, is_done=True)
+
+                    # send error to agent, update weights accordingly
+                    agent.update_weights(curr_q_values, error, state, curr_hidden, weights1, weights2,
+                                         bias_weights1, bias_weights2)
+                    log("Episode Q-Values:\n", curr_q_values)
+                    last_q_values = curr_q_values
+                else:
+                    # predict next Q-values and action
+                    # log("Predict next action.")
+                    next_hidden, next_q_values, next_action = agent.predict(weights1, weights2, bias_weights1,
+                                                                            bias_weights2, epsilon_episode,
+                                                                            state=next_state)
+                    # log("Predicted next action", next_action)
+
+                    # update error based on observed reward
+                    error = agent.update_error(error, reward, selected_action, curr_q_values, next_q_values,
+                                               is_done=False)
+
+                    # send error to agent, update weights accordingly
+                    agent.update_weights(curr_q_values, error, state, curr_hidden, weights1, weights2,
+                                         bias_weights1, bias_weights2)
+
+                # ==============================
+                # Prepare next step
+                # ==============================
+
+                # update current state
+                curr_fp = next_fp
+                # ========== END OF STEP ==========
+
+            # ========== END OF EPISODE ==========
+            all_rewards.append(reward_store)
+            eps_end = time()
+            log("Episode {} took: {}s, roughly {}min.".format(episode, "%.3f" % (eps_end - eps_start),
+                                                              "%.1f" % ((eps_end - eps_start) / 60)))
+            # print("Episode {} had {} steps.".format(episode, steps))
+            num_steps += steps
+
+        # ========== END OF TRAINING ==========
+        all_end = time()
+        log("All episodes took: {}s, roughly {}min.".format("%.3f" % (all_end - all_start),
+                                                            "%.1f" % ((all_end - all_start) / 60)))
+        print("avg steps", num_steps / MAX_EPISODES_V3)
+        return last_q_values, all_rewards
+        # return last_q_values, []
+
+
+def log(*args):
+    if REPORT_TIMING:  # tqdm replaces progress inline, so prints would spam the console with multiple progress bars
+        print(*args)

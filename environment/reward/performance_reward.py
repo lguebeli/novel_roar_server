@@ -13,16 +13,18 @@ class PerformanceReward(AbstractReward):
 
     def compute_reward(self, fp, done):
         rate = collect_rate()
-        print("REWARD: rate", rate)
+        # print("REWARD: rate", rate)
 
-        if done:
-            return self.r_done
+        anomalous = bool(detect_anomaly(fp))  # int [0 1]
+        # print("--- Detected {} FP.".format("anomalous" if anomalous else "normal"))
 
-        anomalous = detect_anomaly(fp)  # int [0 1]
-        print("--- Detected {} FP.".format("anomalous" if anomalous else "normal"))
-        if bool(anomalous):
-            print("REWARD: det", self.r_detected, max(rate, 1))
-            return -(abs(self.r_detected) / max(rate, 1)) - abs(self.r_detected)  # -d/r - r
+        if anomalous:
+            # print("REWARD: det", self.r_detected, max(rate, 1))
+            reward = -(max(1, abs(self.r_detected)) / max(rate, 1)) - abs(self.r_detected)  # -d/r - d
+        elif done:
+            reward = self.r_done
         else:
-            print("REWARD: hid", rate, math.log10(rate+1), self.r_hidden)
-            return math.log10(rate + 1) + abs(self.r_hidden)  # log(r+1) + h
+            # print("REWARD: hid", rate, math.log10(rate+1), self.r_hidden)
+            reward = math.log10(rate + 1) + abs(self.r_hidden)  # log(r+1) + h
+        # print("REWARD: result", reward)
+        return round(reward, 5), anomalous

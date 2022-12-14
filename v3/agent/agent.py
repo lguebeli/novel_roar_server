@@ -8,7 +8,6 @@ from v3.agent.model import ModelAdvancedQLearning
 FP_DIMS = 97
 HIDDEN_NEURONS = 50
 
-EPSILON = 0.2
 LEARN_RATE = 0.005
 DISCOUNT_FACTOR = 0.75
 
@@ -23,7 +22,7 @@ class AgentAdvancedQLearning(AbstractAgent):
         self.num_hidden = HIDDEN_NEURONS  # Hidden neurons
         self.num_output = num_configs  # Output size
 
-        self.model = ModelAdvancedQLearning(epsilon=EPSILON, learn_rate=LEARN_RATE, num_configs=num_configs)
+        self.model = ModelAdvancedQLearning(learn_rate=LEARN_RATE, num_configs=num_configs)
 
     def __preprocess_fp(self, fp):
         headers = ALL_CSV_HEADERS.split(",")
@@ -56,10 +55,11 @@ class AgentAdvancedQLearning(AbstractAgent):
 
         return weights1, weights2, bias_weights1, bias_weights2
 
-    def predict(self, weights1, weights2, bias_weights1, bias_weights2, state):
+    def predict(self, weights1, weights2, bias_weights1, bias_weights2, epsilon, state):
         std_fp = AbstractAgent.standardize_fp(state)
         ready_fp = self.__preprocess_fp(std_fp)
-        hidden, q_values, selected_action = self.model.forward(weights1, weights2, bias_weights1, bias_weights2, inputs=ready_fp)
+        hidden, q_values, selected_action = self.model.forward(weights1, weights2, bias_weights1, bias_weights2,
+                                                               epsilon, inputs=ready_fp)
         return hidden, q_values, selected_action
 
     def update_weights(self, q_values, error, state, hidden, weights1, weights2, bias_weights1, bias_weights2):

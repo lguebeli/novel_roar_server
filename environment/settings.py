@@ -19,7 +19,8 @@ CLIENT_IP = "<Client-IP>"
 # ==============================
 
 MAX_STEPS_V2 = 1000
-MAX_STEPS_V3 = 5
+MAX_EPISODES_V3 = 250
+MAX_STEPS_V3 = 20  # avg 5 steps
 MAX_EPISODES_V4 = 3
 MAX_STEPS_V4 = 5
 MAX_STEPS_V99 = 500

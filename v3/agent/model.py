@@ -2,18 +2,17 @@ import numpy as np
 
 
 class ModelAdvancedQLearning(object):
-    def __init__(self, epsilon, learn_rate, num_configs):
+    def __init__(self, learn_rate, num_configs):
         # Initialize random seed for reproducibility
         np.random.seed(42)
 
         # Initialize hyperparams
-        self.epsilon = epsilon
         self.learn_rate = learn_rate
 
         # Initialize action set
         self.allowed_actions = np.asarray(range(num_configs))
 
-    def forward(self, weights1, weights2, bias_weights1, bias_weights2, inputs):
+    def forward(self, weights1, weights2, bias_weights1, bias_weights2, epsilon, inputs):
         # print("MODEL: inputs", inputs.shape, inputs)
         # print("MODEL: inputs min/max", inputs.shape, np.min(inputs), np.argmin(inputs), np.max(inputs), np.argmax(inputs))
 
@@ -49,7 +48,7 @@ class ModelAdvancedQLearning(object):
         possible_a = self.allowed_actions  # technically an array of indexes
         q_a = q[possible_a]
 
-        if np.random.random() < self.epsilon:  # explore randomly
+        if np.random.random() < epsilon:  # explore randomly
             sel_a = possible_a[np.random.randint(possible_a.size)]
             # print("MODEL: random action", sel_a)
         else:  # exploit greedily
