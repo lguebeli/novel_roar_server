@@ -7,6 +7,10 @@ from tinydb.operations import set
 # ==============================
 # EXECUTION
 # ==============================
+STORAGE_FOLDER_NAME = "storage"
+MULTI_FP_COLLECTION_FOLDER_NAME = "fingerprints"
+
+
 def is_fp_ready():
     return __query_key("FP_READY")
 
@@ -27,20 +31,15 @@ def get_num_configs():
     return len(os.listdir(os.path.join(os.path.abspath(os.path.curdir), "rw-configs")))
 
 
-def get_fp_path():
-    dir_name = "fingerprints" if is_multi_fp_collection() else "fingerprint"
-    return os.path.join(os.path.abspath(os.path.curdir), dir_name)
-
-
 def collect_fingerprint():
-    with open(os.path.join(get_fp_path(), "fp.txt"), "r") as file:
+    with open(os.path.join(get_storage_path(), "fp.txt"), "r") as file:
         fp = file.readline()[1:-1].replace(" ", "")
     # print("Collected FP.")
     return fp
 
 
 def collect_rate():
-    with open(os.path.join(get_fp_path(), "rate.txt"), "r") as file:
+    with open(os.path.join(get_storage_path(), "rate.txt"), "r") as file:
         rate = float(file.readline())
     # print("Collected rate.")
     return rate
@@ -81,7 +80,11 @@ def set_api_running():
     __set_value("API", True)
 
 
+# ==============================
+# STATE STORAGE
+# ==============================
 def initialize_storage():
+    __prepare_storage_file()
     db = __get_storage()
     db.drop_tables()  # reset database to start from scratch
     db.insert({"key": "COLLECT_MULTIPLE_FP", "value": False})
@@ -93,8 +96,27 @@ def initialize_storage():
     print("Storage ready.")
 
 
+def get_storage_path():
+    dir_name = MULTI_FP_COLLECTION_FOLDER_NAME if is_multi_fp_collection() else STORAGE_FOLDER_NAME
+    return os.path.join(os.path.abspath(os.path.curdir), dir_name)
+
+
+def __get_storage_file_path():
+    storage_folder = os.path.join(os.path.abspath(os.path.curdir), STORAGE_FOLDER_NAME)
+    storage_file = os.path.join(storage_folder, "storage.json")
+    return storage_file, storage_folder
+
+
 def __get_storage():
-    return TinyDB(os.path.join(os.path.abspath(os.path.curdir), "storage.json"))
+    storage_path, _ = __get_storage_file_path()
+    return TinyDB(storage_path)
+
+
+def __prepare_storage_file():
+    storage_file, storage_folder = __get_storage_file_path()
+    os.makedirs(storage_folder, exist_ok=True)
+    with open(storage_file, "w+"):  # create file if not exists and truncate contents if exists
+        pass
 
 
 def __query_key(key):

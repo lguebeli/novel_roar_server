@@ -21,7 +21,7 @@ class AbstractController(ABC):
             while not is_api_running():
                 sleep(1)
 
-        print("\n==============================\nStart C2 Server\n==============================")
+        print("\n==============================\nStart Training\n==============================")
         agent = get_agent()
         q_values, rewards = self.loop_episodes(agent)
         if int(get_prototype()) > 1:
