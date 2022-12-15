@@ -10,7 +10,7 @@ from environment.state_handling import is_fp_ready, set_fp_ready, is_rw_done, co
     set_rw_done
 from utilities.simulate import simulate_sending_fp, simulate_sending_rw_done
 
-REPORT_TIMING = False
+DEBUG_PRINTING = False
 
 EPSILON = 0.2
 DECAY_RATE = 0.01
@@ -26,7 +26,7 @@ class ControllerAdvancedQLearning(AbstractController):
         num_steps = 0
         all_start = time()
 
-        eps_iter = range(1, MAX_EPISODES_V3 + 1) if REPORT_TIMING else tqdm(range(1, MAX_EPISODES_V3 + 1))
+        eps_iter = range(1, MAX_EPISODES_V3 + 1) if DEBUG_PRINTING else tqdm(range(1, MAX_EPISODES_V3 + 1))
         for episode in eps_iter:
             # ==============================
             # Setup environment
@@ -172,5 +172,5 @@ class ControllerAdvancedQLearning(AbstractController):
 
 
 def log(*args):
-    if REPORT_TIMING:  # tqdm replaces progress inline, so prints would spam the console with multiple progress bars
+    if DEBUG_PRINTING:  # tqdm replaces progress inline, so prints would spam the console with multiple progress bars
         print(*args)

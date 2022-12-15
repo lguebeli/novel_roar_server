@@ -40,8 +40,9 @@ def kill_process(proc):
 
 
 if __name__ == "__main__":
-    print("==============================\nInstantiate Storage\n==============================")
+    print("==============================\nInstantiate Storage")
     initialize_storage()
+    print("- Storage ready.")
 
     # Parse arguments
     args = parse_args()

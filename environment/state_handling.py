@@ -93,7 +93,6 @@ def initialize_storage():
     db.insert({"key": "PROTOTYPE", "value": 0})
     db.insert({"key": "SIMULATION", "value": False})
     db.insert({"key": "API", "value": False})
-    print("Storage ready.")
 
 
 def get_storage_path():
