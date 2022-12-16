@@ -8,6 +8,7 @@ from environment.reward.performance_reward import PerformanceReward
 from environment.settings import MAX_EPISODES_V3, MAX_STEPS_V3
 from environment.state_handling import is_fp_ready, set_fp_ready, is_rw_done, collect_fingerprint, is_simulation, \
     set_rw_done
+from utilities.plots import plot_results
 from utilities.simulate import simulate_sending_fp, simulate_sending_rw_done
 
 DEBUG_PRINTING = False
@@ -22,8 +23,11 @@ class ControllerAdvancedQLearning(AbstractController):
         weights1, weights2, bias_weights1, bias_weights2 = agent.initialize_network()
 
         all_rewards = []
+        all_summed_rewards = []
+        all_num_steps = []
+
         last_q_values = []
-        num_steps = 0
+        num_total_steps = 0
         all_start = time()
 
         eps_iter = range(1, MAX_EPISODES_V3 + 1) if DEBUG_PRINTING else tqdm(range(1, MAX_EPISODES_V3 + 1))
@@ -38,6 +42,7 @@ class ControllerAdvancedQLearning(AbstractController):
 
             last_action = -1
             reward_store = []
+            summed_reward = 0
 
             steps = 1
             sim_step = 1
@@ -110,6 +115,7 @@ class ControllerAdvancedQLearning(AbstractController):
                 reward, detected = reward_system.compute_reward(next_state, is_rw_done())
                 # log("Computed reward", reward)
                 reward_store.append((selected_action, reward))
+                summed_reward += reward
                 if detected:
                     set_rw_done()  # terminate episode
 
@@ -155,20 +161,26 @@ class ControllerAdvancedQLearning(AbstractController):
                 # ========== END OF STEP ==========
 
             # ========== END OF EPISODE ==========
-            all_rewards.append(reward_store)
             eps_end = time()
             log("Episode {} took: {}s, roughly {}min.".format(episode, "%.3f" % (eps_end - eps_start),
                                                               "%.1f" % ((eps_end - eps_start) / 60)))
             # print("Episode {} had {} steps.".format(episode, steps))
-            num_steps += steps
+            num_total_steps += steps
+            all_rewards.append(reward_store)
+            all_summed_rewards.append(summed_reward)
+            all_num_steps.append(steps)
 
         # ========== END OF TRAINING ==========
         all_end = time()
         log("All episodes took: {}s, roughly {}min.".format("%.3f" % (all_end - all_start),
                                                             "%.1f" % ((all_end - all_start) / 60)))
-        print("avg steps", num_steps / MAX_EPISODES_V3)
+        print("avg steps", num_total_steps / MAX_EPISODES_V3)
+        print("==============================\nGenerating plots...")
+        # print("Rewards", all_summed_rewards)
+        # print("Steps", all_num_steps)
+        plot_results(all_summed_rewards, all_num_steps, MAX_EPISODES_V3)
+        print("- Plots saved.")
         return last_q_values, all_rewards
-        # return last_q_values, []
 
 
 def log(*args):
