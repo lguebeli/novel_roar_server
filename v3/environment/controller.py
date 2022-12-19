@@ -22,6 +22,10 @@ class ControllerAdvancedQLearning(AbstractController):
         reward_system = PerformanceReward(+50, +20, -1)
         weights1, weights2, bias_weights1, bias_weights2 = agent.initialize_network()
 
+        # ==============================
+        # Setup collectibles
+        # ==============================
+
         all_rewards = []
         all_summed_rewards = []
         all_num_steps = []
@@ -132,8 +136,10 @@ class ControllerAdvancedQLearning(AbstractController):
                                                next_q_values=None, is_done=True)
 
                     # send error to agent, update weights accordingly
-                    agent.update_weights(curr_q_values, error, state, curr_hidden, weights1, weights2,
-                                         bias_weights1, bias_weights2)
+                    weights1, weights2, bias_weights1, bias_weights2 = agent.update_weights(curr_q_values, error, state,
+                                                                                            curr_hidden, weights1,
+                                                                                            weights2, bias_weights1,
+                                                                                            bias_weights2)
                     log("Episode Q-Values:\n", curr_q_values)
                     last_q_values = curr_q_values
                 else:
@@ -149,8 +155,10 @@ class ControllerAdvancedQLearning(AbstractController):
                                                is_done=False)
 
                     # send error to agent, update weights accordingly
-                    agent.update_weights(curr_q_values, error, state, curr_hidden, weights1, weights2,
-                                         bias_weights1, bias_weights2)
+                    weights1, weights2, bias_weights1, bias_weights2 = agent.update_weights(curr_q_values, error, state,
+                                                                                            curr_hidden, weights1,
+                                                                                            weights2, bias_weights1,
+                                                                                            bias_weights2)
 
                 # ==============================
                 # Prepare next step

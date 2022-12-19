@@ -83,7 +83,8 @@ class AgentQLearning(AbstractAgent):
             ready_fp = self.__crop_fp(std_fp)
         else:
             ready_fp = self.__preprocess_fp(std_fp)
-        hidden, q_values, selected_action = self.model.forward(weights1, weights2, bias_weights1, bias_weights2, inputs=ready_fp)
+        hidden, q_values, selected_action = self.model.forward(weights1, weights2, bias_weights1, bias_weights2,
+                                                               inputs=ready_fp)
         return hidden, q_values, selected_action
 
     def update_weights(self, q_values, error, state, hidden, weights1, weights2, bias_weights1, bias_weights2):
@@ -92,7 +93,9 @@ class AgentQLearning(AbstractAgent):
             ready_fp = self.__crop_fp(std_fp)
         else:
             ready_fp = self.__preprocess_fp(std_fp)
-        self.model.backward(q_values, error, hidden, weights1, weights2, bias_weights1, bias_weights2, inputs=ready_fp)
+        new_w1, new_w2, new_bw1, new_bw2 = self.model.backward(q_values, error, hidden, weights1, weights2,
+                                                               bias_weights1, bias_weights2, inputs=ready_fp)
+        return new_w1, new_w2, new_bw1, new_bw2
 
     def init_error(self):
         return np.zeros((self.output_size, 1))

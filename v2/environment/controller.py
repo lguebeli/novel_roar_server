@@ -51,7 +51,8 @@ class ControllerQLearning(AbstractController):
 
             # agent selects action based on state
             # print("Predict action.")
-            curr_hidden, curr_q_values, selected_action = agent.predict(weights1, weights2, bias_weights1, bias_weights2, state=state)
+            curr_hidden, curr_q_values, selected_action = agent.predict(weights1, weights2, bias_weights1,
+                                                                        bias_weights2, state=state)
             print("Predicted action {}. Step {}.".format(selected_action, sim_step))
 
             # ==============================
@@ -104,22 +105,28 @@ class ControllerQLearning(AbstractController):
 
             if is_rw_done():
                 # update error based on observed reward
-                error = agent.update_error(error, reward, selected_action, curr_q_values, next_q_values=None, is_done=True)
+                error = agent.update_error(error, reward, selected_action, curr_q_values, next_q_values=None,
+                                           is_done=True)
 
                 # send error to agent, update weights accordingly
-                agent.update_weights(curr_q_values, error, state, curr_hidden, weights1, weights2, bias_weights1, bias_weights2)
+                weights1, weights2, bias_weights1, bias_weights2 = agent.update_weights(curr_q_values, error, state,
+                                                                                        curr_hidden, weights1, weights2,
+                                                                                        bias_weights1, bias_weights2)
                 last_q_values = curr_q_values
             else:
                 # predict next Q-values and action
                 # print("Predict next action.")
-                next_hidden, next_q_values, next_action = agent.predict(weights1, weights2, bias_weights1, bias_weights2, state=next_state)
+                next_hidden, next_q_values, next_action = agent.predict(weights1, weights2, bias_weights1,
+                                                                        bias_weights2, state=next_state)
                 # print("Predicted next action", next_action)
 
                 # update error based on observed reward
                 error = agent.update_error(error, reward, selected_action, curr_q_values, next_q_values, is_done=False)
 
                 # send error to agent, update weights accordingly
-                agent.update_weights(curr_q_values, error, state, curr_hidden, weights1, weights2, bias_weights1, bias_weights2)
+                weights1, weights2, bias_weights1, bias_weights2 = agent.update_weights(curr_q_values, error, state,
+                                                                                        curr_hidden, weights1, weights2,
+                                                                                        bias_weights1, bias_weights2)
 
             # ==============================
             # Prepare next step

@@ -95,3 +95,5 @@ class ModelAdvancedQLearning(object):
 
         # print("MODEL: weights1 after", weights1.shape, np.min(weights1), np.argmin(weights1), np.max(weights1), np.argmax(weights1))
         # print("MODEL: weights2 after", weights2.shape, np.min(weights2), np.argmin(weights2), np.max(weights2), np.argmax(weights2))
+
+        return weights1, weights2, bias_weights1, bias_weights2
