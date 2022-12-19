@@ -4,14 +4,14 @@ Master Thesis on Ransomware Optimized with AI for Resource-constrained devices
 ## Configuration
 Adjust constants in the following files:
 
-| File                               | Constant                                                                                                                 |
-|------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
-| `fp-to-csv.py`                     | - CSV file names<br>- Verify CSV headers                                                                                 |
-| `environment/anomaly-detection.py` | - Contamination factor                                                                                                   |
-| `environment/settings.py`          | - CSV folder path<br>- Raspberry model prefix<br>- Verify CSV headers<br>- C2 simulation settings<br>- Client IP address |
-| `vX/agent/agent.py`                | - Agent specific constants and starting values                                                                           |
-| `vX/agent/model.py`                | - Model specific constants and starting values                                                                           |
-| `vX/environment/controller.py`     | - Episode specific constants and values                                                                                  |
+| File                               | Constant                                                                                                      |
+|------------------------------------|---------------------------------------------------------------------------------------------------------------|
+| `fp-to-csv.py`                     | - CSV file names<br>- Verify CSV headers                                                                      |
+| `environment/anomaly-detection.py` | - Contamination factor                                                                                        |
+| `environment/settings.py`          | - CSV folder path<br>- Verify CSV headers<br>- Client IP address<br>- AD features<br>- C2 simulation settings |
+| `vX/agent/agent.py`                | - Agent specific constants and starting values                                                                |
+| `vX/agent/model.py`                | - Model specific constants and starting values                                                                |
+| `vX/environment/controller.py`     | - Episode specific constants and values                                                                       |
 
 # Prototypes
 

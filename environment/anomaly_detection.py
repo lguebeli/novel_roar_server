@@ -7,8 +7,9 @@ from scipy import stats
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
-from environment.settings import CSV_FOLDER_PATH, ALL_CSV_HEADERS, DUPLICATE_HEADERS
-from environment.state_handling import get_num_configs
+from environment.settings import CSV_FOLDER_PATH, ALL_CSV_HEADERS, DUPLICATE_HEADERS, DROP_CONNECTIVITY, DROP_TEMPORAL, \
+    DROP_CORRELATED_HEATMAP, DROP_CORRELATED_PLOTS, DROP_NO_IMPACT
+from environment.state_handling import get_num_configs, get_prototype
 
 # ========================================
 # ==========   CONFIG   ==========
@@ -41,22 +42,35 @@ def __get_scaler():
 
 
 def preprocess_dataset(dataset):
-    # Remove duplicates
-    dataset.drop(list(map(lambda header: header+".1", DUPLICATE_HEADERS)), inplace=True, axis=1)  # read_csv adds the .1
-    # Remove temporal features
-    dataset.drop(["time", "timestamp", "seconds"], inplace=True, axis=1)
-
-    # Remove highly-correlated features
-    correlated = ["cpu_ni", "cpu_hi", "tasks_stopped", "alarmtimer:alarmtimer_fired", "alarmtimer:alarmtimer_start",
-                  "cachefiles:cachefiles_create", "cachefiles:cachefiles_lookup", "cachefiles:cachefiles_mark_active",
-                  "dma_fence:dma_fence_init", "udp:udp_fail_queue_rcv_skb"]
-    dataset.drop(correlated, inplace=True, axis=1)
-
     # Remove vectors generated when the rasp did not have connectivity
     if len(dataset) > 1:  # avoid dropping single entries causing empty dataset
         dataset = dataset.loc[(dataset['connectivity'] == 1)]
     # Remove the connectivity feature because now it is constant
-    dataset.drop(['connectivity'], inplace=True, axis=1)
+    dataset.drop(DROP_CONNECTIVITY, inplace=True, axis=1)
+
+    # Remove duplicates
+    dataset.drop(list(map(lambda header: header + ".1", DUPLICATE_HEADERS)), inplace=True,
+                 axis=1)  # read_csv adds the .1
+
+    if int(get_prototype()) < 3:
+        # Remove temporal features
+        dataset.drop(["time", "timestamp", "seconds"], inplace=True, axis=1)
+
+        # Remove highly-correlated features
+        correlated = ["cpu_ni", "cpu_hi", "tasks_stopped", "alarmtimer:alarmtimer_fired", "alarmtimer:alarmtimer_start",
+                      "cachefiles:cachefiles_create", "cachefiles:cachefiles_lookup", "cachefiles:cachefiles_mark_active",
+                      "dma_fence:dma_fence_init", "udp:udp_fail_queue_rcv_skb"]
+        dataset.drop(correlated, inplace=True, axis=1)
+    else:
+        # Remove temporal features
+        dataset.drop(DROP_TEMPORAL, inplace=True, axis=1)
+
+        # Remove highly-correlated features
+        dataset.drop(DROP_CORRELATED_HEATMAP, inplace=True, axis=1)
+        dataset.drop(DROP_CORRELATED_PLOTS, inplace=True, axis=1)
+
+        # Remove features where infection had no impact
+        dataset.drop(DROP_NO_IMPACT, inplace=True, axis=1)
 
     # Reset index
     dataset.reset_index(inplace=True, drop=True)
@@ -83,8 +97,13 @@ def evaluate_dataset(name, dataset):
     clf = __get_classifier()
     pred = clf.predict(dataset)
     unique_elements, counts_elements = np.unique(pred, return_counts=True)
-    print(name, unique_elements, counts_elements,
-          "%.2f" % (counts_elements[0] / (counts_elements[0] + counts_elements[1]) * 100), sep="\t")
+    if len(counts_elements) > 1:
+        perc = (counts_elements[0] / (counts_elements[0] + counts_elements[1]) * 100)
+    elif unique_elements[0] == 1:  # detected
+        perc = 0
+    else:  # hidden
+        perc = 100
+    print(name, unique_elements, counts_elements, "%.2f" % perc, sep="\t")
 
 
 def train_anomaly_detection():
@@ -147,7 +166,7 @@ def detect_anomaly(fingerprint):  # string
     headers = ALL_CSV_HEADERS.split(",")
     for header in DUPLICATE_HEADERS:
         found = headers.index(header)
-        headers[found+1] = headers[found+1]+".1"  # match the .1 for duplicates appended by read_csv()
+        headers[found + 1] = headers[found + 1] + ".1"  # match the .1 for duplicates appended by read_csv()
 
     df_fp = pd.DataFrame(fp_data, columns=headers)
 
