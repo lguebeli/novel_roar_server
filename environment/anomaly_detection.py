@@ -58,8 +58,8 @@ def preprocess_dataset(dataset):
 
         # Remove highly-correlated features
         correlated = ["cpu_ni", "cpu_hi", "tasks_stopped", "alarmtimer:alarmtimer_fired", "alarmtimer:alarmtimer_start",
-                      "cachefiles:cachefiles_create", "cachefiles:cachefiles_lookup", "cachefiles:cachefiles_mark_active",
-                      "dma_fence:dma_fence_init", "udp:udp_fail_queue_rcv_skb"]
+                      "cachefiles:cachefiles_create", "cachefiles:cachefiles_lookup",
+                      "cachefiles:cachefiles_mark_active", "dma_fence:dma_fence_init", "udp:udp_fail_queue_rcv_skb"]
         dataset.drop(correlated, inplace=True, axis=1)
     else:
         # Remove temporal features

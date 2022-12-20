@@ -70,9 +70,11 @@ if __name__ == "__main__":
             while True:
                 sleep(600)  # sleep until process is terminated by user keyboard interrupt
     finally:
-        print("==============================\nFinal Cleanup")
+        if is_multi_fp_collection():
+            print("==============================")
+        print("Final Cleanup")
         for proc in procs:
             kill_process(proc)
         print("- Parallel processes killed.")
         cleanup_storage()
-        print("- Storage cleaned up.")
+        print("- Storage cleaned up.\n==============================")

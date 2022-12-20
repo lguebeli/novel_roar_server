@@ -5,7 +5,7 @@ import os
 from environment.state_handling import get_prototype, get_storage_path
 
 
-def plot_results(rewards, steps, num_episodes, num_max_steps):
+def plot_results(rewards, steps, num_episodes, episode_delimiter):
     plt.subplot(211)  # 2 rows for subplots, 1 column, idx 1
     plt.plot(range(1, num_episodes + 1), rewards)
     plt.ylabel("Rewards")
@@ -16,7 +16,7 @@ def plot_results(rewards, steps, num_episodes, num_max_steps):
 
     plt.xlabel("Episodes")
 
-    run_info = "p{}-{}e-{}s".format(get_prototype(), num_episodes, num_max_steps)
+    run_info = "p{}-{}e-{}s".format(get_prototype(), num_episodes, episode_delimiter)
     timestamp = datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
     fig_file = os.path.join(get_storage_path(), "results-fig={}={}.png".format(timestamp, run_info))
     plt.savefig(fig_file)
