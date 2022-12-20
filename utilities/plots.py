@@ -18,5 +18,6 @@ def plot_results(rewards, steps, num_episodes, num_max_steps):
 
     run_info = "p{}-{}e-{}s".format(get_prototype(), num_episodes, num_max_steps)
     timestamp = datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
-    fig_file = os.path.join(get_storage_path(), "results-fig={}={}.png".format(run_info, timestamp))
+    fig_file = os.path.join(get_storage_path(), "results-fig={}={}.png".format(timestamp, run_info))
     plt.savefig(fig_file)
+    return fig_file

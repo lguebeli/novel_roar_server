@@ -186,8 +186,8 @@ class ControllerAdvancedQLearning(AbstractController):
         print("==============================\nGenerating plots...")
         # print("Rewards", all_summed_rewards)
         # print("Steps", all_num_steps)
-        plot_results(all_summed_rewards, all_num_steps, MAX_EPISODES_V3, MAX_STEPS_V3)
-        print("- Plots saved.")
+        results = plot_results(all_summed_rewards, all_num_steps, MAX_EPISODES_V3, MAX_STEPS_V3)
+        print("- Plots saved:", results)
         return last_q_values, all_rewards
 
 

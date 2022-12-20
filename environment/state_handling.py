@@ -126,5 +126,5 @@ def __query_key(key):
 
 
 def __set_value(key, value):
-    __get_storage().update(set("value", str(value)), Query().key == str(key))
+    __get_storage().update(set("value", value), Query().key == str(key))
     # print("Set {} to {}".format(key, value))
