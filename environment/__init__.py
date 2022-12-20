@@ -1,7 +1,7 @@
 from v1.environment.controller import ControllerManual
 from v2.environment.controller import ControllerQLearning
 from v3.environment.controller import ControllerAdvancedQLearning
-from v4.environment.controller import ControllerSarsa
+from v5.environment.controller import ControllerSarsa
 from v99.environment.controller import ControllerBruteForce
 from environment.state_handling import get_prototype
 

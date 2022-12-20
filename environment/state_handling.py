@@ -146,7 +146,6 @@ def __prepare_storage_file():
 
 
 def __get_storage_file_path():
-    print(INSTANCE_NUMBER)
     if not INSTANCE_NUMBER:
         raise RuntimeError("Execution instance unknown! Must initialize storage first.")
     storage_folder = os.path.join(os.path.abspath(os.path.curdir), STORAGE_FOLDER_NAME)
@@ -181,6 +180,5 @@ def __query_key(key):
 
 
 def __set_value(key, value):
-    print("set value")
     __get_storage().update(set("value", value), Query().key == str(key))
     # print("Set {} to {}".format(key, value))

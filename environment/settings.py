@@ -41,7 +41,7 @@ DROP_NO_IMPACT = ['cpu_sy', 'tasks_zombie', 'clk:clk_set_rate', 'filemap:mm_file
 
 MAX_STEPS_V2 = 1000
 MAX_EPISODES_V3 = 250
-MAX_STEPS_V3 = 20  # avg 5 steps
-MAX_EPISODES_V4 = 3
-MAX_STEPS_V4 = 5
+MAX_STEPS_V3 = 20  # avg 4.5 steps
+MAX_EPISODES_V5 = 3
+MAX_STEPS_V5 = 5
 MAX_STEPS_V99 = 500

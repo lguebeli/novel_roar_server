@@ -2,7 +2,7 @@ import numpy as np
 
 from agent.abstract_agent import AbstractAgent
 from environment.state_handling import get_num_configs
-from v4.agent.model import ModelSarsa
+from v5.agent.model import ModelSarsa
 
 LEARN_RATE = 0.05  # 0.0035
 DISCOUNT_FACTOR = 0.5  # 0.85
