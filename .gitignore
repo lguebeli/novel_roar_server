@@ -2,7 +2,6 @@
 **/fingerprint/
 **/fingerprints/
 **/storage/
-**/storage.json
 
 # IDE files
 .idea/
