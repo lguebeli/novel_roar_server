@@ -141,7 +141,6 @@ def __get_storage():
 
 def __prepare_storage_file():
     storage_file, storage_folder = __get_storage_file_path()
-    os.makedirs(storage_folder, exist_ok=True)
     with open(storage_file, "w+"):  # create file if not exists and truncate contents if exists
         pass
 
@@ -157,6 +156,8 @@ def __get_storage_file_path():
 
 def __determine_instance():
     storage_folder = os.path.join(os.path.abspath(os.path.curdir), STORAGE_FOLDER_NAME)
+    os.makedirs(storage_folder, exist_ok=True)
+
     storage_files = [file for file in os.listdir(storage_folder)
                      if file.startswith("storage-") and file.endswith(".json")]
     instances = list(map(lambda file: int(file.split("-")[1][:-5]), storage_files))
