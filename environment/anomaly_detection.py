@@ -93,6 +93,46 @@ def scale_dataset(scaler, dataset):
     return dataset
 
 
+def map_results_to_category(results):
+    # Goal: detect infected behavior; positive = infected, negative = normal
+    true_positives = false_positives = true_negatives = false_negatives = 0
+    for run in range(len(results)):
+        data = results[run]
+        elements = data[0]
+        numbers = data[1]
+        normal = data[2]
+        # print("MAP", run, elements, numbers, infected)
+        if len(elements) > 1:  # detected normal and infected samples
+            if normal:
+                true_negatives += numbers[0]
+                false_positives += numbers[1]
+            else:
+                false_negatives += numbers[0]
+                true_positives += numbers[1]
+        else:  # detected only one type of samples
+            if elements[0] == 0:  # detected normal
+                if normal:
+                    true_negatives += numbers[0]  # detected normal and is normal
+                else:
+                    false_negatives += numbers[0]  # detected normal but is infected
+            else:  # detected infected
+                if normal:
+                    false_positives += numbers[0]  # detected infected but is normal
+                else:
+                    true_positives += numbers[0]  # detected infected and is infected
+    return true_positives, true_negatives, false_positives, false_negatives
+
+
+def calculate_f1_score(true_positives, true_negatives, false_positives, false_negatives):
+    # print(true_positives, true_negatives, false_positives, false_negatives,
+    #       true_positives + true_negatives + false_positives + false_negatives)
+    precision = true_positives / (true_positives + false_positives)
+    recall = true_positives / (true_positives + false_negatives)
+    # print(precision, recall)
+    f1 = 2 * (precision * recall) / (precision + recall)
+    return f1
+
+
 def evaluate_dataset(name, dataset):
     clf = __get_classifier()
     pred = clf.predict(dataset)
@@ -104,6 +144,7 @@ def evaluate_dataset(name, dataset):
     else:  # hidden
         perc = 100
     print(name, unique_elements, counts_elements, "%.2f" % perc, sep="\t")
+    return unique_elements, counts_elements
 
 
 def train_anomaly_detection():
@@ -144,17 +185,21 @@ def train_anomaly_detection():
 
     # Evaluate model
     print("Evaluate test set and infected behavior datasets.")
-    evaluate_dataset("normal", test_set)
+    normal_results = evaluate_dataset("normal", test_set)
 
     # ==============================
     # REPEAT FOR INFECTED SAMPLES
     # ==============================
 
+    all_results = [[*normal_results, True]]
     for conf_nr in range(get_num_configs()):
         df_inf = pd.read_csv(csv_path_template.format("infected-c{}".format(conf_nr)))
         inf_data = preprocess_dataset(df_inf)
         inf_data = scale_dataset(scaler, inf_data)
-        evaluate_dataset("inf-c{}".format(conf_nr), inf_data)
+        inf_results = evaluate_dataset("inf-c{}".format(conf_nr), inf_data)
+        all_results.append([*inf_results, False])
+    f1 = calculate_f1_score(*map_results_to_category(all_results))
+    print("Overall F1 score: %.5f" % f1)
 
 
 def detect_anomaly(fingerprint):  # string
