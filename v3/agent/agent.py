@@ -47,8 +47,11 @@ class AgentAdvancedQLearning(AbstractAgent):
         return fp[indexes]
 
     def initialize_network(self):
-        weights1 = np.random.uniform(0, 1, (self.num_input, self.num_hidden))
-        weights2 = np.random.uniform(0, 1, (self.num_hidden, self.num_output))
+        # Xavier weight initialization
+        weights1 = np.random.uniform(-1 / np.sqrt(self.num_input), +1 / np.sqrt(self.num_input),
+                                     (self.num_input, self.num_hidden))
+        weights2 = np.random.uniform(-1 / np.sqrt(self.num_hidden), +1 / np.sqrt(self.num_hidden),
+                                     (self.num_hidden, self.num_output))
 
         bias_weights1 = np.zeros((self.num_hidden, 1))
         bias_weights2 = np.zeros((self.num_output, 1))
