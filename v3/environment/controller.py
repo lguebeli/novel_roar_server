@@ -48,7 +48,7 @@ class ControllerAdvancedQLearning(AbstractController):
             reward_store = []
             summed_reward = 0
 
-            steps = 1
+            steps = 0
             sim_step = 1
             eps_start = time()
 
@@ -75,7 +75,9 @@ class ControllerAdvancedQLearning(AbstractController):
                 # log("Predict action.")
                 curr_hidden, curr_q_values, selected_action = agent.predict(weights1, weights2, bias_weights1,
                                                                             bias_weights2, epsilon_episode, state=state)
-                log("Predicted action {}. Episode {} step {}.".format(selected_action, episode, sim_step))
+                steps += 1
+                sim_step += 1
+                log("Predicted action {}. Episode {} step {}.".format(selected_action, episode, steps))
 
                 # ==============================
                 # Take step and observe new state
@@ -88,9 +90,6 @@ class ControllerAdvancedQLearning(AbstractController):
                     if not is_simulation():  # cannot send if no socket listening during simulation
                         send_config(config)
                 last_action = selected_action
-
-                sim_step += 1
-                steps += 1
 
                 # receive next FP and compute reward based on FP
                 # log("Wait for FP...")
