@@ -8,7 +8,7 @@ from environment.reward.performance_reward import PerformanceReward
 from environment.settings import MAX_EPISODES_V3, MAX_STEPS_V3
 from environment.state_handling import is_fp_ready, set_fp_ready, is_rw_done, collect_fingerprint, is_simulation, \
     set_rw_done
-from utilities.plots import plot_results
+from utilities.plots import plot_absolute_results
 from utilities.simulate import simulate_sending_fp, simulate_sending_rw_done
 
 DEBUG_PRINTING = False
@@ -186,7 +186,7 @@ class ControllerAdvancedQLearning(AbstractController):
         print("==============================\nGenerating plots...")
         # print("Rewards", all_summed_rewards)
         # print("Steps", all_num_steps)
-        results = plot_results(all_summed_rewards, all_num_steps, MAX_EPISODES_V3, MAX_STEPS_V3)
+        results = plot_absolute_results(all_summed_rewards, all_num_steps, MAX_EPISODES_V3, MAX_STEPS_V3)
         print("- Plots saved:", results)
         return last_q_values, all_rewards
 

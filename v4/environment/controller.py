@@ -8,10 +8,10 @@ from environment.reward.performance_reward import PerformanceReward
 from environment.settings import MAX_EPISODES_V4, SIM_CORPUS_SIZE_V4
 from environment.state_handling import is_fp_ready, set_fp_ready, is_rw_done, collect_fingerprint, is_simulation, \
     set_rw_done, collect_rate
-from utilities.plots import plot_results
+from utilities.plots import plot_average_results
 from utilities.simulate import simulate_sending_fp, simulate_sending_rw_done
 
-DEBUG_PRINTING = True
+DEBUG_PRINTING = False
 
 EPSILON = 0.25
 DECAY_RATE = 0.05
@@ -112,7 +112,7 @@ class ControllerCorpusQLearning(AbstractController):
                 # compute encryption progress based on elapsed time and reported encryption rate for simulation
                 rate = collect_rate()
                 sim_encryption_progress += sim_encryption_duration * rate
-                print("CONTROLLER: rate r/t/p", rate, sim_encryption_duration, sim_encryption_progress)
+                log("CONTROLLER: rate r/t/p", rate, sim_encryption_duration, sim_encryption_progress)
 
                 # ==============================
                 # Observe reward for new state
@@ -192,7 +192,7 @@ class ControllerCorpusQLearning(AbstractController):
         print("==============================\nGenerating plots...")
         # print("Rewards", all_summed_rewards)
         # print("Steps", all_num_steps)
-        results = plot_results(all_summed_rewards, all_num_steps, MAX_EPISODES_V4, SIM_CORPUS_SIZE_V4)
+        results = plot_average_results(all_summed_rewards, all_num_steps, MAX_EPISODES_V4, SIM_CORPUS_SIZE_V4)
         print("- Plots saved:", results)
         return last_q_values, all_rewards
 
