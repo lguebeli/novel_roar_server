@@ -1,14 +1,16 @@
+import math
+import os
+
 import numpy as np
+import pandas as pd
 
 from agent.abstract_agent import AbstractAgent
-from environment.settings import ALL_CSV_HEADERS, DUPLICATE_HEADERS
+from environment.anomaly_detection import get_preprocessor
+from environment.settings import ALL_CSV_HEADERS, CSV_FOLDER_PATH
 from environment.state_handling import get_num_configs
 from v3.agent.model import ModelAdvancedQLearning
 
-FP_DIMS = 97
-HIDDEN_NEURONS = 50
-
-LEARN_RATE = 0.005
+LEARN_RATE = 0.005  # 0.0025
 DISCOUNT_FACTOR = 0.75
 
 
@@ -18,32 +20,26 @@ class AgentAdvancedQLearning(AbstractAgent):
         self.actions = list(range(num_configs))
         self.output_size = num_configs
 
-        self.num_input = FP_DIMS  # Input size
-        self.num_hidden = HIDDEN_NEURONS  # Hidden neurons
+        self.fp_features = self.__get_fp_features()
+
+        self.num_input = len(self.fp_features)  # Input size
+        self.num_hidden = math.ceil(
+            round(self.num_input / 2 / 10) * 10)  # Hidden neurons, next 10 from half the input size
         self.num_output = num_configs  # Output size
 
         self.model = ModelAdvancedQLearning(learn_rate=LEARN_RATE, num_configs=num_configs)
 
+    def __get_fp_features(self):
+        df_normal = pd.read_csv(os.path.join(CSV_FOLDER_PATH, "normal-behavior.csv"))
+        preprocessor = get_preprocessor()
+        ready_dataset = preprocessor.preprocess_dataset(df_normal)
+        return ready_dataset.columns
+
     def __preprocess_fp(self, fp):
         headers = ALL_CSV_HEADERS.split(",")
-
-        duplicates = set(DUPLICATE_HEADERS)  # 3 features
-        duplicates_included = []
-
-        # only time metrics and duplicates
-        # 3+3 features dropped, leaves 103 - 6 = 97 features
-        dropped_features = ["time", "timestamp", "seconds"]
-
         indexes = []
-        for header, value in zip(headers, fp):
-            if header not in dropped_features:
-                if header not in duplicates:
-                    indexes.append(headers.index(header))
-                else:
-                    if header not in duplicates_included:
-                        indexes.append(headers.index(header))
-                        duplicates_included.append(header)
-
+        for header in self.fp_features:
+            indexes.append(headers.index(header))
         return fp[indexes]
 
     def initialize_network(self):

@@ -1,4 +1,4 @@
-from environment.anomaly_detection import detect_anomaly
+from environment.anomaly_detection.anomaly_detection import detect_anomaly
 from environment.reward.abstract_reward import AbstractReward
 
 

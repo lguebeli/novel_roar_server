@@ -7,9 +7,9 @@ from scipy import stats
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
-from environment.settings import CSV_FOLDER_PATH, ALL_CSV_HEADERS, DUPLICATE_HEADERS, DROP_CONNECTIVITY, DROP_TEMPORAL, \
-    DROP_CORRELATED_HEATMAP, DROP_CORRELATED_PLOTS, DROP_NO_IMPACT
-from environment.state_handling import get_num_configs, get_prototype
+from environment.anomaly_detection import get_preprocessor
+from environment.settings import CSV_FOLDER_PATH, ALL_CSV_HEADERS, DUPLICATE_HEADERS
+from environment.state_handling import get_num_configs
 
 # ========================================
 # ==========   CONFIG   ==========
@@ -39,42 +39,6 @@ def __get_scaler():
     global SCALER
     assert SCALER is not None, "Must first initialize scaler and fit to training set!"
     return SCALER
-
-
-def preprocess_dataset(dataset):
-    # Remove vectors generated when the rasp did not have connectivity
-    if len(dataset) > 1:  # avoid dropping single entries causing empty dataset
-        dataset = dataset.loc[(dataset['connectivity'] == 1)]
-    # Remove the connectivity feature because now it is constant
-    dataset.drop(DROP_CONNECTIVITY, inplace=True, axis=1)
-
-    # Remove duplicates
-    dataset.drop(list(map(lambda header: header + ".1", DUPLICATE_HEADERS)), inplace=True,
-                 axis=1)  # read_csv adds the .1
-
-    if int(get_prototype()) < 3:
-        # Remove temporal features
-        dataset.drop(["time", "timestamp", "seconds"], inplace=True, axis=1)
-
-        # Remove highly-correlated features
-        correlated = ["cpu_ni", "cpu_hi", "tasks_stopped", "alarmtimer:alarmtimer_fired", "alarmtimer:alarmtimer_start",
-                      "cachefiles:cachefiles_create", "cachefiles:cachefiles_lookup",
-                      "cachefiles:cachefiles_mark_active", "dma_fence:dma_fence_init", "udp:udp_fail_queue_rcv_skb"]
-        dataset.drop(correlated, inplace=True, axis=1)
-    else:
-        # Remove temporal features
-        dataset.drop(DROP_TEMPORAL, inplace=True, axis=1)
-
-        # Remove highly-correlated features
-        dataset.drop(DROP_CORRELATED_HEATMAP, inplace=True, axis=1)
-        dataset.drop(DROP_CORRELATED_PLOTS, inplace=True, axis=1)
-
-        # Remove features where infection had no impact
-        dataset.drop(DROP_NO_IMPACT, inplace=True, axis=1)
-
-    # Reset index
-    dataset.reset_index(inplace=True, drop=True)
-    return dataset
 
 
 def prepare_training_test_sets(dataset):
@@ -160,7 +124,8 @@ def train_anomaly_detection():
 
     # Preprocess data for ML
     # print("Preprocessing datasets.")
-    normal_data = preprocess_dataset(df_normal)
+    preprocessor = get_preprocessor()
+    normal_data = preprocessor.preprocess_dataset(df_normal)
     # print("proc", normal_data.shape)
 
     # print("Split normal behavior data into training and test set.")
@@ -194,7 +159,7 @@ def train_anomaly_detection():
     all_results = [[*normal_results, True]]
     for conf_nr in range(get_num_configs()):
         df_inf = pd.read_csv(csv_path_template.format("infected-c{}".format(conf_nr)))
-        inf_data = preprocess_dataset(df_inf)
+        inf_data = preprocessor.preprocess_dataset(df_inf)
         inf_data = scale_dataset(scaler, inf_data)
         inf_results = evaluate_dataset("inf-c{}".format(conf_nr), inf_data)
         all_results.append([*inf_results, False])
@@ -216,7 +181,8 @@ def detect_anomaly(fingerprint):  # string
     df_fp = pd.DataFrame(fp_data, columns=headers)
 
     # Sanitizing FP to match IsolationForest
-    preprocessed = preprocess_dataset(df_fp)
+    preprocessor = get_preprocessor()
+    preprocessed = preprocessor.preprocess_dataset(df_fp)
     scaler = __get_scaler()
     scaled = scale_dataset(scaler, preprocessed)
     # print("Scaled FP to", scaled.shape)

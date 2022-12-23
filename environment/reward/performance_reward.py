@@ -1,6 +1,6 @@
 import math
 
-from environment.anomaly_detection import detect_anomaly
+from environment.anomaly_detection.anomaly_detection import detect_anomaly
 from environment.reward.abstract_reward import AbstractReward
 from environment.state_handling import collect_rate
 

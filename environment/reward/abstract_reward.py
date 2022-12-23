@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from environment.anomaly_detection import train_anomaly_detection
+from environment.anomaly_detection.anomaly_detection import train_anomaly_detection
 
 
 class AbstractReward(ABC):

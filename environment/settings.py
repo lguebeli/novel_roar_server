@@ -18,22 +18,13 @@ CLIENT_IP = "<Client-IP>"
 # ANOMALY DETECTION
 # ==============================
 
+MAX_ALLOWED_CORRELATION = 0.95
 DROP_CONNECTIVITY = ["connectivity"]
 DROP_TEMPORAL = ["time", "timestamp", "seconds"]
-DROP_CORRELATED_HEATMAP = ["cpu_ni", "cpu_hi", "tasks_stopped", "alarmtimer:alarmtimer_fired",
-                           "alarmtimer:alarmtimer_start", "cachefiles:cachefiles_create",
-                           "cachefiles:cachefiles_lookup", "cachefiles:cachefiles_mark_active",
-                           "dma_fence:dma_fence_init", "udp:udp_fail_queue_rcv_skb"]
-DROP_CORRELATED_PLOTS = ['net_eth_rx', 'net:net_dev_xmit', 'raw_syscalls:sys_exit', 'kmem:kfree',
-                         'kmem:kmem_cache_free']
-DROP_NO_IMPACT = ['cpu_sy', 'tasks_zombie', 'clk:clk_set_rate', 'filemap:mm_filemap_add_to_page_cache',
-                  'irq:irq_handler_entry', 'jbd2:jbd2_start_commit', 'kmem:mm_page_alloc',
-                  'kmem:mm_page_alloc_zone_locked', 'kmem:mm_page_free', 'kmem:mm_page_pcpu_drain', 'net:netif_rx',
-                  'page-faults', 'pagemap:mm_lru_insertion', 'preemptirq:irq_enable', 'random:get_random_bytes',
-                  'sched:sched_process_exec', 'sched:sched_process_free', 'sched:sched_process_wait',
-                  'signal:signal_deliver', 'signal:signal_generate', 'sock:inet_sock_set_state', 'task:task_newtask',
-                  'tcp:tcp_destroy_sock', 'qdisc:qdisc_dequeue', 'skb:skb_copy_datagram_iovec',
-                  'writeback:writeback_pages_written']
+DROP_CONSTANT = ["cpu_ni", "cpu_hi", "tasks_stopped", "alarmtimer:alarmtimer_fired",
+                   "alarmtimer:alarmtimer_start", "cachefiles:cachefiles_create",
+                   "cachefiles:cachefiles_lookup", "cachefiles:cachefiles_mark_active",
+                   "dma_fence:dma_fence_init", "udp:udp_fail_queue_rcv_skb"]
 
 # ==============================
 # C2 SIMULATION

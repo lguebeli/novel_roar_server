@@ -38,14 +38,6 @@ class AgentQLearning(AbstractAgent):
         # 3+3 features dropped, leaves 103 - 6 = 97 features
         dropped_features = ["time", "timestamp", "seconds"]
 
-        # all features dropped in anomaly detection
-        # 3+14 features dropped, leaves 103 - 17 = 86 features
-        # dropped_features = ["time", "timestamp", "seconds", "connectivity", "cpu_ni", "cpu_hi", "tasks_stopped",
-        #                     "alarmtimer:alarmtimer_fired", "alarmtimer:alarmtimer_start",
-        #                     "cachefiles:cachefiles_create", "cachefiles:cachefiles_lookup",
-        #                     "cachefiles:cachefiles_mark_active", "dma_fence:dma_fence_init",
-        #                     "udp:udp_fail_queue_rcv_skb"]
-
         indexes = []
         for header, value in zip(headers, fp):
             if header not in dropped_features:
