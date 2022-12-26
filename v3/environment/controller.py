@@ -1,3 +1,4 @@
+from datetime import datetime
 from time import sleep, time
 
 from tqdm import tqdm  # add progress bar to episodes
@@ -7,20 +8,26 @@ from environment.abstract_controller import AbstractController
 from environment.reward.performance_reward import PerformanceReward
 from environment.settings import MAX_EPISODES_V3, MAX_STEPS_V3
 from environment.state_handling import is_fp_ready, set_fp_ready, is_rw_done, collect_fingerprint, is_simulation, \
-    set_rw_done
+    set_rw_done, get_prototype
 from utilities.plots import plot_absolute_results
 from utilities.simulate import simulate_sending_fp, simulate_sending_rw_done
 
 DEBUG_PRINTING = False
 
-EPSILON = 0.2
+EPSILON = 0.1
 DECAY_RATE = 0.01
 
 
 class ControllerAdvancedQLearning(AbstractController):
     def loop_episodes(self, agent):
-        reward_system = PerformanceReward(+50, +20, -1)
+        start_timestamp = datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
+        run_info = "p{}-{}e-{}s".format(get_prototype(), MAX_EPISODES_V3, MAX_STEPS_V3)
+        description = "{}={}".format(start_timestamp, run_info)
+        agent_file = None
+
+        reward_system = PerformanceReward(+100, +20, -20)
         weights1, weights2, bias_weights1, bias_weights2 = agent.initialize_network()
+        epsilon_episode = EPSILON
 
         # ==============================
         # Setup collectibles
@@ -177,16 +184,22 @@ class ControllerAdvancedQLearning(AbstractController):
             all_summed_rewards.append(summed_reward)
             all_num_steps.append(steps)
 
+            agent_file = AbstractController.save_agent(weights1, weights2, bias_weights1, bias_weights2,
+                                                       epsilon_episode, agent, description)
+
         # ========== END OF TRAINING ==========
         all_end = time()
         log("All episodes took: {}s, roughly {}min.".format("%.3f" % (all_end - all_start),
                                                             "%.1f" % ((all_end - all_start) / 60)))
         print("steps total", num_total_steps, "avg", num_total_steps / MAX_EPISODES_V3)
-        print("==============================\nGenerating plots...")
-        # print("Rewards", all_summed_rewards)
-        # print("Steps", all_num_steps)
-        results = plot_absolute_results(all_summed_rewards, all_num_steps, MAX_EPISODES_V3, MAX_STEPS_V3)
-        print("- Plots saved:", results)
+
+        print("==============================")
+        print("Saving trained agent to file...")
+        print("- Agent saved:", agent_file)
+
+        print("Generating plots...")
+        results_file = plot_absolute_results(all_summed_rewards, all_num_steps, MAX_EPISODES_V3, description)
+        print("- Plots saved:", results_file)
         return last_q_values, all_rewards
 
 

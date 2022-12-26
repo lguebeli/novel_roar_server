@@ -10,7 +10,7 @@ from environment.settings import ALL_CSV_HEADERS, CSV_FOLDER_PATH
 from environment.state_handling import get_num_configs
 from v3.agent.model import ModelAdvancedQLearning
 
-LEARN_RATE = 0.005  # 0.0025
+LEARN_RATE = 0.0025
 DISCOUNT_FACTOR = 0.75
 
 
@@ -18,7 +18,6 @@ class AgentAdvancedQLearning(AbstractAgent):
     def __init__(self):
         num_configs = get_num_configs()
         self.actions = list(range(num_configs))
-        self.output_size = num_configs
 
         self.fp_features = self.__get_fp_features()
 
@@ -27,7 +26,8 @@ class AgentAdvancedQLearning(AbstractAgent):
             round(self.num_input / 2 / 10) * 10)  # Hidden neurons, next 10 from half the input size
         self.num_output = num_configs  # Output size
 
-        self.model = ModelAdvancedQLearning(learn_rate=LEARN_RATE, num_configs=num_configs)
+        self.learn_rate = LEARN_RATE
+        self.model = ModelAdvancedQLearning(learn_rate=self.learn_rate, num_configs=num_configs)
 
     def __get_fp_features(self):
         df_normal = pd.read_csv(os.path.join(CSV_FOLDER_PATH, "normal-behavior.csv"))
@@ -69,7 +69,7 @@ class AgentAdvancedQLearning(AbstractAgent):
         return new_w1, new_w2, new_bw1, new_bw2
 
     def init_error(self):
-        return np.zeros((self.output_size, 1))
+        return np.zeros((self.num_output, 1))
 
     def update_error(self, error, reward, selected_action, curr_q_values, next_q_values, is_done):
         # print("AGENT: R sel selval best bestval", reward, selected_action, curr_q_values, next_q_values)

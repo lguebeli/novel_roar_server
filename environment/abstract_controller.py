@@ -1,3 +1,5 @@
+import json
+import os
 from abc import ABC, abstractmethod
 from time import sleep
 
@@ -5,7 +7,7 @@ import numpy as np
 
 from agent import get_agent
 from environment.reward.abstract_reward import AbstractReward
-from environment.state_handling import is_api_running, is_simulation, get_prototype
+from environment.state_handling import is_api_running, is_simulation, get_prototype, get_storage_path
 
 WAIT_FOR_CONFIRM = False
 
@@ -38,6 +40,24 @@ class AbstractController(ABC):
                 self.__start_training()
         else:
             self.__start_training()
+
+    @staticmethod
+    def save_agent(weights1, weights2, bias_weights1, bias_weights2, epsilon, agent, description):
+        agent_file = os.path.join(get_storage_path(), "agent={}.json".format(description))
+        content = {
+            "weights1": weights1.tolist(),
+            "weights2": weights2.tolist(),
+            "bias_weights1": bias_weights1.tolist(),
+            "bias_weights2": bias_weights2.tolist(),
+            "epsilon": epsilon,
+            "learn_rate": agent.learn_rate,
+            "num_input": agent.num_input,
+            "num_hidden": agent.num_hidden,
+            "num_output": agent.num_output,
+        }
+        with open(agent_file, "w+") as file:
+            json.dump(content, file)
+        return agent_file
 
     @staticmethod
     def transform_fp(fp):
