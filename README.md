@@ -17,16 +17,17 @@ Adjust constants in the following files:
 
 ***Preliminary!***
 
-| Prototype | Description                                                                                                                                                                                                                                                                                                   |
-|-----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 1         | Proof of Concept: agent manually selects each action exactly once, then terminates after the last action.<br>Every incoming fingerprint is evaluated by anomaly detection, but the computed reward is not further processed in any way.                                                                       |
-| 2         | Incorporate intelligence: replace manual selection of actions with a neural network that predicts the optimal action to take in the current state.<br>In this version, the agent stops its episode once the ransomware is done encrypting.                                                                    |
-| 3         | Optimize framework: to further improve on accuracy and performance, the single neural network for action prediction is replaced with two actor-critic networks.<br>Upon positive anomaly detection, the episode loop will consider presumable detection of the ransomware as failure and start a new episode. |
+| Prototype | Description                                                                                                                                                                                                                                                                                                                             |
+|-----------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1         | Proof of Concept: agent manually selects each action exactly once, then terminates after the last action. Every incoming fingerprint is evaluated by anomaly detection, but the computed reward is not further processed in any way.                                                                                                    |
+| 2         | Incorporate intelligence: replace manual selection of actions with a neural network that predicts the optimal action to take in the current state. In this version, the agent performs a single episode and stops it once the ransomware is done encrypting.                                                                            |
+| 3         | Considering Performance: the reward system now also considers the performance of the chosen action by incorporating the encryption rate. The learning process is continued over multiple episodes to a maximum number of steps per episode.                                                                                             |
+| 4         | Improving simulations: simulating the encryption on the client device heavily speeds up the learning process. Additionally, modeling the simulation as close to the real environment as possible is key to transferring the learnings. Therefore, the simulation was adjusted to consider an artificial corpus of data to be encrypted. |
+| x         | Comparing algorithms: This version implements the SARSA algorithm to compared the results with previous Q-learning versions.                                                                                                                                                                                                            |
+| x         | Optimize framework: to further improve on accuracy and performance, the single neural network for action prediction is replaced with two actor-critic networks. Upon positive anomaly detection, the episode loop will consider presumable detection of the ransomware as failure and start a new episode.                              |
 
 # TODO
 
-- version 2 with Q-learning and single episode
-- version 3 with SARSA and multiple episodes
-- add neutral config
-- version 4 reducing fingerprint input dimensionality with auto-encoder (learn important features representation)
-- version 5 with actor-critic
+- SARSA and multiple episodes
+- reducing fingerprint input dimensionality with auto-encoder (learn important features representation)
+- actor-critic
