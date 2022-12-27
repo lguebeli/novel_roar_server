@@ -7,7 +7,7 @@ from scipy import stats
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
-from environment.anomaly_detection import get_preprocessor
+from environment.anomaly_detection.constructor import get_preprocessor
 from environment.settings import CSV_FOLDER_PATH, ALL_CSV_HEADERS, DUPLICATE_HEADERS
 from environment.state_handling import get_num_configs
 

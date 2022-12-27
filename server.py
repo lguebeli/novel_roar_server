@@ -3,7 +3,7 @@ from multiprocessing import Process
 from time import sleep
 
 from api import create_app
-from environment import get_controller
+from environment.constructor import get_controller
 from environment.state_handling import get_instance_number, setup_child_instance, initialize_storage, cleanup_storage,\
     is_multi_fp_collection, set_multi_fp_collection, is_simulation, set_simulation, set_api_running, set_prototype
 

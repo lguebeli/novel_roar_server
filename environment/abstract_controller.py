@@ -5,7 +5,7 @@ from time import sleep
 
 import numpy as np
 
-from agent import get_agent
+from agent.constructor import get_agent
 from environment.reward.abstract_reward import AbstractReward
 from environment.state_handling import is_api_running, is_simulation, get_prototype, get_storage_path
 

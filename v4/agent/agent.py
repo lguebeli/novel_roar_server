@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from agent.abstract_agent import AbstractAgent
-from environment.anomaly_detection import get_preprocessor
+from environment.anomaly_detection.constructor import get_preprocessor
 from environment.settings import ALL_CSV_HEADERS, CSV_FOLDER_PATH
 from environment.state_handling import get_num_configs
 from v4.agent.model import ModelCorpusQLearning
