@@ -5,7 +5,8 @@ from environment.state_handling import set_fp_ready, get_fp_file_path, get_rate_
 
 
 def write_metrics_to_file(rate, fp, storage_path, is_multi):
-    __write_rate_to_file(rate, storage_path)
+    if not is_multi:
+        __write_rate_to_file(rate, storage_path)
     __write_fingerprint_to_file(fp, storage_path, is_multi)
     set_fp_ready(True)
 
