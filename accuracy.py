@@ -17,6 +17,14 @@ from environment.state_handling import initialize_storage, cleanup_storage, set_
 from utilities.simulate import simulate_sending_fp
 from v4.agent.agent import AgentCorpusQLearning
 
+"""
+Want to change evaluated prototype?
+1) adjust initial EPSILON (setup) to the one used in evaluated prototype (usually in controller)
+2) adjust the import for the agent and its usages below (instantiations for initial and trained)
+3) adjust reward system (initial) to the one used in evaluated prototype (in controller)
+4) set prototype to evaluated prototype number in setup below (start of try-block)
+"""
+
 
 def evaluate_agent(agent, reward_system, weights1, weights2, bias_weights1, bias_weights2, EPSILON):
     accuracies = []
@@ -78,7 +86,7 @@ logs = []
 
 print("========== PREPARE ENVIRONMENT ==========\nAD evaluation is written to log file directly")
 
-EPSILON = 0.1
+EPSILON = 0.25
 
 initialize_storage()
 try:

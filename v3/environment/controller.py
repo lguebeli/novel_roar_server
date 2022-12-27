@@ -28,7 +28,6 @@ class ControllerAdvancedQLearning(AbstractController):
 
         reward_system = PerformanceReward(+100, +20, -20)
         weights1, weights2, bias_weights1, bias_weights2 = agent.initialize_network()
-        epsilon_episode = EPSILON
 
         # ==============================
         # Setup collectibles
