@@ -76,7 +76,7 @@ log_file = os.path.join(os.path.curdir, "storage",
                         "accuracy-report={}.txt".format(datetime.now().strftime("%Y-%m-%d--%H-%M-%S")))
 logs = []
 
-print("========== PREPARE ENVIRONMENT ==========")
+print("========== PREPARE ENVIRONMENT ==========\nAD evaluation is written to log file directly")
 
 EPSILON = 0.1
 

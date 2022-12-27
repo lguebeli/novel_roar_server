@@ -22,10 +22,10 @@ def plot_absolute_results(rewards, steps, num_episodes, description):
     return fig_file
 
 
-def plot_average_results(rewards, steps, num_episodes, description):
-    avg_rewards = __exp_moving_average(np.array(rewards), 10 / num_episodes)
-    avg_steps = __exp_moving_average(np.array(steps), 10 / num_episodes)
-    return __plot_combined_results(rewards, avg_rewards, steps, avg_steps, num_episodes, description)
+def plot_average_results(avg_rewards, steps, num_episodes, description):
+    ema_rewards = __exp_moving_average(np.array(avg_rewards), 10 / num_episodes)
+    ema_steps = __exp_moving_average(np.array(steps), 10 / num_episodes)
+    return __plot_combined_results(avg_rewards, ema_rewards, steps, ema_steps, num_episodes, description)
 
 
 def __exp_moving_average(data, alpha):
@@ -45,18 +45,18 @@ def __exp_moving_average(data, alpha):
     return out
 
 
-def __plot_combined_results(rewards, avg_rewards, steps, avg_steps, num_episodes, description):
+def __plot_combined_results(avg_rewards, ema_rewards, steps, ema_steps, num_episodes, description):
     plt.subplot(211)  # 2 rows for subplots, 1 column, idx 1
-    plt.plot(range(1, num_episodes + 1), rewards, color="blue")
-    plt.plot(range(1, num_episodes + 1), avg_rewards, color="red")
-    plt.ylabel("Rewards")
-    plt.legend(["Absolute", "Average"])
+    plt.scatter(range(1, num_episodes + 1), avg_rewards, s=5, color="blue")
+    plt.plot(range(1, num_episodes + 1), ema_rewards, color="red")
+    plt.ylabel("Average Rewards")
+    plt.legend(["Abs", "EMA"])
 
     plt.subplot(212)
-    plt.plot(range(1, num_episodes + 1), steps, color="blue")
-    plt.plot(range(1, num_episodes + 1), avg_steps, color="red")
+    plt.scatter(range(1, num_episodes + 1), steps, s=5, color="blue")
+    plt.plot(range(1, num_episodes + 1), ema_steps, color="red")
     plt.ylabel("Steps")
-    plt.legend(["Absolute", "Average"])
+    plt.legend(["Abs", "EMA"])
 
     plt.xlabel("Episodes")
 
