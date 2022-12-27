@@ -3,6 +3,7 @@ from time import sleep, time
 
 from tqdm import tqdm  # add progress bar to episodes
 
+from agent.abstract_agent import AgentRepresentation
 from api.configurations import map_to_ransomware_configuration, send_config
 from environment.abstract_controller import AbstractController
 from environment.reward.performance_reward import PerformanceReward
@@ -184,8 +185,8 @@ class ControllerAdvancedQLearning(AbstractController):
             all_summed_rewards.append(summed_reward)
             all_num_steps.append(steps)
 
-            agent_file = AbstractController.save_agent(weights1, weights2, bias_weights1, bias_weights2,
-                                                       epsilon_episode, agent, description)
+            agent_file = AgentRepresentation.save_agent(weights1, weights2, bias_weights1, bias_weights2,
+                                                        epsilon_episode, agent, description)
 
         # ========== END OF TRAINING ==========
         all_end = time()

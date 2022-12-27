@@ -4,7 +4,7 @@ import os
 import numpy as np
 import pandas as pd
 
-from agent.abstract_agent import AbstractAgent
+from agent.abstract_agent import AbstractAgent, AgentRepresentation
 from environment.anomaly_detection.constructor import get_preprocessor
 from environment.settings import ALL_CSV_HEADERS, CSV_FOLDER_PATH
 from environment.state_handling import get_num_configs
@@ -15,19 +15,30 @@ DISCOUNT_FACTOR = 0.75
 
 
 class AgentAdvancedQLearning(AbstractAgent):
-    def __init__(self):
-        num_configs = get_num_configs()
-        self.actions = list(range(num_configs))
+    def __init__(self, representation=None):
+        self.representation = representation
+        if isinstance(representation, AgentRepresentation):  # build from representation
+            self.num_input = representation.num_input
+            self.num_hidden = representation.num_hidden
+            self.num_output = representation.num_output
+            self.actions = list(range(representation.num_output))
 
-        self.fp_features = self.__get_fp_features()
+            self.learn_rate = representation.learn_rate
+            self.fp_features = self.__get_fp_features()
+            self.model = ModelAdvancedQLearning(learn_rate=self.learn_rate, num_configs=self.num_output)
+        else:  # init from scratch
+            num_configs = get_num_configs()
+            self.actions = list(range(num_configs))
 
-        self.num_input = len(self.fp_features)  # Input size
-        self.num_hidden = math.ceil(
-            round(self.num_input / 2 / 10) * 10)  # Hidden neurons, next 10 from half the input size
-        self.num_output = num_configs  # Output size
+            self.fp_features = self.__get_fp_features()
 
-        self.learn_rate = LEARN_RATE
-        self.model = ModelAdvancedQLearning(learn_rate=self.learn_rate, num_configs=num_configs)
+            self.num_input = len(self.fp_features)  # Input size
+            self.num_hidden = math.ceil(
+                round(self.num_input / 2 / 10) * 10)  # Hidden neurons, next 10 from half the input size
+            self.num_output = num_configs  # Output size
+
+            self.learn_rate = LEARN_RATE
+            self.model = ModelAdvancedQLearning(learn_rate=self.learn_rate, num_configs=num_configs)
 
     def __get_fp_features(self):
         df_normal = pd.read_csv(os.path.join(CSV_FOLDER_PATH, "normal-behavior.csv"))
@@ -43,14 +54,20 @@ class AgentAdvancedQLearning(AbstractAgent):
         return fp[indexes]
 
     def initialize_network(self):
-        # Xavier weight initialization
-        weights1 = np.random.uniform(-1 / np.sqrt(self.num_input), +1 / np.sqrt(self.num_input),
-                                     (self.num_input, self.num_hidden))
-        weights2 = np.random.uniform(-1 / np.sqrt(self.num_hidden), +1 / np.sqrt(self.num_hidden),
-                                     (self.num_hidden, self.num_output))
-
-        bias_weights1 = np.zeros((self.num_hidden, 1))
-        bias_weights2 = np.zeros((self.num_output, 1))
+        if isinstance(self.representation, AgentRepresentation):  # init from representation
+            weights1 = np.asarray(self.representation.weights1)
+            weights2 = np.asarray(self.representation.weights2)
+            bias_weights1 = np.asarray(self.representation.bias_weights1)
+            bias_weights2 = np.asarray(self.representation.bias_weights2)
+        else:  # init from scratch
+            # Xavier weight initialization
+            weights1 = np.random.uniform(-1 / np.sqrt(self.num_input), +1 / np.sqrt(self.num_input),
+                                         (self.num_input, self.num_hidden))
+            weights2 = np.random.uniform(-1 / np.sqrt(self.num_hidden), +1 / np.sqrt(self.num_hidden),
+                                         (self.num_hidden, self.num_output))
+    
+            bias_weights1 = np.zeros((self.num_hidden, 1))
+            bias_weights2 = np.zeros((self.num_output, 1))
 
         return weights1, weights2, bias_weights1, bias_weights2
 

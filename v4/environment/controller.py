@@ -3,6 +3,7 @@ from time import sleep, time
 
 from tqdm import tqdm  # add progress bar to episodes
 
+from agent.abstract_agent import AgentRepresentation
 from api.configurations import map_to_ransomware_configuration, send_config
 from environment.abstract_controller import AbstractController
 from environment.reward.performance_reward import PerformanceReward
@@ -20,13 +21,13 @@ DECAY_RATE = 0.01
 
 class ControllerCorpusQLearning(AbstractController):
     def loop_episodes(self, agent):
-        reward_system = PerformanceReward(+100, +20, -20)
-        weights1, weights2, bias_weights1, bias_weights2 = agent.initialize_network()
-
         start_timestamp = datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
         run_info = "p{}-{}e-{}s".format(get_prototype(), MAX_EPISODES_V4, SIM_CORPUS_SIZE_V4)
         description = "{}={}".format(start_timestamp, run_info)
         agent_file = None
+
+        reward_system = PerformanceReward(+100, +20, -20)
+        weights1, weights2, bias_weights1, bias_weights2 = agent.initialize_network()
 
         # ==============================
         # Setup collectibles
@@ -190,8 +191,8 @@ class ControllerCorpusQLearning(AbstractController):
             all_summed_rewards.append(summed_reward)
             all_num_steps.append(steps)
 
-            agent_file = AbstractController.save_agent(weights1, weights2, bias_weights1, bias_weights2,
-                                                       epsilon_episode, agent, description)
+            agent_file = AgentRepresentation.save_agent(weights1, weights2, bias_weights1, bias_weights2,
+                                                        epsilon_episode, agent, description)
 
         # ========== END OF TRAINING ==========
         all_end = time()
