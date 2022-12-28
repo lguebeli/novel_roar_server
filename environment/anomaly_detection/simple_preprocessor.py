@@ -17,7 +17,7 @@ class SimplePreprocessor(AbstractPreprocessor):
         # Remove temporal features
         dataset.drop(DROP_TEMPORAL, inplace=True, axis=1)
 
-        # Remove highly-correlated features
+        # Remove constant features
         dataset.drop(DROP_CONSTANT, inplace=True, axis=1)
 
         # Reset index

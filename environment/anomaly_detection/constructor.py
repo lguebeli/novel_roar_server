@@ -17,3 +17,8 @@ def get_preprocessor():
             print("WARNING: Unknown prototype. Falling back to default simple preprocessor!")
             PREPROCESSOR = SimplePreprocessor()
     return PREPROCESSOR
+
+
+def reset_preprocessor():
+    global PREPROCESSOR
+    PREPROCESSOR = None
