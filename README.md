@@ -52,6 +52,7 @@ There are different ways to use the `server.py` according to the intended purpos
 
 ### Collect Fingerprints
 Fitting if the intention is to only listen to the API for collection of incoming fingerprints.
+Collected fingerprints are stored in the [fingerprints folder](./fingerprints) and need to be manually moved to their destination folder, see [Folder Structure](#folder-structure).
 
 Start the server as follows: `python server.py -c` (the flag `-c` marks collection of fingerprints).
 
@@ -77,6 +78,7 @@ If a script does not require any parameters or flags, it may also be run in an I
 
 ### Convert Fingerprints to CSV Files
 Run this script to convert the collected fingerprints from the target device to a CSV file for further usage, e.g., in simulated execution.
+The respective target set of fingerprints (training or evaluation) must be configured at the top of the script.
 
 Run the script as follows: `python fp-to-csv.py`
 
@@ -96,6 +98,9 @@ The expected result is very bad as the agent's initial prediction skills are mor
 Then, the untrained agent is trained according to the current environment settings.
 Lastly, the now trained agent is again evaluated by feeding all fingerprints through its prediction.
 This time, however, the expected results are much better than before and clearly show that the agent is no longer guessing but demonstrates being able to select good actions for all possible states.
+
+To avoid unwanted influences, the evaluation of agent performance is done using a dedicated evaluation set of fingerprints instead of the regular training set of fingerprints.
+In addition, during both evaluation phases, the agent is only predicting actions but not learning from its choices, such that the evaluation set can still be considered "never seen before".
 
 Run the script as follows: `python accuracy.py`
 
