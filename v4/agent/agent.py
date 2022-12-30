@@ -6,7 +6,7 @@ import pandas as pd
 
 from agent.abstract_agent import AbstractAgent, AgentRepresentation
 from environment.anomaly_detection.constructor import get_preprocessor
-from environment.settings import ALL_CSV_HEADERS, CSV_FOLDER_PATH
+from environment.settings import ALL_CSV_HEADERS, TRAINING_CSV_FOLDER_PATH
 from environment.state_handling import get_num_configs
 from v4.agent.model import ModelCorpusQLearning
 
@@ -41,7 +41,7 @@ class AgentCorpusQLearning(AbstractAgent):
             self.model = ModelCorpusQLearning(learn_rate=self.learn_rate, num_configs=num_configs)
 
     def __get_fp_features(self):
-        df_normal = pd.read_csv(os.path.join(CSV_FOLDER_PATH, "normal-behavior.csv"))
+        df_normal = pd.read_csv(os.path.join(TRAINING_CSV_FOLDER_PATH, "normal-behavior.csv"))
         preprocessor = get_preprocessor()
         ready_dataset = preprocessor.preprocess_dataset(df_normal)
         return ready_dataset.columns

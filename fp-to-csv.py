@@ -1,8 +1,11 @@
 from copy import deepcopy
 import os
 
-from environment.settings import CSV_FOLDER_PATH
+from environment.settings import EVALUATION_CSV_FOLDER_PATH, TRAINING_CSV_FOLDER_PATH
 from environment.state_handling import get_num_configs
+
+# CSV_FOLDER_PATH = EVALUATION_CSV_FOLDER_PATH
+CSV_FOLDER_PATH = TRAINING_CSV_FOLDER_PATH
 
 # FP directories
 normal_fp_dir = os.path.join(CSV_FOLDER_PATH, "normal")

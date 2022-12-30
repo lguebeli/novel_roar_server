@@ -29,6 +29,23 @@ Adjust constants in the following files:
 | x         | Optimize framework: to further improve on accuracy and performance, the single neural network for action prediction is replaced with two actor-critic networks. Upon positive anomaly detection, the episode loop will consider presumable detection of the ransomware as failure and start a new episode.                              |
 
 
+## Folder Structure
+
+All scripts contained in this repository can only work if the required data can be found, i.e., the collected fingerprints need to be stored in a very specific way.
+
+```
+FOLDER                  DESCRIPTION
+
+fingerprints            # The local folder containing all respective subdirectories. This folder and its children are not required to be located in this repository as long as the corresponding settings are correctly set.
+-- evaluation           # The subfolder where the portion of fingerprints explicitly used only in accuracy computation is stored. The corresponding setting is called `EVALUATION_CSV_FOLDER_PATH`.
+    -- infected-cX      # Directory for all infected-behavior fingerprints belonging to ransomware configuration X. There should be one folder for every configuration.
+    -- normal           # Directory for normal-behavior fingerprints. There should be exactly one such folder here.
+-- training             # The subfolder where all other fingerprints used during training will be stored. The corresponding setting is called `TRAINING_CSV_FOLDER_PATH`.
+    -- infected-cX      # Directory for all infected-behavior fingerprints belonging to ransomware configuration X. There should be one folder for every configuration.
+    -- normal           # Directory for normal-behavior fingerprints. There should be exactly one such folder here.
+```
+
+
 ## Run the Server
 
 There are different ways to use the `server.py` according to the intended purpose.

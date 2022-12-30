@@ -11,7 +11,7 @@ from agent.abstract_agent import AgentRepresentation
 from environment.constructor import get_controller
 from environment.reward.abstract_reward import AbstractReward
 from environment.reward.performance_reward import PerformanceReward
-from environment.settings import CSV_FOLDER_PATH
+from environment.settings import EVALUATION_CSV_FOLDER_PATH
 from environment.state_handling import initialize_storage, cleanup_storage, set_prototype, get_num_configs, \
     collect_fingerprint, get_storage_path, set_simulation
 from utilities.simulate import simulate_sending_fp
@@ -31,7 +31,7 @@ def evaluate_agent(agent, reward_system, weights1, weights2, bias_weights1, bias
     num_configs = get_num_configs()
     for config in range(num_configs):
         print("{}Config".format("\n" if config > 0 else ""), config)
-        config_fp_dir = os.path.join(CSV_FOLDER_PATH, "infected-c{}".format(config))
+        config_fp_dir = os.path.join(EVALUATION_CSV_FOLDER_PATH, "infected-c{}".format(config))
         fp_files = os.listdir(config_fp_dir)
         num_selected_hidden_action = 0
         for fp_file in tqdm(fp_files):

@@ -3,7 +3,7 @@ import os
 import numpy as np
 
 from agent.abstract_agent import AbstractAgent
-from environment.settings import CSV_FOLDER_PATH, ALL_CSV_HEADERS, DUPLICATE_HEADERS
+from environment.settings import TRAINING_CSV_FOLDER_PATH, ALL_CSV_HEADERS, DUPLICATE_HEADERS
 from environment.state_handling import get_num_configs
 from v2.agent.model import ModelQLearning
 
@@ -51,7 +51,7 @@ class AgentQLearning(AbstractAgent):
         return fp[indexes]
 
     def __crop_fp(self, fp):
-        with open(os.path.join(CSV_FOLDER_PATH, "normal-behavior.csv"), "r") as csv_normal:
+        with open(os.path.join(TRAINING_CSV_FOLDER_PATH, "normal-behavior.csv"), "r") as csv_normal:
             csv_headers = csv_normal.read().split(",")
         headers = ["cpu_id", "tasks_running", "mem_free", "cpu_temp", "block:block_bio_remap",
                    "sched:sched_process_exec", "writeback:writeback_pages_written"]

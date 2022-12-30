@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
 from environment.anomaly_detection.constructor import get_preprocessor
-from environment.settings import CSV_FOLDER_PATH, ALL_CSV_HEADERS, DUPLICATE_HEADERS
+from environment.settings import TRAINING_CSV_FOLDER_PATH, ALL_CSV_HEADERS, DUPLICATE_HEADERS
 from environment.state_handling import get_num_configs
 
 # ========================================
@@ -118,7 +118,7 @@ def train_anomaly_detection():
 
     # Load data
     # print("Loading CSV data.")
-    csv_path_template = os.path.join(CSV_FOLDER_PATH, "{}-behavior.csv")
+    csv_path_template = os.path.join(TRAINING_CSV_FOLDER_PATH, "{}-behavior.csv")
     df_normal = pd.read_csv(csv_path_template.format("normal"))
     # print("load", df_normal.shape)
 

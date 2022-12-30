@@ -7,7 +7,7 @@ import pandas as pd
 from environment.anomaly_detection.anomaly_detection import detect_anomaly
 from environment.anomaly_detection.constructor import get_preprocessor, reset_preprocessor
 from environment.reward.abstract_reward import AbstractReward
-from environment.settings import CSV_FOLDER_PATH, ALL_CSV_HEADERS
+from environment.settings import TRAINING_CSV_FOLDER_PATH, ALL_CSV_HEADERS
 from environment.state_handling import initialize_storage, cleanup_storage, set_prototype
 
 
@@ -25,7 +25,7 @@ def transform_fp(fp):
 
 
 def get_fp_features():
-    df_normal = pd.read_csv(os.path.join(CSV_FOLDER_PATH, "normal-behavior.csv"))
+    df_normal = pd.read_csv(os.path.join(TRAINING_CSV_FOLDER_PATH, "normal-behavior.csv"))
     preprocessor = get_preprocessor()
     ready_dataset = preprocessor.preprocess_dataset(df_normal)
     return ready_dataset.columns
@@ -56,9 +56,7 @@ ctr = 0
 timer = time.time()
 for f in files:
     fp = collect_fingerprint(p, f)
-    print(fp)
     t = transform_fp(fp)
-    print(t)
     det = detect_anomaly(t)
     if det == 0:
         # print(f, det)

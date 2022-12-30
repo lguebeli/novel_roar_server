@@ -4,14 +4,15 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
-from environment.settings import CSV_FOLDER_PATH
+from environment.settings import TRAINING_CSV_FOLDER_PATH
 from environment.state_handling import get_storage_path
 
 
 class AbstractAgent(ABC):
     @staticmethod
     def standardize_fp(inputs):
-        csv_normal = np.loadtxt(fname=os.path.join(CSV_FOLDER_PATH, "normal-behavior.csv"), delimiter=",", skiprows=1)
+        csv_normal = np.loadtxt(fname=os.path.join(TRAINING_CSV_FOLDER_PATH, "normal-behavior.csv"),
+                                delimiter=",", skiprows=1)
         norm_min = np.min(csv_normal, axis=0).reshape(-1, 1)
         norm_max = np.max(csv_normal, axis=0).reshape(-1, 1)
         # print("ABSAGENT: normal min/max", csv_normal.shape, norm_min.shape, norm_max.shape)
