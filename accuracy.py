@@ -185,7 +185,7 @@ try:
     # WRITE LOGS TO LOG FILE
     # ==============================
 
-    with open(log_file, "w+") as file:
+    with open(log_file, "a") as file:
         log_lines = list(map(lambda l: l + "\n", logs))
         file.writelines(log_lines)
 finally:
