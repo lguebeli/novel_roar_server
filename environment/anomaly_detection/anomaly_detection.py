@@ -4,11 +4,11 @@ import numpy as np
 import pandas as pd
 from pyod.models.iforest import IForest
 from scipy import stats
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
 from environment.anomaly_detection.constructor import get_preprocessor
-from environment.settings import TRAINING_CSV_FOLDER_PATH, ALL_CSV_HEADERS, DUPLICATE_HEADERS
+from environment.settings import EVALUATION_CSV_FOLDER_PATH, TRAINING_CSV_FOLDER_PATH, ALL_CSV_HEADERS, \
+    DUPLICATE_HEADERS
 from environment.state_handling import get_num_configs
 
 # ========================================
@@ -41,10 +41,9 @@ def __get_scaler():
     return SCALER
 
 
-def prepare_training_test_sets(dataset):
-    # Split into training and test sets
-    train_set, test_set = train_test_split(dataset, test_size=0.20, random_state=42, shuffle=True)
+def prepare_training_test_sets(train_set, test_set):
     # print("prep", train_set.shape, test_set.shape)
+    assert 4 + 1e-5 >= len(train_set) / len(test_set) >= 4 - 1e-5  # 0.8 to 0.2 has factor 4 +- some epsilon
 
     # Remove train data with Z-score higher than 3
     train_set = train_set[(np.abs(stats.zscore(train_set)) < 3).all(axis=1)]
@@ -119,17 +118,22 @@ def train_anomaly_detection():
     # Load data
     # print("Loading CSV data.")
     csv_path_template = os.path.join(TRAINING_CSV_FOLDER_PATH, "{}-behavior.csv")
-    df_normal = pd.read_csv(csv_path_template.format("normal"))
-    # print("load", df_normal.shape)
+    df_normal_train = pd.read_csv(csv_path_template.format("normal"))
+    df_normal_test = pd.read_csv(os.path.join(EVALUATION_CSV_FOLDER_PATH, "{}-behavior.csv").format("normal"))
+
+    # randomly sample all rows to mimic shuffling
+    df_normal_train = df_normal_train.sample(frac=1, random_state=42).reset_index(drop=True)
+    # print("load", df_normal_train.shape, df_normal_test.shape)
 
     # Preprocess data for ML
     # print("Preprocessing datasets.")
     preprocessor = get_preprocessor()
-    normal_data = preprocessor.preprocess_dataset(df_normal)
-    # print("proc", normal_data.shape)
+    normal_train_data = preprocessor.preprocess_dataset(df_normal_train)
+    normal_test_data = preprocessor.preprocess_dataset(df_normal_test)
+    # print("proc", normal_train_data.shape, normal_test_data.shape)
 
-    # print("Split normal behavior data into training and test set.")
-    train_set, test_set = prepare_training_test_sets(dataset=normal_data)
+    # print("Prepare normal behavior data training and test set.")
+    train_set, test_set = prepare_training_test_sets(normal_train_data, normal_test_data)
     # print("sets", train_set.shape, test_set.shape)
 
     # Scale the datasets, turning them into ndarrays
