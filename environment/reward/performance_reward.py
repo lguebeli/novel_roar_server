@@ -24,7 +24,7 @@ class PerformanceReward(AbstractReward):
         elif done:
             reward = self.r_done
         else:
-            # print("REWARD: hid", rate, math.log10(rate+1), self.r_hidden)
-            reward = math.log10(rate + 1) + abs(self.r_hidden)  # log(r+1) + h
+            # print("REWARD: hid", rate, 10 * math.log(rate+1), self.r_hidden)
+            reward = 10 * math.log(rate + 1) + abs(self.r_hidden)  # ln(r+1) + h
         # print("REWARD: result", reward)
         return round(reward, 5), anomalous

@@ -26,7 +26,7 @@ class ControllerCorpusQLearning(AbstractController):
         description = "{}={}".format(start_timestamp, run_info)
         agent_file = None
 
-        reward_system = PerformanceReward(+100, +20, -20)
+        reward_system = PerformanceReward(+100, +0, -20)
         weights1, weights2, bias_weights1, bias_weights2 = agent.initialize_network()
 
         # ==============================

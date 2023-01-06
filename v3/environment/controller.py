@@ -26,7 +26,7 @@ class ControllerAdvancedQLearning(AbstractController):
         description = "{}={}".format(start_timestamp, run_info)
         agent_file = None
 
-        reward_system = PerformanceReward(+100, +20, -20)
+        reward_system = PerformanceReward(+100, +0, -20)
         weights1, weights2, bias_weights1, bias_weights2 = agent.initialize_network()
 
         # ==============================
@@ -68,7 +68,6 @@ class ControllerAdvancedQLearning(AbstractController):
             curr_fp = collect_fingerprint()
             set_fp_ready(False)
 
-            # log("Loop episode...")
             while not is_rw_done():
                 # log("==================================================")
                 # ==============================
