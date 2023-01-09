@@ -208,7 +208,7 @@ try:
     controller = get_controller()
     training_start = time()
     timestamp = datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
-    controller.loop_episodes(agent)
+    final_q_values, _ = controller.loop_episodes(agent)
     training_duration = time() - training_start
     logs.append("Agent and plots timestamp: {}".format(timestamp))
     print("Training took {}s, roughly {}min.".format("%.3f" % training_duration, "%.1f" % (training_duration / 60)))
@@ -277,6 +277,10 @@ try:
                                                             known_best_trained))
     logs.append("For known best action {}: from {} to {}.".format(KNOWN_BEST_ACTION, known_best_initial,
                                                                   known_best_trained))
+
+    # report final Q-values
+    print("Final Q-Values:\n{}".format(final_q_values))
+    logs.append("Final Q-Values:\n{}".format(final_q_values))
 
     # show time required for entire accuracy computation
     total_duration = time() - total_start
