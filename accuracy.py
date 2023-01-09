@@ -31,6 +31,9 @@ def evaluate_agent(agent, weights1, weights2, bias_weights1, bias_weights2, EPSI
     accuracies_configs = {}
     num_configs = get_num_configs()
 
+    for config in range(num_configs):  # ensure all keys exist for accessing through KNOWN_BEST_ACTION
+        accuracies_overall[config] = 0
+
     # eval normal
     print("Normal")
     normal_fp_dir = os.path.join(EVALUATION_CSV_FOLDER_PATH, "normal")
