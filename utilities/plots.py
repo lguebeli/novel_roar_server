@@ -22,10 +22,12 @@ def plot_absolute_results(rewards, steps, num_episodes, description):
     return fig_file
 
 
-def plot_average_results(avg_rewards, steps, num_episodes, description):
-    ema_rewards = __exp_moving_average(np.array(avg_rewards), 10 / num_episodes)
-    ema_steps = __exp_moving_average(np.array(steps), 10 / num_episodes)
-    return __plot_combined_results(avg_rewards, ema_rewards, steps, ema_steps, num_episodes, description)
+def plot_average_results(rewards, avg_rewards, steps, num_episodes, description):
+    ema_rewards = __exp_moving_average(np.array(rewards), max(10 / num_episodes, 1 / 1000))
+    ema_avg_rewards = __exp_moving_average(np.array(avg_rewards), max(10 / num_episodes, 1 / 1000))
+    ema_steps = __exp_moving_average(np.array(steps), max(10 / num_episodes, 1 / 1000))
+    return __plot_combined_results(rewards, ema_rewards, avg_rewards, ema_avg_rewards, steps, ema_steps, num_episodes,
+                                   description)
 
 
 def __exp_moving_average(data, alpha):
@@ -45,38 +47,51 @@ def __exp_moving_average(data, alpha):
     return out
 
 
-def __plot_combined_results(avg_rewards, ema_rewards, steps, ema_steps, num_episodes, description):
-    fig, (ax1, ax2) = plt.subplots(2, 1)  # 2 rows for subplots, 1 column
+def __plot_combined_results(rewards, ema_rewards, avg_rewards, ema_avg_rewards, steps, ema_steps, num_episodes,
+                            description):
+    fig, (ax1, ax2, ax3) = plt.subplots(3, 1)  # 3 rows for subplots, 1 column
 
     # ==============================
     # PLOT REWARDS
     # ==============================
 
-    ax1.scatter(range(1, num_episodes + 1), avg_rewards, s=5, color="blue")
+    ax1.scatter(range(1, num_episodes + 1), rewards, s=5, color="blue")
     ax1.plot(range(1, num_episodes + 1), ema_rewards, color="red")
-    ax1.set_ylabel("Average Rewards")
+    ax1.set_ylabel("Rewards")
 
     ax1.xaxis.get_major_locator().set_params(integer=True)
     ax1.yaxis.get_major_locator().set_params(integer=True)
     ax1.legend(["Abs", "EMA"])
 
     # ==============================
-    # PLOT STEPS
+    # PLOT AVG REWARDS
     # ==============================
 
-    ax2.scatter(range(1, num_episodes + 1), steps, s=5, color="blue")
-    ax2.plot(range(1, num_episodes + 1), ema_steps, color="red")
-    ax2.set_ylabel("Steps")
+    ax2.scatter(range(1, num_episodes + 1), avg_rewards, s=5, color="blue")
+    ax2.plot(range(1, num_episodes + 1), ema_avg_rewards, color="red")
+    ax2.set_ylabel("Average Rewards")
 
     ax2.xaxis.get_major_locator().set_params(integer=True)
     ax2.yaxis.get_major_locator().set_params(integer=True)
     ax2.legend(["Abs", "EMA"])
 
     # ==============================
+    # PLOT STEPS
+    # ==============================
+
+    ax3.scatter(range(1, num_episodes + 1), steps, s=5, color="blue")
+    ax3.plot(range(1, num_episodes + 1), ema_steps, color="red")
+    ax3.set_ylabel("Steps")
+
+    ax3.xaxis.get_major_locator().set_params(integer=True)
+    ax3.yaxis.get_major_locator().set_params(integer=True)
+    ax3.legend(["Abs", "EMA"])
+
+    # ==============================
     # FINALIZE AND SAVE FIGURE
     # ==============================
 
-    ax2.set_xlabel("Episodes")
+    ax3.set_xlabel("Episodes")
     fig.align_ylabels()
 
     fig_file = os.path.join(get_storage_path(), "results-fig={}.png".format(description))

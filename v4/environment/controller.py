@@ -34,6 +34,7 @@ class ControllerCorpusQLearning(AbstractController):
         # ==============================
 
         all_rewards = []
+        all_summed_rewards = []
         all_avg_rewards = []
         all_num_steps = []
 
@@ -188,6 +189,7 @@ class ControllerCorpusQLearning(AbstractController):
             # print("Episode {} had {} steps.".format(episode, steps))
             num_total_steps += steps
             all_rewards.append(reward_store)
+            all_summed_rewards.append(summed_reward)
             all_avg_rewards.append(summed_reward / steps)  # average reward over episode
             all_num_steps.append(steps)
 
@@ -205,7 +207,8 @@ class ControllerCorpusQLearning(AbstractController):
         print("- Agent saved:", agent_file)
 
         print("Generating plots...")
-        results_file = plot_average_results(all_avg_rewards, all_num_steps, MAX_EPISODES_V4, description)
+        results_file = plot_average_results(all_summed_rewards, all_avg_rewards, all_num_steps, MAX_EPISODES_V4,
+                                            description)
         print("- Plots saved:", results_file)
         return last_q_values, all_rewards
 
