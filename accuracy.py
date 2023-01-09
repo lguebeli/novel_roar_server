@@ -18,10 +18,11 @@ from v4.agent.agent import AgentCorpusQLearning
 """
 Want to change evaluated prototype?
 1) adjust initial EPSILON (setup) to the one used in evaluated prototype (usually in controller)
-2) adjust the import for the agent and its usages below (instantiations for initial and trained)
-3) adjust reward system (initial) to the one used in evaluated prototype (in controller)
+2) adjust the known best action (setup) if necessary (depending on AD and reward system)
+3) adjust the filename of the logfile to match the prototype settings (in controller/agent)
 4) set prototype to evaluated prototype number in setup below (start of try-block)
-5) adjust the known best action (setup) if necessary (depending on AD and reward system)
+5) adjust reward system (initial) to the one used in evaluated prototype (in controller)
+6) adjust the import for the agent and its usages below (instantiations for initial and trained)
 """
 
 
@@ -35,7 +36,7 @@ def evaluate_agent(agent, weights1, weights2, bias_weights1, bias_weights2, EPSI
     normal_fp_dir = os.path.join(EVALUATION_CSV_FOLDER_PATH, "normal")
     fp_files = os.listdir(normal_fp_dir)
     accuracies_configs["normal"] = {"total": 0}
-    for fp_file in tqdm(fp_files[:5]):
+    for fp_file in tqdm(fp_files):
         # collect selected initial fingerprint
         with open(os.path.join(normal_fp_dir, fp_file)) as file:
             fp = file.readline()[1:-1].replace(" ", "")
@@ -64,7 +65,7 @@ def evaluate_agent(agent, weights1, weights2, bias_weights1, bias_weights2, EPSI
         fp_files = os.listdir(config_fp_dir)
 
         accuracies_configs[config] = {"total": 0}
-        for fp_file in tqdm(fp_files[:5]):
+        for fp_file in tqdm(fp_files):
             # collect selected initial fingerprint
             with open(os.path.join(config_fp_dir, fp_file)) as file:
                 fp = file.readline()[1:-1].replace(" ", "")
@@ -145,8 +146,10 @@ def print_accuracy_table(accuracies_overall, accuracies_configs, logs):
 # SETUP
 # ==============================
 total_start = time()
+prototype_description = "p4-5000e=eps0.5decay0.01"
 log_file = os.path.join(os.path.curdir, "storage",
-                        "accuracy-report={}.txt".format(datetime.now().strftime("%Y-%m-%d--%H-%M-%S")))
+                        "accuracy-report={}={}.txt".format(datetime.now().strftime("%Y-%m-%d--%H-%M-%S"),
+                                                           prototype_description))
 logs = []
 
 print("========== PREPARE ENVIRONMENT ==========\nAD evaluation is written to log file directly")
