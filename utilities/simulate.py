@@ -12,24 +12,16 @@ from utilities.metrics import write_metrics_to_file
 # ==============================
 
 UNLIMITED_CONFIGURATIONS = [1, 2]
-
-
-def __find_average_rate(config):
-    metrics_dir = os.path.join(TRAINING_CSV_FOLDER_PATH, "metrics")
-    with open(os.path.join(metrics_dir, "metrics-c{}.txt".format(config)), "r") as file:
-        lines = file.readlines()[1:]  # drop headers
-        sum = 0
-        for line in lines:
-            sum += float(line.split(",")[-2])
-        avg = sum / len(lines)
-        # print("SIM: config", config, "avg %.3f" % avg, "for", sum, "out of", len(lines), "lines")
-    return avg
+AVERAGE_RATES = {  # calculated by auxiliary script ´find_avg_rate.py´
+    1: 565565.651186441,
+    2: 632834.8006,
+}
 
 
 def simulate_sending_fp(config_num):
     config_dir = os.path.join(os.curdir, "rw-configs")
     if config_num in UNLIMITED_CONFIGURATIONS:  # config defines a rate of 0, so we need to collect it from metrics
-        rate = __find_average_rate(config_num)
+        rate = AVERAGE_RATES[config_num]
     else:
         with open(os.path.join(config_dir, "config-{}.json".format(config_num)), "r") as config_file:
             config = json.load(config_file)
