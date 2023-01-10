@@ -19,7 +19,7 @@ class PerformanceReward(AbstractReward):
         # print("--- Detected {} FP.".format("anomalous" if anomalous else "normal"))
 
         if anomalous:
-            # print("REWARD: det", self.r_detected, max(rate, 1))
+            # print("REWARD: det", self.r_detected, rate, max(rate, 1))
             reward = -(max(1, abs(self.r_detected)) / max(rate, 1)) - abs(self.r_detected)  # -d/r - d
         elif done:
             reward = self.r_done
