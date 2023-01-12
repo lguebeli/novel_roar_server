@@ -164,6 +164,7 @@ initialize_storage()
 try:
     set_prototype("4")
     set_simulation(True)
+    np.random.seed(42)
 
     # ==============================
     # WRITE AD EVALUATION TO LOG FILE

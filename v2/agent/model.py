@@ -5,9 +5,6 @@ USE_SIMPLE_FP = False
 
 class ModelQLearning(object):
     def __init__(self, epsilon, learn_rate, num_configs):
-        # Initialize random seed for reproducibility
-        np.random.seed(42)
-
         # Initialize hyperparams
         self.epsilon = epsilon
         self.learn_rate = learn_rate

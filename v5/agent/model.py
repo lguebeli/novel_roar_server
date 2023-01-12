@@ -9,9 +9,6 @@ NUM_CONFIGS = get_num_configs()
 
 class ModelSarsa(object):
     def __init__(self, learn_rate):
-        # Initialize random seed for reproducibility
-        np.random.seed(42)
-
         # Initialize hyperparams
         self.learn_rate = learn_rate
 

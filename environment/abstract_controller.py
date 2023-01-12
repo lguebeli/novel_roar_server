@@ -22,6 +22,9 @@ class AbstractController(ABC):
                 sleep(1)
 
         print("\n==============================\nStart Training\n==============================")
+        # Initialize random seed for reproducibility
+        np.random.seed(42)
+
         agent = get_agent()
         q_values, rewards = self.loop_episodes(agent)
         if int(get_prototype()) > 1:
