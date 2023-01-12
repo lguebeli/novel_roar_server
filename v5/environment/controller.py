@@ -1,38 +1,67 @@
-from time import sleep
+from datetime import datetime
+from time import sleep, time
 
 from tqdm import tqdm  # add progress bar to episodes
 
+from agent.abstract_agent import AgentRepresentation
 from api.configurations import map_to_ransomware_configuration, send_config
 from environment.abstract_controller import AbstractController
-from environment.reward.standard_reward import StandardReward
-from environment.settings import MAX_EPISODES_V5, MAX_STEPS_V5
-from environment.state_handling import is_fp_ready, set_fp_ready, is_rw_done, collect_fingerprint, is_simulation
+from environment.reward.ideal_AD_performance_reward import IdealADPerformanceReward
+from environment.settings import MAX_EPISODES_V5, SIM_CORPUS_SIZE_V5
+from environment.state_handling import is_fp_ready, set_fp_ready, is_rw_done, collect_fingerprint, is_simulation, \
+    set_rw_done, collect_rate, get_prototype
+from utilities.plots import plot_average_results
 from utilities.simulate import simulate_sending_fp, simulate_sending_rw_done
 
-EPSILON = 0.2
-DECAY_RATE = 0.01  # 0.0005
+DEBUG_PRINTING = False
+
+EPSILON = 0.5
+DECAY_RATE = 0.01
 
 
-class ControllerSarsa(AbstractController):
+class ControllerIdealADQLearning(AbstractController):
     def loop_episodes(self, agent):
+        start_timestamp = datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
+        run_info = "p{}-{}e-{}s".format(get_prototype(), MAX_EPISODES_V5, SIM_CORPUS_SIZE_V5)
+        description = "{}={}".format(start_timestamp, run_info)
+        agent_file = None
+
+        reward_system = IdealADPerformanceReward(+1000, +0, -20)
+        weights1, weights2, bias_weights1, bias_weights2 = agent.initialize_network()
+
+        # ==============================
+        # Setup collectibles
+        # ==============================
+
         all_rewards = []
+        all_summed_rewards = []
+        all_avg_rewards = []
+        all_num_steps = []
+
         last_q_values = []
+        num_total_steps = 0
+        all_start = time()
 
-        for n in tqdm(range(MAX_EPISODES_V5)):
+        eps_iter = range(1, MAX_EPISODES_V5 + 1) if DEBUG_PRINTING else tqdm(range(1, MAX_EPISODES_V5 + 1))
+        for episode in eps_iter:
             # ==============================
-            # Setup
+            # Setup environment
             # ==============================
 
-            epsilon_episode = EPSILON / (1 + DECAY_RATE * n)  # decay epsilon
+            set_rw_done(False)
 
-            reward_system = StandardReward(+10, +5, -10)
+            epsilon_episode = EPSILON / (1 + DECAY_RATE * episode)  # decay epsilon
+
             last_action = -1
             reward_store = []
+            summed_reward = 0
 
-            sim_step = 0
+            steps = 0
+            sim_encryption_progress = 0
+            eps_start = time()
 
             # accept initial FP
-            print("Wait for initial FP...")
+            # log("Wait for initial FP...")
             if is_simulation():
                 simulate_sending_fp(0)
             while not is_fp_ready():
@@ -40,36 +69,37 @@ class ControllerSarsa(AbstractController):
             curr_fp = collect_fingerprint()
             set_fp_ready(False)
 
-            # transform FP into np array
-            state = AbstractController.transform_fp(curr_fp)
-
-            # agent selects action based on state
-            print("Predict initial action.")
-            selected_action, _, q_values = agent.predict(fingerprint=state, epsilon=epsilon_episode)
-            print("Predicted action", selected_action)
-
-            # ==============================
-            # Episodes
-            # ==============================
-
-            print("Loop episode...")
+            # log("Loop episode...")
             while not is_rw_done():
+                # log("==================================================")
+                # ==============================
+                # Predict action
+                # ==============================
+
+                # transform FP into np array
+                state = AbstractController.transform_fp(curr_fp)
+
+                # agent selects action based on state
+                # log("Predict action.")
+                curr_hidden, curr_q_values, selected_action = agent.predict(weights1, weights2, bias_weights1,
+                                                                            bias_weights2, epsilon_episode, state=state)
+                steps += 1
+                log("Predicted action {}. Episode {} step {}.".format(selected_action, episode, steps))
+
                 # ==============================
                 # Take step and observe new state
                 # ==============================
 
                 # convert action to config and send to client
                 if selected_action != last_action:
-                    print("Sending new action {} to client. Step {}.".format(selected_action, sim_step))
+                    # log("Sending new action {} to client.".format(selected_action))
                     config = map_to_ransomware_configuration(selected_action)
                     if not is_simulation():  # cannot send if no socket listening during simulation
                         send_config(config)
                 last_action = selected_action
 
-                sim_step += 1
-
                 # receive next FP and compute reward based on FP
-                print("Wait for FP...")
+                # log("Wait for FP...")
                 if is_simulation():
                     simulate_sending_fp(selected_action)
                 while not (is_fp_ready() or is_rw_done()):
@@ -80,62 +110,106 @@ class ControllerSarsa(AbstractController):
                 else:
                     next_fp = collect_fingerprint()
 
+                # transform FP into np array
                 next_state = AbstractController.transform_fp(next_fp)
                 set_fp_ready(False)
+
+                # compute encryption progress based on elapsed time and reported encryption rate for simulation
+                rate = collect_rate()
+                sim_encryption_progress += rate
+                log("CONTROLLER: rate r/p", rate, sim_encryption_progress)
 
                 # ==============================
                 # Observe reward for new state
                 # ==============================
 
-                print("Computing reward for next FP.")
-                reward = reward_system.compute_reward(next_state, is_rw_done())
-                reward_store.append(reward)
+                if is_simulation() and sim_encryption_progress >= SIM_CORPUS_SIZE_V5:
+                    simulate_sending_rw_done()
+
+                # log("Computing reward for next FP.")
+                reward, detected = reward_system.compute_reward(selected_action, is_rw_done())
+                # log("Computed reward", reward)
+                reward_store.append((selected_action, reward))
+                summed_reward += reward
+                if detected:
+                    set_rw_done()  # terminate episode
 
                 # ==============================
                 # Next Q-values, error, and learning
                 # ==============================
-
-                if is_simulation() and sim_step >= MAX_STEPS_V5:
-                    simulate_sending_rw_done()
 
                 # initialize error
                 error = agent.init_error()
 
                 if is_rw_done():
                     # update error based on observed reward
-                    error = agent.update_error(error=error, reward=reward, is_done=True,
-                                               selected_action=selected_action, selected_q_value=q_values[selected_action],
-                                               next_action=None, next_q_value=None)
+                    error = agent.update_error(error, reward, selected_action, curr_q_values,
+                                               next_q_values=None, is_done=True)
 
                     # send error to agent, update weights accordingly
-                    agent.update_weights(state, error)
-                    last_q_values = q_values
+                    weights1, weights2, bias_weights1, bias_weights2 = agent.update_weights(curr_q_values, error, state,
+                                                                                            curr_hidden, weights1,
+                                                                                            weights2, bias_weights1,
+                                                                                            bias_weights2)
+                    log("Episode Q-Values:\n", curr_q_values)
+                    last_q_values = curr_q_values
                 else:
                     # predict next Q-values and action
-                    print("Predict next action.")
-                    next_selected_action, _, next_q_values = agent.predict(fingerprint=next_state, epsilon=epsilon_episode)
-                    print("Predicted next action", next_selected_action)
+                    # log("Predict next action.")
+                    next_hidden, next_q_values, next_action = agent.predict(weights1, weights2, bias_weights1,
+                                                                            bias_weights2, epsilon_episode,
+                                                                            state=next_state)
+                    # log("Predicted next action", next_action)
 
                     # update error based on observed reward
-                    error = agent.update_error(error=error, reward=reward, is_done=False,
-                                               selected_action=selected_action, selected_q_value=q_values[selected_action],
-                                               next_action=next_selected_action, next_q_value=next_q_values[next_selected_action])
+                    error = agent.update_error(error, reward, selected_action, curr_q_values, next_q_values,
+                                               is_done=False)
 
                     # send error to agent, update weights accordingly
-                    agent.update_weights(state, error)
+                    weights1, weights2, bias_weights1, bias_weights2 = agent.update_weights(curr_q_values, error, state,
+                                                                                            curr_hidden, weights1,
+                                                                                            weights2, bias_weights1,
+                                                                                            bias_weights2)
 
-                    # ==============================
-                    # Prepare next step
-                    # ==============================
+                # ==============================
+                # Prepare next step
+                # ==============================
 
-                    # update current state
-                    curr_fp = next_fp
-                    selected_action = next_selected_action
-                    print("==================================================")
+                # update current state
+                curr_fp = next_fp
                 # ========== END OF STEP ==========
 
             # ========== END OF EPISODE ==========
+            eps_end = time()
+            log("Episode {} took: {}s, roughly {}min.".format(episode, "%.3f" % (eps_end - eps_start),
+                                                              "%.1f" % ((eps_end - eps_start) / 60)))
+            # print("Episode {} had {} steps.".format(episode, steps))
+            num_total_steps += steps
             all_rewards.append(reward_store)
+            all_summed_rewards.append(summed_reward)
+            all_avg_rewards.append(summed_reward / steps)  # average reward over episode
+            all_num_steps.append(steps)
+
+            agent_file = AgentRepresentation.save_agent(weights1, weights2, bias_weights1, bias_weights2,
+                                                        epsilon_episode, agent, description)
 
         # ========== END OF TRAINING ==========
+        all_end = time()
+        log("All episodes took: {}s, roughly {}min.".format("%.3f" % (all_end - all_start),
+                                                            "%.1f" % ((all_end - all_start) / 60)))
+        print("steps total", num_total_steps, "avg", num_total_steps / MAX_EPISODES_V5)
+
+        print("==============================")
+        print("Saving trained agent to file...")
+        print("- Agent saved:", agent_file)
+
+        print("Generating plots...")
+        results_file = plot_average_results(all_summed_rewards, all_avg_rewards, all_num_steps, MAX_EPISODES_V5,
+                                            description)
+        print("- Plots saved:", results_file)
         return last_q_values, all_rewards
+
+
+def log(*args):
+    if DEBUG_PRINTING:  # tqdm replaces progress inline, so prints would spam the console with multiple progress bars
+        print(*args)

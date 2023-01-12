@@ -2,7 +2,8 @@ from v1.environment.controller import ControllerManual
 from v2.environment.controller import ControllerQLearning
 from v3.environment.controller import ControllerAdvancedQLearning
 from v4.environment.controller import ControllerCorpusQLearning
-from v5.environment.controller import ControllerSarsa
+from v5.environment.controller import ControllerIdealADQLearning
+from v6.environment.controller import ControllerSarsa
 from v99.environment.controller import ControllerBruteForce
 from environment.state_handling import get_prototype
 
@@ -22,6 +23,8 @@ def get_controller():
         elif proto == "4":
             CONTROLLER = ControllerCorpusQLearning()
         elif proto == "5":
+            CONTROLLER = ControllerIdealADQLearning()
+        elif proto == "6":
             CONTROLLER = ControllerSarsa()
         elif proto == "99":
             CONTROLLER = ControllerBruteForce()
