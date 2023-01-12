@@ -17,7 +17,7 @@ class IdealADPerformanceReward(AbstractReward):
         # print("REWARD: rate", rate)
 
         anomalous = bool(action in DETECTED_ACTIONS)  # int [0 1]
-        print("--- Detected {} FP for action {}.".format("anomalous" if anomalous else "normal", action))
+        # print("--- Detected {} FP for action {}.".format("anomalous" if anomalous else "normal", action))
 
         if anomalous:
             # print("REWARD: det", self.r_detected, rate, max(rate, 1))
