@@ -15,7 +15,7 @@ from utilities.simulate import simulate_sending_fp, simulate_sending_rw_done
 
 DEBUG_PRINTING = False
 
-EPSILON = 0.25
+EPSILON = 0.5
 DECAY_RATE = 0.01
 
 
@@ -26,7 +26,7 @@ class ControllerCorpusQLearning(AbstractController):
         description = "{}={}".format(start_timestamp, run_info)
         agent_file = None
 
-        reward_system = PerformanceReward(+100, +0, -20)
+        reward_system = PerformanceReward(+1000, +0, -20)
         weights1, weights2, bias_weights1, bias_weights2 = agent.initialize_network()
 
         # ==============================

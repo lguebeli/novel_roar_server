@@ -149,7 +149,7 @@ def print_accuracy_table(accuracies_overall, accuracies_configs, logs):
 # SETUP
 # ==============================
 total_start = time()
-prototype_description = "p4-5000e=eps0.5decay0.01"
+prototype_description = "p4-10000e=eps0.5decay0.01"
 log_file = os.path.join(os.path.curdir, "storage",
                         "accuracy-report={}={}.txt".format(datetime.now().strftime("%Y-%m-%d--%H-%M-%S"),
                                                            prototype_description))
