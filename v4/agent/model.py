@@ -36,7 +36,6 @@ class ModelCorpusQLearning(object):
         # q = adaline2 * (adaline2 > 0)  # h2, ReLU activation, x if a > 0 else 0
         q = adaline2 / (1 + np.exp(-adaline2))  # h2, SiLU activation, x*sig(x) = x/(1+e^-x)
 
-
         # print("MODEL: Q", q.shape, "\n", q)
 
         # ==============================

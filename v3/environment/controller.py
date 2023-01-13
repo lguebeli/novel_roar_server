@@ -49,7 +49,7 @@ class ControllerAdvancedQLearning(AbstractController):
 
             set_rw_done(False)
 
-            epsilon_episode = EPSILON / (1 + DECAY_RATE * episode)  # decay epsilon
+            epsilon_episode = EPSILON / (1 + DECAY_RATE * (episode - 1))  # decay epsilon, episode 1-based
 
             last_action = -1
             reward_store = []

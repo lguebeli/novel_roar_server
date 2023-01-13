@@ -50,7 +50,7 @@ class ControllerCorpusQLearning(AbstractController):
 
             set_rw_done(False)
 
-            epsilon_episode = EPSILON / (1 + DECAY_RATE * episode)  # decay epsilon
+            epsilon_episode = EPSILON / (1 + DECAY_RATE * (episode - 1))  # decay epsilon, episode 1-based
 
             last_action = -1
             reward_store = []
@@ -120,7 +120,6 @@ class ControllerCorpusQLearning(AbstractController):
                 # compute encryption progress based on elapsed time and reported encryption rate for simulation
                 rate = collect_rate()
                 sim_encryption_progress += sim_encryption_duration * rate
-                log("CONTROLLER: rate r/t/p", rate, sim_encryption_duration, sim_encryption_progress)
 
                 # ==============================
                 # Observe reward for new state
@@ -195,6 +194,7 @@ class ControllerCorpusQLearning(AbstractController):
 
             agent_file = AgentRepresentation.save_agent(weights1, weights2, bias_weights1, bias_weights2,
                                                         epsilon_episode, agent, description)
+            # log("=================================================\n=================================================")
 
         # ========== END OF TRAINING ==========
         all_end = time()

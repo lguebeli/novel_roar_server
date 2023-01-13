@@ -50,7 +50,7 @@ class ControllerIdealADQLearning(AbstractController):
 
             set_rw_done(False)
 
-            epsilon_episode = EPSILON / (1 + DECAY_RATE * episode)  # decay epsilon
+            epsilon_episode = EPSILON / (1 + DECAY_RATE * (episode - 1))  # decay epsilon, episode 1-based
 
             last_action = -1
             reward_store = []
@@ -114,10 +114,9 @@ class ControllerIdealADQLearning(AbstractController):
                 next_state = AbstractController.transform_fp(next_fp)
                 set_fp_ready(False)
 
-                # compute encryption progress based on elapsed time and reported encryption rate for simulation
+                # compute encryption progress (assume 1s per step) and reported encryption rate for simulation
                 rate = collect_rate()
                 sim_encryption_progress += rate
-                log("CONTROLLER: rate r/p", rate, sim_encryption_progress)
 
                 # ==============================
                 # Observe reward for new state
@@ -192,6 +191,7 @@ class ControllerIdealADQLearning(AbstractController):
 
             agent_file = AgentRepresentation.save_agent(weights1, weights2, bias_weights1, bias_weights2,
                                                         epsilon_episode, agent, description)
+            # log("=================================================\n=================================================")
 
         # ========== END OF TRAINING ==========
         all_end = time()
