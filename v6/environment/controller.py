@@ -13,7 +13,7 @@ from environment.state_handling import is_fp_ready, set_fp_ready, is_rw_done, co
 from utilities.plots import plot_average_results
 from utilities.simulate import simulate_sending_fp, simulate_sending_rw_done
 
-DEBUG_PRINTING = True
+DEBUG_PRINTING = False
 
 EPSILON = 0.5
 DECAY_RATE = 0.01
