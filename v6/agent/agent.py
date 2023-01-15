@@ -10,8 +10,8 @@ from environment.settings import ALL_CSV_HEADERS, TRAINING_CSV_FOLDER_PATH
 from environment.state_handling import get_num_configs
 from v6.agent.model import ModelSarsa
 
-LEARN_RATE = 0.05  # 0.0035
-DISCOUNT_FACTOR = 0.5  # 0.85
+LEARN_RATE = 0.0005  # 0.0035
+DISCOUNT_FACTOR = 0.75  # 0.85
 
 
 class AgentSarsa(AbstractAgent):

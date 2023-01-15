@@ -158,7 +158,8 @@ class ControllerSarsa(AbstractController):
                     next_hidden, next_q_values, next_selected_action = agent.predict(weights1, weights2, bias_weights1,
                                                                                      bias_weights2, epsilon_episode,
                                                                                      state=next_state)
-                    log("Predicted next action", next_selected_action)
+                    steps += 1
+                    log("Predicted next action {}. Episode {} step {}.".format(next_selected_action, episode, steps))
 
                     # update error based on observed reward
                     error = agent.update_error(error, reward, selected_action, curr_q_values[selected_action],
