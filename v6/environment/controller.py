@@ -57,7 +57,6 @@ class ControllerSarsa(AbstractController):
             summed_reward = 0
 
             steps = 1
-            sim_encryption_time = None
             sim_encryption_progress = 0
             eps_start = time()
 
@@ -97,8 +96,6 @@ class ControllerSarsa(AbstractController):
                     if not is_simulation():  # cannot send if no socket listening during simulation
                         send_config(config)
                 last_action = selected_action
-                sim_encryption_duration = time() - sim_encryption_time if sim_encryption_time else 0
-                sim_encryption_time = time()
 
                 # receive next FP and compute reward based on FP
                 log("Wait for FP...")
