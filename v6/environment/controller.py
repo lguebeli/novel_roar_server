@@ -114,7 +114,7 @@ class ControllerSarsa(AbstractController):
 
                 # compute encryption progress (assume 1s per step) and reported encryption rate for simulation
                 rate = collect_rate()
-                sim_encryption_progress += sim_encryption_duration * rate
+                sim_encryption_progress += rate
 
                 # ==============================
                 # Observe reward for new state
