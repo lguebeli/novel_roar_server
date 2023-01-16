@@ -4,6 +4,7 @@ from v3.environment.controller import ControllerAdvancedQLearning
 from v4.environment.controller import ControllerCorpusQLearning
 from v5.environment.controller import ControllerIdealADQLearning
 from v6.environment.controller import ControllerSarsa
+from v7.environment.controller import ControllerIdealADSarsa
 from v98.environment.controller import ControllerOneStepEpisodeQLearning
 from v99.environment.controller import ControllerBruteForce
 from environment.state_handling import get_prototype
@@ -27,6 +28,8 @@ def get_controller():
             CONTROLLER = ControllerIdealADQLearning()
         elif proto == "6":
             CONTROLLER = ControllerSarsa()
+        elif proto == "7":
+            CONTROLLER = ControllerIdealADSarsa()
         elif proto == "98":
             CONTROLLER = ControllerOneStepEpisodeQLearning()
         elif proto == "99":
