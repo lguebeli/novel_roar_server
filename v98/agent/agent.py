@@ -33,8 +33,7 @@ class AgentOneStepEpisodeQLearning(AbstractAgent):
             self.fp_features = self.__get_fp_features()
 
             self.num_input = len(self.fp_features)  # Input size
-            self.num_hidden = math.ceil(
-                round(self.num_input / 2 / 10) * 10)  # Hidden neurons, next 10 from half the input size
+            self.num_hidden = math.ceil(self.num_input / 2 / 10) * 10  # Hidden neurons, next 10 from half input size
             self.num_output = num_configs  # Output size
 
             self.learn_rate = LEARN_RATE
