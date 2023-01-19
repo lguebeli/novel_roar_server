@@ -1,10 +1,10 @@
 import numpy as np
 
 from environment.anomaly_detection.abstract_preprocessor import AbstractPreprocessor
-from environment.settings import MAX_ALLOWED_CORRELATION, DROP_TEMPORAL, DUPLICATE_HEADERS
+from environment.settings import MAX_ALLOWED_CORRELATION, DROP_TEMPORAL, DUPLICATE_HEADERS, DROP_UNSTABLE
 
 
-class CorrelationPreprocessor(AbstractPreprocessor):
+class AdvancedPreprocessor(AbstractPreprocessor):
     def __init__(self):
         self.const_feats = None
         self.correlated_feats = None
@@ -48,12 +48,15 @@ class CorrelationPreprocessor(AbstractPreprocessor):
 
         # Drop constant features
         if self.const_feats is None:  # must preprocess normal data first to align infected data to it
-            self.const_feats = CorrelationPreprocessor.get_constant_features(dataset)
+            self.const_feats = AdvancedPreprocessor.get_constant_features(dataset)
         dataset.drop(self.const_feats, inplace=True, axis=1)
+
+        # Drop unstable features
+        dataset.drop(DROP_UNSTABLE, inplace=True, axis=1)
 
         # Drop highly correlated features
         if self.correlated_feats is None:  # must preprocess normal data first to align infected data to it
-            self.correlated_feats = CorrelationPreprocessor.get_highly_correlated_features(dataset)
+            self.correlated_feats = AdvancedPreprocessor.get_highly_correlated_features(dataset)
         dataset.drop(self.correlated_feats, inplace=True, axis=1)
 
         # Reset index

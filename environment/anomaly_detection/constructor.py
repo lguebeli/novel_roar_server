@@ -1,5 +1,5 @@
 from environment.anomaly_detection.simple_preprocessor import SimplePreprocessor
-from environment.anomaly_detection.correlation_preprocessor import CorrelationPreprocessor
+from environment.anomaly_detection.advanced_preprocessor import AdvancedPreprocessor
 from environment.state_handling import get_prototype
 
 PREPROCESSOR = None
@@ -12,7 +12,7 @@ def get_preprocessor():
         if proto in ["1", "2", "99"]:
             PREPROCESSOR = SimplePreprocessor()
         elif proto in ["3", "4", "5", "6", "7", "98"]:
-            PREPROCESSOR = CorrelationPreprocessor()
+            PREPROCESSOR = AdvancedPreprocessor()
         else:
             print("WARNING: Unknown prototype. Falling back to default simple preprocessor!")
             PREPROCESSOR = SimplePreprocessor()

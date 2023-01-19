@@ -19,13 +19,20 @@ CLIENT_IP = "<Client-IP>"
 # ANOMALY DETECTION
 # ==============================
 
-MAX_ALLOWED_CORRELATION = 0.95
+MAX_ALLOWED_CORRELATION = 0.99
 DROP_CONNECTIVITY = ["connectivity"]
 DROP_TEMPORAL = ["time", "timestamp", "seconds"]
 DROP_CONSTANT = ["cpu_ni", "cpu_hi", "tasks_stopped", "alarmtimer:alarmtimer_fired",
                    "alarmtimer:alarmtimer_start", "cachefiles:cachefiles_create",
                    "cachefiles:cachefiles_lookup", "cachefiles:cachefiles_mark_active",
                    "dma_fence:dma_fence_init", "udp:udp_fail_queue_rcv_skb"]
+DROP_UNSTABLE = ["cpu_wa", "mem_free", "mem_used", "mem_cache", "swap_avail", "net_lo_rx", "net_lo_tx", "net_eth_rx",
+                 "net_eth_tx", "cpu_temp", "filemap:mm_filemap_add_to_page_cache", "ipi:ipi_raise",
+                 "jbd2:jbd2_start_commit", "kmem:kfree", "kmem:kmalloc", "kmem:mm_page_alloc_zone_locked",
+                 "kmem:mm_page_pcpu_drain", "net:net_dev_queue", "net:net_dev_xmit", "qdisc:qdisc_dequeue",
+                 "random:mix_pool_bytes_nolock", "rpm:rpm_suspend", "skb:consume_skb", "tcp:tcp_probe",
+                 "timer:timer_start", "workqueue:workqueue_activate_work", "writeback:writeback_pages_written",
+                 "writeback:writeback_written"]
 
 # ==============================
 # C2 SIMULATION
