@@ -29,7 +29,7 @@ class CorrelationPreprocessor(AbstractPreprocessor):
     def get_highly_correlated_features(dataset):
         # https://www.projectpro.io/recipes/drop-out-highly-correlated-features-in-python
         corr_matrix = dataset.corr().abs()
-        upper_tri = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
+        upper_tri = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))  # upper tri excl diagonal
         correlated_feats = [column for column in upper_tri.columns if any(upper_tri[column] > MAX_ALLOWED_CORRELATION)]
         # print("AD CORR:", len(correlated_feats))
         return correlated_feats
