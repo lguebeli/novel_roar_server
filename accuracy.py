@@ -13,7 +13,7 @@ from environment.reward.abstract_reward import AbstractReward
 from environment.settings import EVALUATION_CSV_FOLDER_PATH
 from environment.state_handling import initialize_storage, cleanup_storage, set_prototype, get_num_configs, \
     get_storage_path, set_simulation
-from v7.agent.agent import AgentIdealADSarsa
+from v4.agent.agent import AgentCorpusQLearning
 
 """
 Want to change evaluated prototype?
@@ -148,7 +148,7 @@ def print_accuracy_table(accuracies_overall, accuracies_configs, logs):
 # SETUP
 # ==============================
 total_start = time()
-prototype_description = "p7-10000e=eps0.5decay0.01"
+prototype_description = "p4-10000e=eps0.5decay0.01"
 
 EPSILON = 0.5
 KNOWN_BEST_ACTION = 3
@@ -162,7 +162,7 @@ print("========== PREPARE ENVIRONMENT ==========\nAD evaluation is written to lo
 
 initialize_storage()
 try:
-    set_prototype("7")
+    set_prototype("4")
     set_simulation(True)
     np.random.seed(42)
 
@@ -182,7 +182,9 @@ try:
     print("\n========== MEASURE ACCURACY (INITIAL) ==========")
     logs.append("\n========== MEASURE ACCURACY (INITIAL) ==========")
 
-    agent = AgentIdealADSarsa()
+    agent = AgentCorpusQLearning()
+    print("Evaluating agent {} with settings {}.\n".format(agent, prototype_description))
+    logs.append("Evaluating agent {} with settings {}.\n".format(agent, prototype_description))
     weights1, weights2, bias_weights1, bias_weights2 = agent.initialize_network()
     logs.append("Agent representation")
     logs.append("> weights1: {}".format(weights1.tolist()))
@@ -230,7 +232,7 @@ try:
         repr_dict["epsilon"], repr_dict["learn_rate"], repr_dict["num_input"], repr_dict["num_hidden"],
         repr_dict["num_output"]
     )
-    agent = AgentIdealADSarsa(AgentRepresentation(*representation))
+    agent = AgentCorpusQLearning(AgentRepresentation(*representation))
     final_epsilon = repr_dict["epsilon"]
     weights1, weights2, bias_weights1, bias_weights2 = agent.initialize_network()
     logs.append("Agent representation")
