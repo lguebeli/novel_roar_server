@@ -57,7 +57,6 @@ class ControllerCorpusQLearning(AbstractController):
             summed_reward = 0
 
             steps = 0
-            sim_encryption_time = None
             sim_encryption_progress = 0
             eps_start = time()
 
@@ -98,8 +97,6 @@ class ControllerCorpusQLearning(AbstractController):
                     if not is_simulation():  # cannot send if no socket listening during simulation
                         send_config(config)
                 last_action = selected_action
-                sim_encryption_duration = time() - sim_encryption_time if sim_encryption_time else 0
-                sim_encryption_time = time()
 
                 # receive next FP and compute reward based on FP
                 # log("Wait for FP...")
@@ -117,9 +114,9 @@ class ControllerCorpusQLearning(AbstractController):
                 next_state = AbstractController.transform_fp(next_fp)
                 set_fp_ready(False)
 
-                # compute encryption progress based on elapsed time and reported encryption rate for simulation
+                # compute encryption progress (assume 1s per step) and reported encryption rate for simulation
                 rate = collect_rate()
-                sim_encryption_progress += sim_encryption_duration * rate
+                sim_encryption_progress += rate
 
                 # ==============================
                 # Observe reward for new state
