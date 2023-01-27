@@ -10,7 +10,7 @@ from environment.reward.performance_reward import PerformanceReward
 from environment.settings import MAX_EPISODES_V3, MAX_STEPS_V3
 from environment.state_handling import is_fp_ready, set_fp_ready, is_rw_done, collect_fingerprint, is_simulation, \
     set_rw_done, get_prototype
-from utilities.plots import plot_absolute_results
+from utilities.plots import plot_average_results
 from utilities.simulate import simulate_sending_fp, simulate_sending_rw_done
 
 DEBUG_PRINTING = False
@@ -35,6 +35,7 @@ class ControllerAdvancedQLearning(AbstractController):
 
         all_rewards = []
         all_summed_rewards = []
+        all_avg_rewards = []
         all_num_steps = []
 
         last_q_values = []
@@ -181,10 +182,12 @@ class ControllerAdvancedQLearning(AbstractController):
             num_total_steps += steps
             all_rewards.append(reward_store)
             all_summed_rewards.append(summed_reward)
+            all_avg_rewards.append(summed_reward / steps)  # average reward over episode
             all_num_steps.append(steps)
 
             agent_file = AgentRepresentation.save_agent(weights1, weights2, bias_weights1, bias_weights2,
                                                         epsilon_episode, agent, description)
+            # log("=================================================\n=================================================")
 
         # ========== END OF TRAINING ==========
         all_end = time()
@@ -197,7 +200,8 @@ class ControllerAdvancedQLearning(AbstractController):
         print("- Agent saved:", agent_file)
 
         print("Generating plots...")
-        results_file = plot_absolute_results(all_summed_rewards, all_num_steps, MAX_EPISODES_V3, description)
+        results_file = plot_average_results(all_summed_rewards, all_avg_rewards, all_num_steps, MAX_EPISODES_V3,
+                                            description)
         print("- Plots saved:", results_file)
         return last_q_values, all_rewards
 
