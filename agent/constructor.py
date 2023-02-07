@@ -5,6 +5,7 @@ from v4.agent.agent import AgentCorpusQLearning
 from v5.agent.agent import AgentIdealADQLearning
 from v6.agent.agent import AgentSarsa
 from v7.agent.agent import AgentIdealADSarsa
+from v8.agent.agent import AgentHeWeightsQLearning
 from v98.agent.agent import AgentOneStepEpisodeQLearning
 from v99.agent.agent import AgentBruteForce
 from environment.state_handling import get_prototype
@@ -30,6 +31,8 @@ def get_agent():
             AGENT = AgentSarsa()
         elif proto == "7":
             AGENT = AgentIdealADSarsa()
+        elif proto == "8":
+            AGENT = AgentHeWeightsQLearning()
         elif proto == "98":
             AGENT = AgentOneStepEpisodeQLearning()
         elif proto == "99":

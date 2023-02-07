@@ -11,7 +11,7 @@ def get_preprocessor():
         proto = get_prototype()
         if proto in ["1", "2", "99"]:
             PREPROCESSOR = SimplePreprocessor()
-        elif proto in ["3", "4", "5", "6", "7", "98"]:
+        elif proto in ["3", "4", "5", "6", "7", "8", "98"]:
             PREPROCESSOR = AdvancedPreprocessor()
         else:
             print("WARNING: Unknown prototype. Falling back to default simple preprocessor!")
