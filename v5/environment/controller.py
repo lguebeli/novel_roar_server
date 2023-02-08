@@ -204,9 +204,13 @@ class ControllerIdealADQLearning(AbstractController):
         print("- Agent saved:", agent_file)
 
         print("Generating plots...")
-        results_file = plot_average_results(all_summed_rewards, all_avg_rewards, all_num_steps, MAX_EPISODES_V5,
-                                            description)
-        print("- Plots saved:", results_file)
+        results_plots_file = plot_average_results(all_summed_rewards, all_avg_rewards, all_num_steps, MAX_EPISODES_V5,
+                                                  description)
+        print("- Plots saved:", results_plots_file)
+        results_store_file = AbstractController.save_results_to_file(all_summed_rewards, all_avg_rewards, all_num_steps,
+                                                                     description)
+        print("- Results saved:", results_store_file)
+
         return last_q_values, all_rewards
 
 
