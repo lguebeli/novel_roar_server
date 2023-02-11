@@ -11,7 +11,6 @@ USE_SIMPLE_FP = False
 FP_DIMS = 7 if USE_SIMPLE_FP else 97
 HIDDEN_NEURONS = 10 if USE_SIMPLE_FP else 50
 
-EPSILON = 0.2
 LEARN_RATE = 0.05 if USE_SIMPLE_FP else 0.005
 DISCOUNT_FACTOR = 0.5 if USE_SIMPLE_FP else 0.75
 
@@ -26,7 +25,9 @@ class AgentQLearning(AbstractAgent):
         self.num_hidden = HIDDEN_NEURONS  # Hidden neurons
         self.num_output = num_configs  # Output size
 
-        self.model = ModelQLearning(epsilon=EPSILON, learn_rate=LEARN_RATE, num_configs=num_configs)
+        self.learn_rate = LEARN_RATE  # only used in Agent for storing AgentRepresentation
+
+        self.model = ModelQLearning(learn_rate=LEARN_RATE, num_configs=num_configs)
 
     def __preprocess_fp(self, fp):
         headers = ALL_CSV_HEADERS.split(",")
@@ -69,14 +70,14 @@ class AgentQLearning(AbstractAgent):
 
         return weights1, weights2, bias_weights1, bias_weights2
 
-    def predict(self, weights1, weights2, bias_weights1, bias_weights2, state):
+    def predict(self, weights1, weights2, bias_weights1, bias_weights2, epsilon, state):
         std_fp = AbstractAgent.standardize_fp(state)
         if USE_SIMPLE_FP:
             ready_fp = self.__crop_fp(std_fp)
         else:
             ready_fp = self.__preprocess_fp(std_fp)
         hidden, q_values, selected_action = self.model.forward(weights1, weights2, bias_weights1, bias_weights2,
-                                                               inputs=ready_fp)
+                                                               epsilon, inputs=ready_fp)
         return hidden, q_values, selected_action
 
     def update_weights(self, q_values, error, state, hidden, weights1, weights2, bias_weights1, bias_weights2):
