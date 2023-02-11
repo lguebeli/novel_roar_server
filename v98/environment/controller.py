@@ -6,6 +6,7 @@ from tqdm import tqdm  # add progress bar to episodes
 from agent.abstract_agent import AgentRepresentation
 from api.configurations import map_to_ransomware_configuration, send_config
 from environment.abstract_controller import AbstractController
+from environment.reward.ideal_AD_performance_reward import IdealADPerformanceReward
 from environment.reward.performance_reward import PerformanceReward
 from environment.settings import MAX_EPISODES_V98
 from environment.state_handling import is_fp_ready, set_fp_ready, is_rw_done, collect_fingerprint, is_simulation, \
@@ -14,6 +15,7 @@ from utilities.plots import plot_average_results
 from utilities.simulate import simulate_sending_fp
 
 DEBUG_PRINTING = False
+BASE_ON_IDEAL_AD = True
 
 EPSILON = 0.5
 DECAY_RATE = 0.01
@@ -26,7 +28,7 @@ class ControllerOneStepEpisodeQLearning(AbstractController):
         description = "{}={}".format(start_timestamp, run_info)
         agent_file = None
 
-        reward_system = PerformanceReward(+1000, +0, -20)
+        reward_system = IdealADPerformanceReward(+1000, +0, -20) if BASE_ON_IDEAL_AD else PerformanceReward(+1000, +0, -20)
         weights1, weights2, bias_weights1, bias_weights2 = agent.initialize_network()
 
         # ==============================
@@ -114,7 +116,8 @@ class ControllerOneStepEpisodeQLearning(AbstractController):
                 # ==============================
 
                 log("Computing reward for next FP.")
-                reward, detected = reward_system.compute_reward(next_state, False)  # single step, no corpus, never done
+                reward, detected = reward_system.compute_reward(selected_action if BASE_ON_IDEAL_AD else next_state,
+                                                                False)  # single step, no corpus, never done
                 log("Computed reward", reward)
                 reward_store.append((selected_action, reward))
                 summed_reward += reward
