@@ -40,12 +40,12 @@ def preprocess_fp(fp, fp_features):
 
 
 initialize_storage()
-print("========== PROTOTYPE 1 WITH ORIGINAL FP ==========")
+print("========== PROTOTYPE 1 WITH SIMPLE PREPROCESSOR ==========")
 set_prototype("1")
 AbstractReward.prepare_reward_computation()
 reset_preprocessor()
-print("\n========== PROTOTYPE 4 WITH SHORTENED FP ==========")
-set_prototype("4")
+print("\n========== PROTOTYPE 3 WITH ADVANCED PREPROCESSOR ==========")
+set_prototype("3")
 AbstractReward.prepare_reward_computation()
 
 print("\n========== EVALUATE COLLECTED FP ==========")
