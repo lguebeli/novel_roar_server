@@ -30,7 +30,7 @@ def __exp_moving_average(data, alpha):
 
 def __plot_combined_results(rewards, ema_rewards, num_steps, description):
     fig, ax1 = plt.subplots(1, 1)  # 1 rows for subplots, 1 column
-    fig.set_size_inches(4, 8)  # width/height in inches
+    fig.set_size_inches(10, 3)  # width/height in inches
     fig.set_tight_layout(tight=True)
 
     # ==============================
