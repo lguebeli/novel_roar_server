@@ -51,10 +51,10 @@ class AbstractController(ABC):
     @staticmethod
     def save_results_to_file(all_summed_rewards, all_avg_rewards, all_num_steps, run_description):
         results_content = "\n".join(["{",
-                                     '"summed_rewards": {}'.format(all_summed_rewards),
-                                     '"avg_rewards": {}'.format(all_avg_rewards),
+                                     '"summed_rewards": {},'.format(all_summed_rewards),
+                                     '"avg_rewards": {},'.format(all_avg_rewards),
                                      '"num_steps": {}'.format(all_num_steps),
-                                     "}"])
+                                     "}\n"])
         results_file = os.path.join(get_storage_path(), "results-store={}.txt".format(run_description))
         with open(results_file, "w") as file:
             file.write(results_content)
