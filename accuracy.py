@@ -13,13 +13,13 @@ from environment.reward.abstract_reward import AbstractReward
 from environment.settings import EVALUATION_CSV_FOLDER_PATH
 from environment.state_handling import initialize_storage, cleanup_storage, set_prototype, get_num_configs, \
     get_storage_path, set_simulation
-from v4.agent.agent import AgentCorpusQLearning
+from v8.agent.agent import AgentOptimized
 
 """
 Want to change evaluated prototype?
 1) adjust initial EPSILON (setup) to the one used in evaluated prototype (usually in controller)
 2) adjust the known best action (setup) if necessary (depending on AD and reward system)
-3) adjust the filename of the logfile (setup) to match the prototype settings (in controller/agent)
+3) adjust the filename of the logfile (setup) to match the prototype settings (in controller/agent/model)
 4) set prototype to evaluated prototype number in setup below (start of try-block)
 5) adjust the import for the agent and its usages below (instantiations for initial and trained)
 """
@@ -148,9 +148,9 @@ def print_accuracy_table(accuracies_overall, accuracies_configs, logs):
 # SETUP
 # ==============================
 total_start = time()
-prototype_description = "p4-10000e=eps0.5decay0.01"
+prototype_description = "p8-10000e=e0.4d.01a0.0050y0.10=Log-SiLU=h40=weights-he"
 
-EPSILON = 0.5
+EPSILON = 0.4
 KNOWN_BEST_ACTION = 3
 
 log_file = os.path.join(os.path.curdir, "storage",
@@ -162,7 +162,7 @@ print("========== PREPARE ENVIRONMENT ==========\nAD evaluation is written to lo
 
 initialize_storage()
 try:
-    set_prototype("4")
+    set_prototype("8")
     set_simulation(True)
     np.random.seed(42)
 
@@ -182,7 +182,7 @@ try:
     print("\n========== MEASURE ACCURACY (INITIAL) ==========")
     logs.append("\n========== MEASURE ACCURACY (INITIAL) ==========")
 
-    agent = AgentCorpusQLearning()
+    agent = AgentOptimized()
     print("Evaluating agent {} with settings {}.\n".format(agent, prototype_description))
     logs.append("Evaluating agent {} with settings {}.\n".format(agent, prototype_description))
     weights1, weights2, bias_weights1, bias_weights2 = agent.initialize_network()
@@ -232,7 +232,7 @@ try:
         repr_dict["epsilon"], repr_dict["learn_rate"], repr_dict["num_input"], repr_dict["num_hidden"],
         repr_dict["num_output"]
     )
-    agent = AgentCorpusQLearning(AgentRepresentation(*representation))
+    agent = AgentOptimized(AgentRepresentation(*representation))
     final_epsilon = repr_dict["epsilon"]
     weights1, weights2, bias_weights1, bias_weights2 = agent.initialize_network()
     logs.append("Agent representation")

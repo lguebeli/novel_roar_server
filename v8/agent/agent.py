@@ -8,13 +8,13 @@ from agent.abstract_agent import AbstractAgent, AgentRepresentation
 from environment.anomaly_detection.constructor import get_preprocessor
 from environment.settings import ALL_CSV_HEADERS, TRAINING_CSV_FOLDER_PATH
 from environment.state_handling import get_num_configs
-from v8.agent.model import ModelHeWeightsQLearning
+from v8.agent.model import ModelOptimized
 
-LEARN_RATE = 0.0005
-DISCOUNT_FACTOR = 0.75
+LEARN_RATE = 0.0050
+DISCOUNT_FACTOR = 0.10
 
 
-class AgentHeWeightsQLearning(AbstractAgent):
+class AgentOptimized(AbstractAgent):
     def __init__(self, representation=None):
         self.representation = representation
         if isinstance(representation, AgentRepresentation):  # build from representation
@@ -25,7 +25,7 @@ class AgentHeWeightsQLearning(AbstractAgent):
 
             self.learn_rate = representation.learn_rate
             self.fp_features = self.__get_fp_features()
-            self.model = ModelHeWeightsQLearning(learn_rate=self.learn_rate, num_configs=self.num_output)
+            self.model = ModelOptimized(learn_rate=self.learn_rate, num_configs=self.num_output)
         else:  # init from scratch
             num_configs = get_num_configs()
             self.actions = list(range(num_configs))
@@ -33,11 +33,11 @@ class AgentHeWeightsQLearning(AbstractAgent):
             self.fp_features = self.__get_fp_features()
 
             self.num_input = len(self.fp_features)  # Input size
-            self.num_hidden = math.ceil(self.num_input / 2 / 10) * 10  # Hidden neurons, next 10 from half input size
+            self.num_hidden = round(self.num_input * 0.8 / 5) * 5  # Hidden neurons, round 80 % to 5
             self.num_output = num_configs  # Output size
 
             self.learn_rate = LEARN_RATE
-            self.model = ModelHeWeightsQLearning(learn_rate=self.learn_rate, num_configs=num_configs)
+            self.model = ModelOptimized(learn_rate=self.learn_rate, num_configs=num_configs)
 
     def __get_fp_features(self):
         df_normal = pd.read_csv(os.path.join(TRAINING_CSV_FOLDER_PATH, "normal-behavior.csv"))
@@ -60,10 +60,19 @@ class AgentHeWeightsQLearning(AbstractAgent):
             bias_weights2 = np.asarray(self.representation.bias_weights2)
         else:  # init from scratch
             # He weight initialization
-            weights1 = np.random.uniform(-1 / np.sqrt(self.num_input), +1 / np.sqrt(self.num_input),
-                                         (self.num_input, self.num_hidden))
-            weights2 = np.random.uniform(-1 / np.sqrt(self.num_hidden), +1 / np.sqrt(self.num_hidden),
-                                         (self.num_hidden, self.num_output))
+            # number of nodes in the previous layer
+            n1 = self.num_input
+            n2 = self.num_hidden
+            n3 = self.num_output
+            # calculate the range for the weights
+            std1 = math.sqrt(2.0 / n1)
+            std2 = math.sqrt(2.0 / n2)
+            # generate random numbers
+            numbers1 = np.random.randn(n1, n2)
+            numbers2 = np.random.randn(n2, n3)
+            # scale to the desired range
+            weights1 = numbers1 * std1
+            weights2 = numbers2 * std2
 
             bias_weights1 = np.zeros((self.num_hidden, 1))
             bias_weights2 = np.zeros((self.num_output, 1))

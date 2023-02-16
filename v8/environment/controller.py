@@ -15,11 +15,11 @@ from utilities.simulate import simulate_sending_fp, simulate_sending_rw_done
 
 DEBUG_PRINTING = False
 
-EPSILON = 0.1
+EPSILON = 0.4
 DECAY_RATE = 0.01
 
 
-class ControllerHeWeightsQLearning(AbstractController):
+class ControllerOptimized(AbstractController):
     def loop_episodes(self, agent):
         start_timestamp = datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
         run_info = "p{}-{}e-{}s".format(get_prototype(), MAX_EPISODES_V8, SIM_CORPUS_SIZE_V8)

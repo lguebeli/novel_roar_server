@@ -1,7 +1,7 @@
 import numpy as np
 
 
-class ModelHeWeightsQLearning(object):
+class ModelOptimized(object):
     def __init__(self, learn_rate, num_configs):
         # Initialize hyperparams
         self.learn_rate = learn_rate
@@ -25,9 +25,9 @@ class ModelHeWeightsQLearning(object):
         # print("MODEL: ad1 dot", np.dot(weights1.T, inputs))
         # print("MODEL: ad1 min/max", adaline1.shape, np.min(adaline1), np.argmin(adaline1), np.max(adaline1), np.argmax(adaline1))
 
-        # hidden1 = 1 / (1 + np.exp(-adaline1))  # logistic activation
+        hidden1 = 1 / (1 + np.exp(-adaline1))  # logistic activation
         # hidden1 = adaline1 * (adaline1 > 0)  # h2, ReLU activation, x if a > 0 else 0
-        hidden1 = adaline1 / (1 + np.exp(-adaline1))  # h2, SiLU activation, x*sig(x) = x/(1+e^-x)
+        # hidden1 = adaline1 / (1 + np.exp(-adaline1))  # h2, SiLU activation, x*sig(x) = x/(1+e^-x)
 
         # print("MODEL: hidden1 min/max", hidden1.shape, np.min(hidden1), np.argmin(hidden1), np.max(hidden1), np.argmax(hidden1))
         # print("MODEL: w2", weights2.shape, weights2)
@@ -82,9 +82,9 @@ class ModelHeWeightsQLearning(object):
         # print("MODEL back: dw2", delta_weights2.shape, delta_weights2)
         # print("MODEL back: dw2 min/max", delta_weights2.shape, np.min(delta_weights2), np.argmin(delta_weights2), np.max(delta_weights2), np.argmax(delta_weights2))
 
-        delta1 = 1 / (1 + np.exp(-hidden)) * (1 + hidden*(1 - (1 / (1 + np.exp(-hidden))))) * np.dot(weights2, delta2)  # derivative SiLU: sig(x) * (1 + x(1 - sig(x)))
+        # delta1 = 1 / (1 + np.exp(-hidden)) * (1 + hidden*(1 - (1 / (1 + np.exp(-hidden))))) * np.dot(weights2, delta2)  # derivative SiLU: sig(x) * (1 + x(1 - sig(x)))
         # delta1 = (hidden > 0) * np.dot(weights2, delta2)  # derivative ReLU: 1 if q > 0 else 0
-        # delta1 = hidden * (1 - hidden) * np.dot(weights2, delta2)  # derivative logistic: f(x) * (1 - f(x))
+        delta1 = hidden * (1 - hidden) * np.dot(weights2, delta2)  # derivative logistic: f(x) * (1 - f(x))
 
         delta_weights1 = np.outer(inputs, delta1)
         # print("MODEL back: d1", delta1.shape, delta1)
