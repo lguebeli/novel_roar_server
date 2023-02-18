@@ -148,7 +148,7 @@ def print_accuracy_table(accuracies_overall, accuracies_configs, logs):
 # SETUP
 # ==============================
 total_start = time()
-prototype_description = "p8-10000e=e0.4d.01a0.0050y0.10=Log-SiLU=h40=weights-he"
+prototype_description = "p8-10000e=e0.4d0.01a0.0050y0.10=Log-SiLU=h40=weights-he"
 
 EPSILON = 0.4
 KNOWN_BEST_ACTION = 3

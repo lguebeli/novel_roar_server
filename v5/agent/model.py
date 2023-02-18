@@ -26,8 +26,8 @@ class ModelIdealADQLearning(object):
         # print("MODEL: ad1 min/max", adaline1.shape, np.min(adaline1), np.argmin(adaline1), np.max(adaline1), np.argmax(adaline1))
 
         hidden1 = 1 / (1 + np.exp(-adaline1))  # logistic activation
-        # hidden1 = adaline1 * (adaline1 > 0)  # h2, ReLU activation, x if a > 0 else 0
-        # hidden1 = adaline1 / (1 + np.exp(-adaline1))  # h2, SiLU activation, x*sig(x) = x/(1+e^-x)
+        # hidden1 = adaline1 * (adaline1 > 0)  # ReLU activation, x if a > 0 else 0
+        # hidden1 = adaline1 / (1 + np.exp(-adaline1))  # SiLU activation, x*sig(x) = x/(1+e^-x)
 
         # print("MODEL: hidden1 min/max", hidden1.shape, np.min(hidden1), np.argmin(hidden1), np.max(hidden1), np.argmax(hidden1))
         # print("MODEL: w2", weights2.shape, weights2)
@@ -38,7 +38,7 @@ class ModelIdealADQLearning(object):
         # print("MODEL: ad2 dot", np.dot(weights2.T, hidden1))
         # print("MODEL: ad2 min/max", adaline2.shape, np.min(adaline2), np.argmin(adaline2), np.max(adaline2), np.argmax(adaline2))
 
-        # q = 1 / (1 + np.exp(-adaline2))  # logistic activation
+        # q = 1 / (1 + np.exp(-adaline2))  # h2, logistic activation
         # q = adaline2 * (adaline2 > 0)  # h2, ReLU activation, x if a > 0 else 0
         q = adaline2 / (1 + np.exp(-adaline2))  # h2, SiLU activation, x*sig(x) = x/(1+e^-x)
 
