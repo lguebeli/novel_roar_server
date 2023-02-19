@@ -24,15 +24,17 @@ class ModelIdealADSarsa(object):
         adaline1 = np.dot(weights1.T, inputs) + bias_weights1
         # print("MODEL: ad1 dot", np.dot(weights1.T, inputs))
         # print("MODEL: ad1 min/max", adaline1.shape, np.min(adaline1), np.argmin(adaline1), np.max(adaline1), np.argmax(adaline1))
-        hidden1 = 1 / (1 + np.exp(-adaline1))  # logistic activation
-        # print("MODEL: hidden1 min/max", hidden1.shape, np.min(hidden1), np.argmin(hidden1), np.max(hidden1), np.argmax(hidden1))
 
+        hidden1 = 1 / (1 + np.exp(-adaline1))  # logistic activation
+
+        # print("MODEL: hidden1 min/max", hidden1.shape, np.min(hidden1), np.argmin(hidden1), np.max(hidden1), np.argmax(hidden1))
         # print("MODEL: w2", weights2.shape, weights2)
         # print("MODEL: w2 min/max", weights2.shape, np.min(weights2), np.argmin(weights2), np.max(weights2), np.argmax(weights2))
         # print("MODEL: bw2 min/max", bias_weights2.shape, np.min(bias_weights2), np.argmin(bias_weights2), np.max(bias_weights2), np.argmax(bias_weights2))
         adaline2 = np.dot(weights2.T, hidden1) + bias_weights2
         # print("MODEL: ad2 dot", np.dot(weights2.T, hidden1))
         # print("MODEL: ad2 min/max", adaline2.shape, np.min(adaline2), np.argmin(adaline2), np.max(adaline2), np.argmax(adaline2))
+
         # q = adaline2 * (adaline2 > 0)  # h2, ReLU activation, x if a > 0 else 0
         q = adaline2 / (1 + np.exp(-adaline2))  # h2, SiLU activation, x*sig(x) = x/(1+e^-x)
 
@@ -65,9 +67,10 @@ class ModelIdealADSarsa(object):
         # ==============================
 
         # print("MODEL back: inputs err", inputs.shape, q_err.shape, inputs.T, q_err.T, sep="\n")
-        delta2 = 1 / (1 + np.exp(-q)) * (
-                    1 + q * (1 - (1 / (1 + np.exp(-q))))) * q_err  # derivative SiLU: sig(q) * (1 + q(1 - sig(q)))
+
+        delta2 = 1 / (1 + np.exp(-q)) * (1 + q * (1 - (1 / (1 + np.exp(-q))))) * q_err  # derivative SiLU: sig(q) * (1 + q(1 - sig(q)))
         # delta2 = (q > 0) * q_err  # derivative ReLU: 1 if q > 0 else 0
+
         delta_weights2 = np.outer(hidden, delta2.T)
         # print("MODEL back: d2", delta2.shape, delta2)
         # print("MODEL back: d2 min/max", delta2.shape, np.min(delta2), np.argmin(delta2), np.max(delta2), np.argmax(delta2))
@@ -75,6 +78,7 @@ class ModelIdealADSarsa(object):
         # print("MODEL back: dw2 min/max", delta_weights2.shape, np.min(delta_weights2), np.argmin(delta_weights2), np.max(delta_weights2), np.argmax(delta_weights2))
 
         delta1 = hidden * (1 - hidden) * np.dot(weights2, delta2)  # derivative logistic: f(x) * (1 - f(x))
+
         delta_weights1 = np.outer(inputs, delta1)
         # print("MODEL back: d1", delta1.shape, delta1)
         # print("MODEL back: d1 min/max", delta1.shape, np.min(delta1), np.argmin(delta1), np.max(delta1), np.argmax(delta1))

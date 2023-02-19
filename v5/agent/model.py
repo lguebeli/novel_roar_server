@@ -33,7 +33,6 @@ class ModelIdealADQLearning(object):
         # print("MODEL: w2", weights2.shape, weights2)
         # print("MODEL: w2 min/max", weights2.shape, np.min(weights2), np.argmin(weights2), np.max(weights2), np.argmax(weights2))
         # print("MODEL: bw2 min/max", bias_weights2.shape, np.min(bias_weights2), np.argmin(bias_weights2), np.max(bias_weights2), np.argmax(bias_weights2))
-
         adaline2 = np.dot(weights2.T, hidden1) + bias_weights2
         # print("MODEL: ad2 dot", np.dot(weights2.T, hidden1))
         # print("MODEL: ad2 min/max", adaline2.shape, np.min(adaline2), np.argmin(adaline2), np.max(adaline2), np.argmax(adaline2))
