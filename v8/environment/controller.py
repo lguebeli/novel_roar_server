@@ -191,7 +191,7 @@ class ControllerOptimized(AbstractController):
 
             agent_file = AgentRepresentation.save_agent(weights1, weights2, bias_weights1, bias_weights2,
                                                         epsilon_episode, agent, description)
-            # log("=================================================\n=================================================")
+            log("=================================================\n=================================================")
 
         # ========== END OF TRAINING ==========
         all_end = time()
