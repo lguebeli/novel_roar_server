@@ -6,11 +6,11 @@ from environment.settings import CLIENT_IP
 from environment.state_handling import get_num_configs
 
 
-def send_config(config):
+def send_config(num_config, config):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.connect((CLIENT_IP, 42666))
         sock.send(bytes(json.dumps(config), encoding="utf-8"))
-        print("Sent config", config)
+        print("Sent config", num_config, config)
 
 
 def map_to_ransomware_configuration(action):

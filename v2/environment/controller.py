@@ -74,7 +74,7 @@ class ControllerQLearning(AbstractController):
                 # print("Sending new action {} to client.".format(selected_action))
                 config = map_to_ransomware_configuration(selected_action)
                 if not is_simulation():  # cannot send if no socket listening during simulation
-                    send_config(config)
+                    send_config(selected_action, config)
             last_action = selected_action
 
             sim_step += 1
