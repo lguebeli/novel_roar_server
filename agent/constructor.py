@@ -41,3 +41,34 @@ def get_agent():
             print("WARNING: Falling back to default agent v1!")
             AGENT = AgentManual()
     return AGENT
+
+
+def build_agent_from_repr(representation):
+    proto = get_prototype()
+    if proto == "1":
+        print("WARNING: Agent v1 does not support building from representation! Returning fresh agent instance...")
+        AGENT = AgentManual()
+    elif proto == "2":
+        print("WARNING: Agent v2 does not support building from representation! Returning fresh agent instance...")
+        AGENT = AgentQLearning()
+    elif proto == "3":
+        AGENT = AgentAdvancedQLearning(representation)
+    elif proto == "4":
+        AGENT = AgentCorpusQLearning(representation)
+    elif proto == "5":
+        AGENT = AgentIdealADQLearning(representation)
+    elif proto == "6":
+        AGENT = AgentSarsa(representation)
+    elif proto == "7":
+        AGENT = AgentIdealADSarsa(representation)
+    elif proto == "8":
+        AGENT = AgentOptimized(representation)
+    elif proto == "98":
+        AGENT = AgentOneStepEpisodeQLearning(representation)
+    elif proto == "99":
+        print("WARNING: Agent v99 does not support building from representation! Returning fresh agent instance...")
+        AGENT = AgentBruteForce()
+    else:
+        print("WARNING: Falling back to default agent v1!")
+        AGENT = AgentManual()
+    return AGENT

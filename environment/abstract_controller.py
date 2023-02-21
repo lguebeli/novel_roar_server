@@ -1,12 +1,15 @@
+import json
 import os
 from abc import ABC, abstractmethod
 from time import sleep
 
 import numpy as np
 
-from agent.constructor import get_agent
+from agent.agent_representation import AgentRepresentation
+from agent.constructor import get_agent, build_agent_from_repr
 from environment.reward.abstract_reward import AbstractReward
-from environment.state_handling import is_api_running, is_simulation, get_prototype, get_storage_path
+from environment.state_handling import is_api_running, is_simulation, get_prototype, get_storage_path,\
+    get_agent_representation_path
 
 WAIT_FOR_CONFIRM = False
 
@@ -26,7 +29,22 @@ class AbstractController(ABC):
         # Initialize random seed for reproducibility
         np.random.seed(42)
 
-        agent = get_agent()
+        representation_path = get_agent_representation_path()
+        if isinstance(representation_path, str) and len(representation_path) > 0:
+            print("Verified agent representation path:", representation_path)
+            with open(representation_path, "r") as agent_file:
+                repr_dict = json.load(agent_file)
+            representation = AgentRepresentation(repr_dict["weights1"], repr_dict["weights2"],
+                                                 repr_dict["bias_weights1"], repr_dict["bias_weights2"],
+                                                 repr_dict["epsilon"], repr_dict["learn_rate"],
+                                                 repr_dict["num_input"], repr_dict["num_hidden"],
+                                                 repr_dict["num_output"])
+            print("Building agent from representation.")
+            agent = build_agent_from_repr(representation)
+            print("------------------------------")
+        else:
+            agent = get_agent()
+
         q_values, rewards = self.loop_episodes(agent)
         if int(get_prototype()) > 1:
             print("==============================", "Rewards:", rewards, "\nFinal Q-Values:", q_values, sep="\n")

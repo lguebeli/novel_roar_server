@@ -5,7 +5,8 @@ from time import sleep
 from api import create_app
 from environment.constructor import get_controller
 from environment.state_handling import get_instance_number, setup_child_instance, initialize_storage, cleanup_storage,\
-    is_multi_fp_collection, set_multi_fp_collection, is_simulation, set_simulation, set_api_running, set_prototype
+    is_multi_fp_collection, set_multi_fp_collection, is_simulation, set_simulation, set_api_running, set_prototype,\
+    set_agent_representation_path
 
 
 def parse_args():
@@ -17,6 +18,10 @@ def parse_args():
     parser.add_argument('-p', '--proto',
                         help='Prototype selection.',
                         default=0,
+                        action="store")
+    parser.add_argument('-r', '--representation',
+                        help='Absolute path to agent representation file.',
+                        default="",
                         action="store")
     parser.add_argument('-s', '--simulation',
                         help='Indicator for simulation of sensor behavior.',
@@ -55,6 +60,8 @@ if __name__ == "__main__":
         set_prototype(proto)
         simulated = args.simulation
         set_simulation(simulated)
+        agent_repr = args.representation
+        set_agent_representation_path(agent_repr)
 
         # Start API listener
         if not is_simulation():

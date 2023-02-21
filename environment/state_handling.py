@@ -44,6 +44,14 @@ def collect_rate():
     return rate
 
 
+def set_agent_representation_path(path):
+    __set_value("AGENT_REPR", path)
+
+
+def get_agent_representation_path():
+    return __query_key("AGENT_REPR")
+
+
 # ==============================
 # ORCHESTRATION
 # ==============================
@@ -105,6 +113,7 @@ def initialize_storage():
     db.insert({"key": "PROTOTYPE", "value": 0})
     db.insert({"key": "SIMULATION", "value": False})
     db.insert({"key": "API", "value": False})
+    db.insert({"key": "AGENT_REPR", "value": ""})
 
 
 def cleanup_storage():
