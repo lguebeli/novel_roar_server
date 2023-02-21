@@ -1,3 +1,5 @@
+from agent.agent_representation import AgentRepresentation
+from environment.state_handling import get_prototype
 from v1.agent.agent import AgentManual
 from v2.agent.agent import AgentQLearning
 from v3.agent.agent import AgentAdvancedQLearning
@@ -8,7 +10,6 @@ from v7.agent.agent import AgentIdealADSarsa
 from v8.agent.agent import AgentOptimized
 from v98.agent.agent import AgentOneStepEpisodeQLearning
 from v99.agent.agent import AgentBruteForce
-from environment.state_handling import get_prototype
 
 AGENT = None
 
@@ -44,6 +45,7 @@ def get_agent():
 
 
 def build_agent_from_repr(representation):
+    assert isinstance(representation, AgentRepresentation)
     proto = get_prototype()
     if proto == "1":
         print("WARNING: Agent v1 does not support building from representation! Returning fresh agent instance...")

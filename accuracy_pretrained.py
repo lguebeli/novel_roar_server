@@ -8,7 +8,7 @@ import numpy as np
 from tqdm import tqdm
 
 from agent.agent_representation import AgentRepresentation
-from agent.constructor import get_agent, build_agent_from_repr
+from agent.constructor import build_agent_from_repr
 from environment.constructor import get_controller
 from environment.reward.abstract_reward import AbstractReward
 from environment.settings import EVALUATION_CSV_FOLDER_PATH
@@ -147,7 +147,9 @@ def print_accuracy_table(accuracies_overall, accuracies_configs, logs):
 # SETUP
 # ==============================
 total_start = time()
-prototype_description = "p8-10000e=e0.4d0.01a0.0050y0.10=Log-SiLU=h40=weights-he"
+# repr_path = "<absolute-path-to-agent-representation>"
+repr_path = "C:/dev/master-thesis/roar_server/storage/agent=2023-02-21--14-59-39=p8-20e-4000s.json"
+prototype_description = "p8-20e=e0.4d0.01a0.0050y0.10=Log-SiLU=h40=weights-he"
 
 EPSILON = 0.4
 KNOWN_BEST_ACTION = 3
@@ -175,17 +177,24 @@ try:
             AbstractReward.prepare_reward_computation()
 
     # ==============================
-    # EVAL UNTRAINED AGENT
+    # EVAL PRETRAINED AGENT
     # ==============================
 
-    print("\n========== MEASURE ACCURACY (INITIAL) ==========")
-    logs.append("\n========== MEASURE ACCURACY (INITIAL) ==========")
+    print("\n========== BUILD PRE-TRAINED AGENT FROM REPRESENTATION ==========")
+    logs.append("\n========== BUILD PRE-TRAINED AGENT FROM REPRESENTATION ==========")
 
-    agent = get_agent()
-    print("Evaluating agent {} with settings {}.\n".format(agent, prototype_description))
-    logs.append("Evaluating agent {} with settings {}.\n".format(agent, prototype_description))
+    print("Provided representation path:", repr_path)
+    logs.append("Provided representation path: {}".format(repr_path))
+    with open(repr_path, "r") as agent_file:
+        repr_dict = json.load(agent_file)
+    representation = (
+        repr_dict["weights1"], repr_dict["weights2"], repr_dict["bias_weights1"], repr_dict["bias_weights2"],
+        repr_dict["epsilon"], repr_dict["learn_rate"], repr_dict["num_input"], repr_dict["num_hidden"],
+        repr_dict["num_output"]
+    )
+    agent = build_agent_from_repr(AgentRepresentation(*representation))
     weights1, weights2, bias_weights1, bias_weights2 = agent.initialize_network()
-    logs.append("Agent representation")
+    logs.append("Pretrained agent representation")
     logs.append("> prototype: {}".format(agent))
     logs.append("> weights1: {}".format(weights1.tolist()))
     logs.append("> weights2: {}".format(weights2.tolist()))
@@ -193,6 +202,12 @@ try:
     logs.append("> bias_weights2: {}".format(bias_weights2.tolist()))
     logs.append("> epsilon: {}, learn_rate: {}, num_input: {}, num_hidden: {}, num_output: {}".format(
         EPSILON, agent.learn_rate, agent.num_input, agent.num_hidden, agent.num_output))
+
+    print("\n========== MEASURE ACCURACY (INITIAL) ==========")
+    logs.append("\n========== MEASURE ACCURACY (INITIAL) ==========")
+
+    print("Evaluating agent {} with settings {}.\n".format(agent, prototype_description))
+    logs.append("Evaluating agent {} with settings {}.\n".format(agent, prototype_description))
 
     start = time()
     accuracies_initial_overall, accuracies_initial_configs = evaluate_agent(agent, weights1, weights2, bias_weights1,
@@ -219,7 +234,7 @@ try:
                                                            "%.1f" % (training_duration / 60)))
 
     # ==============================
-    # EVAL TRAINED AGENT
+    # EVAL AGENT AFTER NEW TRAINING
     # ==============================
 
     print("\n========== MEASURE ACCURACY (TRAINED) ==========")
@@ -235,7 +250,7 @@ try:
     agent = build_agent_from_repr(AgentRepresentation(*representation))
     final_epsilon = repr_dict["epsilon"]
     weights1, weights2, bias_weights1, bias_weights2 = agent.initialize_network()
-    logs.append("Agent representation")
+    logs.append("Post-trained agent representation")
     logs.append("> prototype: {}".format(agent))
     logs.append("> weights1: {}".format(weights1.tolist()))
     logs.append("> weights2: {}".format(weights2.tolist()))
