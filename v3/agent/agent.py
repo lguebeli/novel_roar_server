@@ -4,7 +4,8 @@ import os
 import numpy as np
 import pandas as pd
 
-from agent.abstract_agent import AbstractAgent, AgentRepresentation
+from agent.abstract_agent import AbstractAgent
+from agent.agent_representation import AgentRepresentation
 from environment.anomaly_detection.constructor import get_preprocessor
 from environment.settings import ALL_CSV_HEADERS, TRAINING_CSV_FOLDER_PATH
 from environment.state_handling import get_num_configs

@@ -3,7 +3,7 @@ from time import sleep, time
 
 from tqdm import tqdm  # add progress bar to episodes
 
-from agent.abstract_agent import AgentRepresentation
+from agent.agent_representation import AgentRepresentation
 from api.configurations import map_to_ransomware_configuration, send_config
 from environment.abstract_controller import AbstractController
 from environment.reward.ideal_AD_performance_reward import IdealADPerformanceReward

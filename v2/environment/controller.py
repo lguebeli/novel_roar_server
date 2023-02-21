@@ -1,7 +1,7 @@
 from time import sleep, time
 from datetime import datetime
 
-from agent.abstract_agent import AgentRepresentation
+from agent.agent_representation import AgentRepresentation
 from api.configurations import map_to_ransomware_configuration, send_config
 from environment.abstract_controller import AbstractController
 from environment.reward.standard_reward import StandardReward

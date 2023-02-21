@@ -7,7 +7,7 @@ from time import time
 import numpy as np
 from tqdm import tqdm
 
-from agent.abstract_agent import AgentRepresentation
+from agent.agent_representation import AgentRepresentation
 from environment.constructor import get_controller
 from environment.reward.abstract_reward import AbstractReward
 from environment.settings import EVALUATION_CSV_FOLDER_PATH
