@@ -1,4 +1,5 @@
 import os
+from threading import Lock
 
 from tinydb import TinyDB, Query
 from tinydb.operations import set
@@ -119,11 +120,14 @@ def initialize_storage():
 def cleanup_storage():
     storage_file, _ = __get_storage_file_path()
     files = [storage_file, get_fp_file_path(), get_rate_file_path()]
-    for file in files:
-        if os.path.exists(file):
-            os.remove(file)
-    global INSTANCE_NUMBER
-    INSTANCE_NUMBER = None
+
+    lock = Lock()
+    with lock:
+        for file in files:
+            if os.path.exists(file):
+                os.remove(file)
+        global INSTANCE_NUMBER
+        INSTANCE_NUMBER = None
 
 
 def get_storage_path():
@@ -132,15 +136,15 @@ def get_storage_path():
 
 
 def get_fp_file_path():
-    if not INSTANCE_NUMBER:
+    if not get_instance_number():
         raise RuntimeError("Execution instance unknown! Must initialize storage first.")
-    return os.path.join(get_storage_path(), "fp-{}.txt".format(INSTANCE_NUMBER))
+    return os.path.join(get_storage_path(), "fp-{}.txt".format(get_instance_number()))
 
 
 def get_rate_file_path():
-    if not INSTANCE_NUMBER:
+    if not get_instance_number():
         raise RuntimeError("Execution instance unknown! Must initialize storage first.")
-    return os.path.join(get_storage_path(), "rate-{}.txt".format(INSTANCE_NUMBER))
+    return os.path.join(get_storage_path(), "rate-{}.txt".format(get_instance_number()))
 
 
 def __get_storage():
@@ -155,10 +159,10 @@ def __prepare_storage_file():
 
 
 def __get_storage_file_path():
-    if not INSTANCE_NUMBER:
+    if not get_instance_number():
         raise RuntimeError("Execution instance unknown! Must initialize storage first.")
     storage_folder = os.path.join(os.path.abspath(os.path.curdir), STORAGE_FOLDER_NAME)
-    storage_file = os.path.join(storage_folder, "storage-{}.json".format(INSTANCE_NUMBER))
+    storage_file = os.path.join(storage_folder, "storage-{}.json".format(get_instance_number()))
     return storage_file, storage_folder
 
 
@@ -182,12 +186,41 @@ def __determine_instance():
 
 
 def __query_key(key):
-    flag = __get_storage().get(Query().key == str(key))
+    # print("Query", key)
+    flag = None
+    lock = Lock()
+    with lock:
+        max_retries = 3
+        # FIXME: solve race condition by properly implementing file lock;
+        #  Currently, concurrent read and write operations sometimes lead to improper JSON format
+        #  Solved as of now by just re-reading the file
+        for i in range(max_retries):  # retry concurrent read at most 3 time
+            success = False
+            try:
+                flag = __get_storage().get(Query().key == str(key))
+                success = True
+            except Exception as e:
+                print("ERROR GETTING STORAGE OF", key, e)
+                storage_path, _ = __get_storage_file_path()
+                with open(storage_path, "r") as st_f:
+                    content = st_f.read()
+                print("STORAGE CONTENT:", repr(content))
+                if content.endswith('"}}}}'):
+                    with open(storage_path, "w") as st_f:
+                        st_f.write(content[-1])
+                if i >= max_retries:
+                    raise e
+            if success:
+                break
+
     assert flag is not None
     # print("{} is {}".format(key, flag["value"]))
     return flag["value"]
 
 
 def __set_value(key, value):
-    __get_storage().update(set("value", value), Query().key == str(key))
+    lock = Lock()
+    with lock:
+        # print("Setting", key, "to", value)
+        __get_storage().update(set("value", value), Query().key == str(key))
     # print("Set {} to {}".format(key, value))

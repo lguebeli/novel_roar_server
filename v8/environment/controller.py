@@ -5,6 +5,7 @@ from tqdm import tqdm  # add progress bar to episodes
 
 from agent.agent_representation import AgentRepresentation
 from api.configurations import map_to_ransomware_configuration, send_config
+from api.ransomware import send_reset_corpus, send_terminate
 from environment.abstract_controller import AbstractController
 from environment.reward.ideal_AD_performance_reward import IdealADPerformanceReward
 from environment.settings import MAX_EPISODES_V8, SIM_CORPUS_SIZE_V8
@@ -25,6 +26,7 @@ class ControllerOptimized(AbstractController):
         run_info = "p{}-{}e-{}s".format(get_prototype(), MAX_EPISODES_V8, SIM_CORPUS_SIZE_V8)
         description = "{}={}".format(start_timestamp, run_info)
         agent_file = None
+        simulated = is_simulation()
 
         reward_system = IdealADPerformanceReward(+1000, +0, -20)
         weights1, weights2, bias_weights1, bias_weights2 = agent.initialize_network()
@@ -61,17 +63,17 @@ class ControllerOptimized(AbstractController):
             eps_start = time()
 
             # accept initial FP
-            # log("Wait for initial FP...")
-            if is_simulation():
+            log("Wait for initial FP...")
+            if simulated:
                 simulate_sending_fp(0)
             while not is_fp_ready():
                 sleep(.5)
             curr_fp = collect_fingerprint()
             set_fp_ready(False)
 
-            # log("Loop episode...")
-            while not is_rw_done():
-                # log("==================================================")
+            log("Loop episode...")
+            while True:  # break at end of loop to emulate do-while
+                log("==================================================")
                 # ==============================
                 # Predict action
                 # ==============================
@@ -80,7 +82,7 @@ class ControllerOptimized(AbstractController):
                 state = AbstractController.transform_fp(curr_fp)
 
                 # agent selects action based on state
-                # log("Predict action.")
+                log("Predict action.")
                 curr_hidden, curr_q_values, selected_action = agent.predict(weights1, weights2, bias_weights1,
                                                                             bias_weights2, epsilon_episode, state=state)
                 steps += 1
@@ -92,15 +94,15 @@ class ControllerOptimized(AbstractController):
 
                 # convert action to config and send to client
                 if selected_action != last_action:
-                    # log("Sending new action {} to client.".format(selected_action))
+                    log("Sending new action {} to client.".format(selected_action))
                     config = map_to_ransomware_configuration(selected_action)
-                    if not is_simulation():  # cannot send if no socket listening during simulation
+                    if not simulated:  # cannot send if no socket listening during simulation
                         send_config(selected_action, config)
                 last_action = selected_action
 
                 # receive next FP and compute reward based on FP
-                # log("Wait for FP...")
-                if is_simulation():
+                log("Wait for FP...")
+                if simulated:
                     simulate_sending_fp(selected_action)
                 while not (is_fp_ready() or is_rw_done()):
                     sleep(.5)
@@ -122,16 +124,19 @@ class ControllerOptimized(AbstractController):
                 # Observe reward for new state
                 # ==============================
 
-                if is_simulation() and sim_encryption_progress >= SIM_CORPUS_SIZE_V8:
+                if simulated and sim_encryption_progress >= SIM_CORPUS_SIZE_V8:
                     simulate_sending_rw_done()
 
-                # log("Computing reward for next FP.")
-                reward, detected = reward_system.compute_reward(selected_action, is_rw_done())
-                # log("Computed reward", reward)
+                log("Computing reward for next FP.")
+                is_done = is_rw_done()
+                reward, detected = reward_system.compute_reward(selected_action, is_done)
+                log("Computed reward", reward)
                 reward_store.append((selected_action, reward))
                 summed_reward += reward
                 if detected:
-                    set_rw_done()  # terminate episode
+                    if not is_done and not simulated:  # do not send reset if done as the RW already did it
+                        send_reset_corpus()
+                    set_rw_done()  # manually terminate episode
 
                 # ==============================
                 # Next Q-values, error, and learning
@@ -154,11 +159,11 @@ class ControllerOptimized(AbstractController):
                     last_q_values = curr_q_values
                 else:
                     # predict next Q-values and action
-                    # log("Predict next action.")
+                    log("Predict next action.")
                     next_hidden, next_q_values, next_action = agent.predict(weights1, weights2, bias_weights1,
                                                                             bias_weights2, epsilon_episode,
                                                                             state=next_state)
-                    # log("Predicted next action", next_action)
+                    log("Predicted next action", next_action)
 
                     # update error based on observed reward
                     error = agent.update_error(error, reward, selected_action, curr_q_values, next_q_values,
@@ -174,8 +179,11 @@ class ControllerOptimized(AbstractController):
                 # Prepare next step
                 # ==============================
 
-                # update current state
-                curr_fp = next_fp
+                if is_rw_done():
+                    break
+                else:
+                    # update current state
+                    curr_fp = next_fp
                 # ========== END OF STEP ==========
 
             # ========== END OF EPISODE ==========
@@ -210,6 +218,9 @@ class ControllerOptimized(AbstractController):
         results_store_file = AbstractController.save_results_to_file(all_summed_rewards, all_avg_rewards, all_num_steps,
                                                                      description)
         print("- Results saved:", results_store_file)
+
+        if not simulated:
+            send_terminate()
         return last_q_values, all_rewards
 
 
