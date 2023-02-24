@@ -15,7 +15,7 @@ from utilities.simulate import simulate_sending_fp, simulate_sending_rw_done
 
 DEBUG_PRINTING = False
 
-EPSILON = 0.5
+EPSILON = 0.1
 DECAY_RATE = 0.01
 
 

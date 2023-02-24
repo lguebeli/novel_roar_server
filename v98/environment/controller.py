@@ -17,7 +17,7 @@ from utilities.simulate import simulate_sending_fp
 DEBUG_PRINTING = False
 BASE_ON_IDEAL_AD = True
 
-EPSILON = 0.5
+EPSILON = 0.1
 DECAY_RATE = 0.01
 
 
