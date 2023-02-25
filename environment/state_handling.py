@@ -200,16 +200,17 @@ def __query_key(key):
                 flag = __get_storage().get(Query().key == str(key))
                 success = True
             except Exception as e:
-                print("ERROR GETTING STORAGE OF", key, e)
+                print("ERROR GETTING STORAGE OF {}, RETRYING {}; ERROR {}".format(key, i+1, e))
                 storage_path, _ = __get_storage_file_path()
                 with open(storage_path, "r") as st_f:
                     content = st_f.read()
                 print("STORAGE CONTENT:", repr(content))
+                if i == max_retries - 1:  # final iteration, zero-based
+                    raise e
                 if content.endswith('"}}}}'):
                     with open(storage_path, "w") as st_f:
-                        st_f.write(content[-1])
-                if i >= max_retries:
-                    raise e
+                        st_f.write(content[:-1].strip())
+                        st_f.truncate()
             if success:
                 break
 
