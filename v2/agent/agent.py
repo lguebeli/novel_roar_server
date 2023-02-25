@@ -3,6 +3,7 @@ import os
 import numpy as np
 
 from agent.abstract_agent import AbstractAgent
+from agent.agent_representation import AgentRepresentation
 from environment.settings import TRAINING_CSV_FOLDER_PATH, ALL_CSV_HEADERS, DUPLICATE_HEADERS
 from environment.state_handling import get_num_configs
 from v2.agent.model import ModelQLearning
@@ -16,18 +17,26 @@ DISCOUNT_FACTOR = 0.5 if USE_SIMPLE_FP else 0.75
 
 
 class AgentQLearning(AbstractAgent):
-    def __init__(self):
-        num_configs = get_num_configs()
-        self.actions = list(range(num_configs))
-        self.output_size = num_configs
+    def __init__(self, representation=None):
+        self.representation = representation
 
-        self.num_input = FP_DIMS  # Input size
-        self.num_hidden = HIDDEN_NEURONS  # Hidden neurons
-        self.num_output = num_configs  # Output size
+        if isinstance(representation, AgentRepresentation):  # build from representation
+            self.num_input = representation.num_input
+            self.num_hidden = representation.num_hidden
+            self.num_output = representation.num_output
+            self.actions = list(range(representation.num_output))
 
-        self.learn_rate = LEARN_RATE  # only used in Agent for storing AgentRepresentation
+            self.learn_rate = representation.learn_rate
+            self.model = ModelQLearning(learn_rate=LEARN_RATE, num_configs=self.num_output)
+        else:  # init from scratch
+            num_configs = get_num_configs()
+            self.num_input = FP_DIMS  # Input size
+            self.num_hidden = HIDDEN_NEURONS  # Hidden neurons
+            self.num_output = num_configs  # Output size
+            self.actions = list(range(num_configs))
 
-        self.model = ModelQLearning(learn_rate=LEARN_RATE, num_configs=num_configs)
+            self.learn_rate = LEARN_RATE  # only used in AbstractAgent for storing AgentRepresentation
+            self.model = ModelQLearning(learn_rate=LEARN_RATE, num_configs=num_configs)
 
     def __preprocess_fp(self, fp):
         headers = ALL_CSV_HEADERS.split(",")
@@ -62,11 +71,18 @@ class AgentQLearning(AbstractAgent):
         return fp[indexes]
 
     def initialize_network(self):
-        weights1 = np.random.uniform(0, 1, (self.num_input, self.num_hidden))
-        weights2 = np.random.uniform(0, 1, (self.num_hidden, self.num_output))
+        if isinstance(self.representation, AgentRepresentation):  # init from representation
+            weights1 = np.asarray(self.representation.weights1)
+            weights2 = np.asarray(self.representation.weights2)
+            bias_weights1 = np.asarray(self.representation.bias_weights1)
+            bias_weights2 = np.asarray(self.representation.bias_weights2)
+        else:  # init from scratch
+            # uniform weight initialization
+            weights1 = np.random.uniform(0, 1, (self.num_input, self.num_hidden))
+            weights2 = np.random.uniform(0, 1, (self.num_hidden, self.num_output))
 
-        bias_weights1 = np.zeros((self.num_hidden, 1))
-        bias_weights2 = np.zeros((self.num_output, 1))
+            bias_weights1 = np.zeros((self.num_hidden, 1))
+            bias_weights2 = np.zeros((self.num_output, 1))
 
         return weights1, weights2, bias_weights1, bias_weights2
 
@@ -91,7 +107,7 @@ class AgentQLearning(AbstractAgent):
         return new_w1, new_w2, new_bw1, new_bw2
 
     def init_error(self):
-        return np.zeros((self.output_size, 1))
+        return np.zeros((self.num_output, 1))
 
     def update_error(self, error, reward, selected_action, curr_q_values, next_q_values, is_done):
         # print("AGENT: R sel selval best bestval", reward, selected_action, curr_q_values, next_q_values)

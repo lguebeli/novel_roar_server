@@ -51,8 +51,7 @@ def build_agent_from_repr(representation):
         print("WARNING: Agent v1 does not support building from representation! Returning fresh agent instance...")
         AGENT = AgentManual()
     elif proto == "2":
-        print("WARNING: Agent v2 does not support building from representation! Returning fresh agent instance...")
-        AGENT = AgentQLearning()
+        AGENT = AgentQLearning(representation)
     elif proto == "3":
         AGENT = AgentAdvancedQLearning(representation)
     elif proto == "4":
