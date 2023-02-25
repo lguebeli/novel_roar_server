@@ -24,6 +24,7 @@ Want to change evaluated prototype?
 2) adjust the known best action (setup) if necessary (depending on AD and reward system)
 3) adjust the filename of the logfile (setup) to match the prototype settings (in controller/agent/model)
 4) set prototype to evaluated prototype number in setup below (start of try-block)
+5) adjust simulation settings if required (start of try-block)
 """
 
 
