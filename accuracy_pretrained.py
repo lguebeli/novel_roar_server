@@ -147,8 +147,7 @@ def print_accuracy_table(accuracies_overall, accuracies_configs, logs):
 # SETUP
 # ==============================
 total_start = time()
-# repr_path = "<absolute-path-to-agent-representation>"
-repr_path = "C:/dev/master-thesis/roar_server/storage/agent=2023-02-21--14-59-39=p8-20e-4000s.json"
+repr_path = "<absolute-path-to-agent-representation>"
 prototype_description = "p8-20e=e0.4d0.01a0.0050y0.10=Log-SiLU=h40=weights-he"
 
 EPSILON = 0.4
