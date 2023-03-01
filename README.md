@@ -170,7 +170,7 @@ Run the script the same as the other: `python3 accuracy_pretrained.py`
 - **WARNING**: _The second script has not been properly evaluated yet! Although it should work in theory, it was never actually tested so far._
 
 ### Convert Fingerprints to CSV Files
-Run this script to convert the collected fingerprints from the target device to a CSV file for further usage, e.g., in simulated execution.
+Run this script to convert the collected fingerprints from the target device to a CSV file for further usage, e.g., in simulated execution or in combination with the [data pipelines](./__data/fingerprint_processing_pipelines.zip).
 The respective target set of fingerprints (training or evaluation) must be configured at the top of the script.
 
 Run the script as follows: `python3 fp-to-csv.py`
