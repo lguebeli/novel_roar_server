@@ -2,32 +2,15 @@ import os
 
 import numpy as np
 import pandas as pd
-from pyod.models.iforest import IForest
 from scipy import stats
 from sklearn.preprocessing import StandardScaler
 
-from environment.anomaly_detection.constructor import get_preprocessor
+from environment.anomaly_detection.constructor import get_preprocessor, get_classifier
 from environment.settings import EVALUATION_CSV_FOLDER_PATH, TRAINING_CSV_FOLDER_PATH, ALL_CSV_HEADERS, \
     DUPLICATE_HEADERS
 from environment.state_handling import get_num_configs
 
-# ========================================
-# ==========   CONFIG   ==========
-# ========================================
-CONTAMINATION_FACTOR = 0.05
-
-# ========================================
-# ==========   GLOBALS   ==========
-# ========================================
-CLASSIFIER = None
 SCALER = None
-
-
-def __get_classifier():
-    global CLASSIFIER
-    if not CLASSIFIER:
-        CLASSIFIER = IForest(random_state=42, contamination=CONTAMINATION_FACTOR)
-    return CLASSIFIER
 
 
 def __init_scaler(train_set):
@@ -97,7 +80,7 @@ def calculate_f1_score(true_positives, true_negatives, false_positives, false_ne
 
 
 def evaluate_dataset(name, dataset):
-    clf = __get_classifier()
+    clf = get_classifier()
     pred = clf.predict(dataset)
     unique_elements, counts_elements = np.unique(pred, return_counts=True)
     if len(counts_elements) > 1:
@@ -146,7 +129,7 @@ def train_anomaly_detection():
 
     # Instantiate ML Isolation Forest instance
     # print("Instantiate classifier.")
-    clf = __get_classifier()
+    clf = get_classifier()
 
     # Train model
     # print("Train classifier on training set.")
@@ -192,7 +175,7 @@ def detect_anomaly(fingerprint):  # string
     # print("Scaled FP to", scaled.shape)
 
     # Evaluate fingerprint
-    clf = __get_classifier()
+    clf = get_classifier()
     pred = clf.predict(scaled)
     assert type(pred) == np.ndarray and len(pred) == 1
     return pred[0]
