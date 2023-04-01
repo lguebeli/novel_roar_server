@@ -9,6 +9,8 @@ from keras.utils import set_random_seed
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.models import load_model
 
+from environment.state_handling import get_instance_number
+
 
 class ThresholdConfig(Enum):
     MSE_IRQ = "mse_irq",
@@ -22,7 +24,7 @@ class ActivationConfig(str, Enum):
 
 VERBOSE_OUTPUT = False
 THRESHOLD = ThresholdConfig.MSE_IRQ
-ACTIVATION = ActivationConfig.RELU
+ACTIVATION = ActivationConfig.SILU
 
 
 class AutoEncoder(object):
@@ -60,15 +62,16 @@ class AutoEncoder(object):
         # Train AutoEncoder
         # --------------------
 
+        instance = get_instance_number()
         es = EarlyStopping(monitor='val_loss', mode='min', patience=20)
-        mc = ModelCheckpoint('best_model.h5', monitor='val_loss', mode='min', save_best_only=True)
+        mc = ModelCheckpoint('storage/best_model-{}.h5'.format(instance), monitor='val_loss', mode='min', save_best_only=True)
         history = self.autoencoder.fit(training_set, training_set, epochs=2000,
                                        batch_size=16,
                                        shuffle=True,
                                        validation_split=0.2,
                                        verbose=1 if VERBOSE_OUTPUT else 0,
                                        callbacks=[es, mc]).history
-        self.autoencoder = load_model('best_model.h5')
+        self.autoencoder = load_model('storage/best_model-{}.h5'.format(instance))
 
         if VERBOSE_OUTPUT:
             self.__plot_autoencoder_training_history(history)
