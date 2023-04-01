@@ -1,7 +1,8 @@
 from pyod.models.iforest import IForest
 
-from environment.anomaly_detection.simple_preprocessor import SimplePreprocessor
 from environment.anomaly_detection.advanced_preprocessor import AdvancedPreprocessor
+from environment.anomaly_detection.autoencoder import AutoEncoder
+from environment.anomaly_detection.simple_preprocessor import SimplePreprocessor
 from environment.state_handling import get_prototype
 
 # ========================================
@@ -30,9 +31,11 @@ def get_preprocessor():
     return PREPROCESSOR
 
 
-def reset_preprocessor():
+def reset_AD():
     global PREPROCESSOR
     PREPROCESSOR = None
+    global CLASSIFIER
+    CLASSIFIER = None
 
 
 def get_classifier():
@@ -42,7 +45,7 @@ def get_classifier():
         if proto in ["1", "2", "3", "4", "5", "6", "7", "8", "98", "99"]:
             CLASSIFIER = IForest(random_state=42, contamination=CONTAMINATION_FACTOR)
         elif proto in ["9"]:
-            CLASSIFIER = IForest(random_state=42, contamination=CONTAMINATION_FACTOR)
+            CLASSIFIER = AutoEncoder(encoding_dim=[32, 16, 32], random_state=42)
         else:
             print("WARNING: Unknown prototype. Falling back to Isolation Forest classifier!")
             CLASSIFIER = IForest(random_state=42, contamination=CONTAMINATION_FACTOR)
