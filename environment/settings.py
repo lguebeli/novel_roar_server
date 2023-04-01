@@ -58,6 +58,9 @@ SIM_CORPUS_SIZE_V7 = 4000  # 4000 for 8 steps with 500 bytes/s
 MAX_EPISODES_V8 = 300
 SIM_CORPUS_SIZE_V8 = 4000  # 4000 for 8 steps with 500 bytes/s
 
+MAX_EPISODES_V9 = 300
+SIM_CORPUS_SIZE_V9 = 4000  # 4000 for 8 steps with 500 bytes/s
+
 MAX_EPISODES_V98 = 5000
 
 MAX_STEPS_V99 = 500
