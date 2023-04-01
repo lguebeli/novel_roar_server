@@ -3,6 +3,12 @@
 **/fingerprints/
 **/storage/
 
+# Result and data files
+__data/**/*.json
+__data/**/*.out
+__data/**/*.png
+__data/**/*.txt
+
 # IDE files
 .idea/
 
