@@ -197,7 +197,7 @@ if __name__ == "__main__":
     procs = []
     try:
         set_prototype("8")
-        simulated = False
+        simulated = True
         set_simulation(simulated)
         np.random.seed(42)
 

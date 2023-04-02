@@ -129,7 +129,7 @@ class ControllerOptimizedQLearningAE(AbstractController):
 
                 log("Computing reward for next FP.")
                 is_done = is_rw_done()
-                reward, detected = reward_system.compute_reward(selected_action, is_done)
+                reward, detected = reward_system.compute_reward(next_state, is_done)
                 log("Computed reward", reward)
                 reward_store.append((selected_action, reward))
                 summed_reward += reward

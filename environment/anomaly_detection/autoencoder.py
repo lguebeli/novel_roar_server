@@ -110,7 +110,7 @@ class AutoEncoder(object):
     def __detect_outliers(self, df):
         pred = self.autoencoder.predict(df, verbose=VERBOSE_OUTPUT)
         mse = np.mean(np.power(df - pred, 2), axis=1)
-        outliers = [np.array(mse) < self.threshold]
+        outliers = np.asarray([np.array(mse) < self.threshold])
         return outliers
 
     def __detect_outliers_range(self, df):
@@ -118,5 +118,5 @@ class AutoEncoder(object):
         mse = np.mean(np.power(df - pred, 2), axis=1)
         up_bound = self.threshold[0]
         bottom_bound = self.threshold[1]
-        outliers = [(np.array(mse) < up_bound) & (np.array(mse) > bottom_bound)]
+        outliers = np.asarray([(np.array(mse) < up_bound) & (np.array(mse) > bottom_bound)])
         return outliers
