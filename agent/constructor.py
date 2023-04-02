@@ -9,6 +9,7 @@ from v6.agent.agent import AgentSarsa
 from v7.agent.agent import AgentIdealADSarsa
 from v8.agent.agent import AgentOptimized
 from v9.agent.agent import AgentOptimizedQLearningAE
+from v10.agent.agent import AgentOptimizedQLearningIF
 from v98.agent.agent import AgentOneStepEpisodeQLearning
 from v99.agent.agent import AgentBruteForce
 
@@ -37,6 +38,8 @@ def get_agent():
             AGENT = AgentOptimized()
         elif proto == "9":
             AGENT = AgentOptimizedQLearningAE()
+        elif proto == "10":
+            AGENT = AgentOptimizedQLearningIF()
         elif proto == "98":
             AGENT = AgentOneStepEpisodeQLearning()
         elif proto == "99":
@@ -69,6 +72,8 @@ def build_agent_from_repr(representation):
         AGENT = AgentOptimized(representation)
     elif proto == "9":
         AGENT = AgentOptimizedQLearningAE(representation)
+    elif proto == "10":
+        AGENT = AgentOptimizedQLearningIF(representation)
     elif proto == "98":
         AGENT = AgentOneStepEpisodeQLearning(representation)
     elif proto == "99":
