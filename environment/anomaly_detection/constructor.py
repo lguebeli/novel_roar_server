@@ -3,6 +3,7 @@ from pyod.models.iforest import IForest
 from environment.anomaly_detection.advanced_preprocessor import AdvancedPreprocessor
 from environment.anomaly_detection.autoencoder import AutoEncoder
 from environment.anomaly_detection.simple_preprocessor import SimplePreprocessor
+from environment.settings import MAX_ALLOWED_CORRELATION_AE, MAX_ALLOWED_CORRELATION_IF
 from environment.state_handling import get_prototype
 
 # ========================================
@@ -24,7 +25,7 @@ def get_preprocessor():
         if proto in ["1", "2", "99"]:
             PREPROCESSOR = SimplePreprocessor()
         elif proto in ["3", "4", "5", "6", "7", "8", "9", "98"]:
-            PREPROCESSOR = AdvancedPreprocessor()
+            PREPROCESSOR = AdvancedPreprocessor(__get_correlation_threshold())
         else:
             print("WARNING: Unknown prototype. Falling back to default simple preprocessor!")
             PREPROCESSOR = SimplePreprocessor()
@@ -50,3 +51,11 @@ def get_classifier():
             print("WARNING: Unknown prototype. Falling back to Isolation Forest classifier!")
             CLASSIFIER = IForest(random_state=42, contamination=CONTAMINATION_FACTOR)
     return CLASSIFIER
+
+
+def __get_correlation_threshold():
+    proto = get_prototype()
+    if proto in ["9"]:
+        return MAX_ALLOWED_CORRELATION_AE
+    else:
+        return MAX_ALLOWED_CORRELATION_IF

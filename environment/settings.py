@@ -19,7 +19,8 @@ CLIENT_IP = "<Client-IP>"
 # ANOMALY DETECTION
 # ==============================
 
-MAX_ALLOWED_CORRELATION = 0.99
+MAX_ALLOWED_CORRELATION_IF = 0.99
+MAX_ALLOWED_CORRELATION_AE = 0.94
 DROP_CONNECTIVITY = ["connectivity"]
 DROP_TEMPORAL = ["time", "timestamp", "seconds"]
 DROP_CONSTANT = ["cpu_ni", "cpu_hi", "tasks_stopped", "alarmtimer:alarmtimer_fired",

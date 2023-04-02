@@ -23,7 +23,7 @@ class ActivationConfig(str, Enum):
 
 
 VERBOSE_OUTPUT = False
-THRESHOLD = ThresholdConfig.MSE_IRQ
+THRESHOLD = ThresholdConfig.MSE_PERCENTAGE
 ACTIVATION = ActivationConfig.SILU
 
 

@@ -1,13 +1,14 @@
 import numpy as np
 
 from environment.anomaly_detection.abstract_preprocessor import AbstractPreprocessor
-from environment.settings import MAX_ALLOWED_CORRELATION, DROP_TEMPORAL, DUPLICATE_HEADERS, DROP_UNSTABLE
+from environment.settings import DROP_TEMPORAL, DUPLICATE_HEADERS, DROP_UNSTABLE
 
 
 class AdvancedPreprocessor(AbstractPreprocessor):
-    def __init__(self):
+    def __init__(self, correlation_threshold):
         self.const_feats = None
         self.correlated_feats = None
+        self.threshold = correlation_threshold
 
     @staticmethod
     def get_constant_features(dataset):
@@ -25,12 +26,11 @@ class AdvancedPreprocessor(AbstractPreprocessor):
         # print("AD PRE: const", len(constant_feats))
         return constant_feats
 
-    @staticmethod
-    def get_highly_correlated_features(dataset):
+    def get_highly_correlated_features(self, dataset):
         # https://www.projectpro.io/recipes/drop-out-highly-correlated-features-in-python
         corr_matrix = dataset.corr().abs()
         upper_tri = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))  # upper tri excl diagonal
-        correlated_feats = [column for column in upper_tri.columns if any(upper_tri[column] > MAX_ALLOWED_CORRELATION)]
+        correlated_feats = [column for column in upper_tri.columns if any(upper_tri[column] > self.threshold)]
         # print("AD CORR:", len(correlated_feats))
         return correlated_feats
 
@@ -56,7 +56,7 @@ class AdvancedPreprocessor(AbstractPreprocessor):
 
         # Drop highly correlated features
         if self.correlated_feats is None:  # must preprocess normal data first to align infected data to it
-            self.correlated_feats = AdvancedPreprocessor.get_highly_correlated_features(dataset)
+            self.correlated_feats = self.get_highly_correlated_features(dataset)
         dataset.drop(self.correlated_feats, inplace=True, axis=1)
 
         # Reset index
