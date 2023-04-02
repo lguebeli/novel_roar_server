@@ -20,13 +20,13 @@ CLIENT_IP = "<Client-IP>"
 # ==============================
 
 MAX_ALLOWED_CORRELATION_IF = 0.99
-MAX_ALLOWED_CORRELATION_AE = 0.94
+MAX_ALLOWED_CORRELATION_AE = 0.98
 DROP_CONNECTIVITY = ["connectivity"]
 DROP_TEMPORAL = ["time", "timestamp", "seconds"]
 DROP_CONSTANT = ["cpu_ni", "cpu_hi", "tasks_stopped", "alarmtimer:alarmtimer_fired",
-                   "alarmtimer:alarmtimer_start", "cachefiles:cachefiles_create",
-                   "cachefiles:cachefiles_lookup", "cachefiles:cachefiles_mark_active",
-                   "dma_fence:dma_fence_init", "udp:udp_fail_queue_rcv_skb"]
+                 "alarmtimer:alarmtimer_start", "cachefiles:cachefiles_create",
+                 "cachefiles:cachefiles_lookup", "cachefiles:cachefiles_mark_active",
+                 "dma_fence:dma_fence_init", "udp:udp_fail_queue_rcv_skb"]
 DROP_UNSTABLE = ["cpu_wa", "mem_free", "mem_used", "mem_cache", "swap_avail", "net_lo_rx", "net_lo_tx", "net_eth_rx",
                  "net_eth_tx", "cpu_temp", "filemap:mm_filemap_add_to_page_cache", "ipi:ipi_raise",
                  "jbd2:jbd2_start_commit", "kmem:kfree", "kmem:kmalloc", "kmem:mm_page_alloc_zone_locked",
@@ -59,10 +59,10 @@ SIM_CORPUS_SIZE_V7 = 4000  # 4000 for 8 steps with 500 bytes/s
 MAX_EPISODES_V8 = 300
 SIM_CORPUS_SIZE_V8 = 4000  # 4000 for 8 steps with 500 bytes/s
 
-MAX_EPISODES_V9 = 300
+MAX_EPISODES_V9 = 1000
 SIM_CORPUS_SIZE_V9 = 4000  # 4000 for 8 steps with 500 bytes/s
 
-MAX_EPISODES_V10 = 300
+MAX_EPISODES_V10 = 100
 SIM_CORPUS_SIZE_V10 = 4000  # 4000 for 8 steps with 500 bytes/s
 
 MAX_EPISODES_V98 = 5000

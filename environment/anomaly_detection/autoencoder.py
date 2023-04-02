@@ -2,18 +2,18 @@ from enum import Enum
 
 import matplotlib.pyplot as plt
 import numpy as np
+from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.layers import Input, Dense
 from keras.models import Model
+from keras.models import load_model
 from keras.optimizers import Adam
 from keras.utils import set_random_seed
-from keras.callbacks import EarlyStopping, ModelCheckpoint
-from keras.models import load_model
 
 from environment.state_handling import get_instance_number
 
 
 class ThresholdConfig(Enum):
-    MSE_IRQ = "mse_irq",
+    MSE_IQR = "mse_iqr",
     MSE_PERCENTAGE = "mse_perc"
 
 
@@ -23,14 +23,15 @@ class ActivationConfig(str, Enum):
 
 
 VERBOSE_OUTPUT = False
-THRESHOLD = ThresholdConfig.MSE_PERCENTAGE
+THRESHOLD = ThresholdConfig.MSE_IQR
 ACTIVATION = ActivationConfig.SILU
 
 
 class AutoEncoder(object):
-    def __init__(self, encoding_dim, random_state):
+    def __init__(self, encoding_dim, random_state, outlier_percentage):
         self.encoding_dim = encoding_dim
         set_random_seed(random_state)
+        self.outlier_percentage = outlier_percentage
 
     def fit(self, training_set):
         # --------------------
@@ -50,21 +51,13 @@ class AutoEncoder(object):
         self.autoencoder.compile(loss='mean_squared_error', optimizer=opt, metrics=['acc'])
 
         # --------------------
-        # Setup Threshold
-        # --------------------
-
-        if THRESHOLD == ThresholdConfig.MSE_IRQ:  # threshold mse irq, else percentage
-            self.threshold = self.__get_threshold_mse_iqr(training_set)
-        else:
-            self.threshold = self.__get_threshold_mse_percentage(training_set, outlier_percentage=0.1)
-
-        # --------------------
         # Train AutoEncoder
         # --------------------
 
         instance = get_instance_number()
         es = EarlyStopping(monitor='val_loss', mode='min', patience=20)
-        mc = ModelCheckpoint('storage/best_model-{}.h5'.format(instance), monitor='val_loss', mode='min', save_best_only=True)
+        mc = ModelCheckpoint('storage/best_model-{}.h5'.format(instance), monitor='val_loss', mode='min',
+                             save_best_only=True)
         history = self.autoencoder.fit(training_set, training_set, epochs=2000,
                                        batch_size=16,
                                        shuffle=True,
@@ -76,6 +69,15 @@ class AutoEncoder(object):
         if VERBOSE_OUTPUT:
             self.__plot_autoencoder_training_history(history)
 
+        # --------------------
+        # Setup Threshold
+        # --------------------
+
+        if THRESHOLD == ThresholdConfig.MSE_IQR:  # threshold mse iqr, else percentage
+            self.threshold = self.__get_threshold_mse_iqr(training_set)
+        else:
+            self.threshold = self.__get_threshold_mse_percentage(training_set)
+
     def __get_threshold_mse_iqr(self, train_data):
         train_predicted = self.autoencoder.predict(train_data, verbose=VERBOSE_OUTPUT)
         mse = np.mean(np.power(train_data - train_predicted, 2), axis=1)
@@ -85,10 +87,10 @@ class AutoEncoder(object):
         threshold = [up_bound, bottom_bound]
         return threshold
 
-    def __get_threshold_mse_percentage(self, train_data, outlier_percentage):
+    def __get_threshold_mse_percentage(self, train_data):
         train_predicted = self.autoencoder.predict(train_data, verbose=VERBOSE_OUTPUT)
         mse = np.mean(np.power(train_data - train_predicted, 2), axis=1)
-        thresh = np.quantile(mse, 1 - outlier_percentage)
+        thresh = np.quantile(mse, 1 - self.outlier_percentage)
         return thresh
 
     def __plot_autoencoder_training_history(self, history):
@@ -102,21 +104,21 @@ class AutoEncoder(object):
         plt.show()
 
     def predict(self, eval_set):
-        if THRESHOLD == ThresholdConfig.MSE_IRQ:
+        if THRESHOLD == ThresholdConfig.MSE_IQR:
             return self.__detect_outliers_range(eval_set)
         else:
             return self.__detect_outliers(eval_set)
 
-    def __detect_outliers(self, df):
-        pred = self.autoencoder.predict(df, verbose=VERBOSE_OUTPUT)
-        mse = np.mean(np.power(df - pred, 2), axis=1)
-        outliers = np.asarray([np.array(mse) < self.threshold])
-        return outliers
-
     def __detect_outliers_range(self, df):
         pred = self.autoencoder.predict(df, verbose=VERBOSE_OUTPUT)
         mse = np.mean(np.power(df - pred, 2), axis=1)
-        up_bound = self.threshold[0]
-        bottom_bound = self.threshold[1]
-        outliers = np.asarray([(np.array(mse) < up_bound) & (np.array(mse) > bottom_bound)])
+        upper_bound = self.threshold[0]
+        lower_bound = self.threshold[1]
+        outliers = np.multiply([(np.array(mse) < lower_bound) | (np.array(mse) > upper_bound)], 1)
+        return outliers
+
+    def __detect_outliers(self, df):
+        pred = self.autoencoder.predict(df, verbose=VERBOSE_OUTPUT)
+        mse = np.mean(np.power(df - pred, 2), axis=1)
+        outliers = np.multiply([np.array(mse) > self.threshold], 1)
         return outliers
