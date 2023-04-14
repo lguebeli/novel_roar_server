@@ -6,6 +6,9 @@ It is generally advised to first consult the corresponding report of this master
 The report motivates the thesis and introduces the required background.
 It further explains the development, reasoning, and results of each prototype in great detail.
 
+This repository contains the RL Agent and command and control (C&C) part of ROAR.
+There is [another repository](https://github.com/jluech/roar_client) for the underlying ransomware.
+
 
 
 
