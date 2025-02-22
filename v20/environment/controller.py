@@ -8,7 +8,7 @@ from api.configurations import map_to_ransomware_configuration, send_config
 from api.ransomware import send_reset_corpus, send_terminate
 from environment.abstract_controller import AbstractController
 from environment.reward.ideal_AD_performance_reward import IdealADPerformanceReward
-from environment.settings import MAX_EPISODES_V8, SIM_CORPUS_SIZE_V8
+from environment.settings import MAX_EPISODES_V20, SIM_CORPUS_SIZE_V20
 from environment.state_handling import is_fp_ready, set_fp_ready, is_rw_done, collect_fingerprint, is_simulation, \
     set_rw_done, collect_rate, get_prototype
 from utilities.plots import plot_average_results
@@ -23,13 +23,16 @@ DECAY_RATE = 0.01
 class ControllerDDQL(AbstractController):
     def loop_episodes(self, agent):
         start_timestamp = datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
-        run_info = "p{}-{}e-{}s".format(get_prototype(), MAX_EPISODES_V8, SIM_CORPUS_SIZE_V8)
+        run_info = "p{}-{}e-{}s".format(get_prototype(), MAX_EPISODES_V20, SIM_CORPUS_SIZE_V20)
         description = "{}={}".format(start_timestamp, run_info)
         agent_file = None
         simulated = is_simulation()
 
         reward_system = IdealADPerformanceReward(+1000, +0, -20)
         weights1, weights2, bias_weights1, bias_weights2 = agent.initialize_network()
+
+        # Initialize target network weights
+        target_weights1, target_weights2, target_bias_weights1, target_bias_weights2 = weights1.copy(), weights2.copy(), bias_weights1.copy(), bias_weights2.copy()
 
         # ==============================
         # Setup collectibles
@@ -44,7 +47,7 @@ class ControllerDDQL(AbstractController):
         num_total_steps = 0
         all_start = time()
 
-        eps_iter = range(1, MAX_EPISODES_V8 + 1) if DEBUG_PRINTING else tqdm(range(1, MAX_EPISODES_V8 + 1))
+        eps_iter = range(1, MAX_EPISODES_V20 + 1) if DEBUG_PRINTING else tqdm(range(1, MAX_EPISODES_V20 + 1))
         for episode in eps_iter:
             # ==============================
             # Setup environment
@@ -124,7 +127,7 @@ class ControllerDDQL(AbstractController):
                 # Observe reward for new state
                 # ==============================
 
-                if simulated and sim_encryption_progress >= SIM_CORPUS_SIZE_V8:
+                if simulated and sim_encryption_progress >= SIM_CORPUS_SIZE_V20:
                     simulate_sending_rw_done()
 
                 log("Computing reward for next FP.")
@@ -158,11 +161,11 @@ class ControllerDDQL(AbstractController):
                     log("Episode Q-Values:\n", curr_q_values)
                     last_q_values = curr_q_values
                 else:
-                    # predict next Q-values and action
-                    log("Predict next action.")
-                    next_hidden, next_q_values, next_action = agent.predict(weights1, weights2, bias_weights1,
-                                                                            bias_weights2, epsilon_episode,
-                                                                            state=next_state)
+                    # predict next Q-values and action using target network
+                    log("Predict next action using target network.")
+                    next_hidden, next_q_values, next_action = agent.predict(target_weights1, target_weights2, target_bias_weights1,
+                                                                            target_bias_weights2, epsilon_episode,
+                                                                            state=next_state, target=True)
                     log("Predicted next action", next_action)
 
                     # update error based on observed reward
@@ -197,6 +200,9 @@ class ControllerDDQL(AbstractController):
             all_avg_rewards.append(summed_reward / steps)  # average reward over episode
             all_num_steps.append(steps)
 
+            # Update target network
+            agent.update_target_network(weights1, weights2, bias_weights1, bias_weights2)
+
             agent_file = AgentRepresentation.save_agent(weights1, weights2, bias_weights1, bias_weights2,
                                                         epsilon_episode, agent, description)
             log("=================================================\n=================================================")
@@ -205,14 +211,14 @@ class ControllerDDQL(AbstractController):
         all_end = time()
         log("All episodes took: {}s, roughly {}min.".format("%.3f" % (all_end - all_start),
                                                             "%.1f" % ((all_end - all_start) / 60)))
-        print("steps total", num_total_steps, "avg", num_total_steps / MAX_EPISODES_V8)
+        print("steps total", num_total_steps, "avg", num_total_steps / MAX_EPISODES_V20)
 
         print("==============================")
         print("Saving trained agent to file...")
         print("- Agent saved:", agent_file)
 
         print("Generating plots...")
-        results_plots_file = plot_average_results(all_summed_rewards, all_avg_rewards, all_num_steps, MAX_EPISODES_V8,
+        results_plots_file = plot_average_results(all_summed_rewards, all_avg_rewards, all_num_steps, MAX_EPISODES_V20,
                                                   description)
         print("- Plots saved:", results_plots_file)
         results_store_file = AbstractController.save_results_to_file(all_summed_rewards, all_avg_rewards, all_num_steps,

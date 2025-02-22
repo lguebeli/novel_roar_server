@@ -9,7 +9,7 @@ from agent.agent_representation import AgentRepresentation
 from environment.anomaly_detection.constructor import get_preprocessor
 from environment.settings import ALL_CSV_HEADERS, TRAINING_CSV_FOLDER_PATH
 from environment.state_handling import get_num_configs
-from v8.agent.model import ModelOptimized
+from v20.agent.model import ModelOptimized
 
 LEARN_RATE = 0.0050
 DISCOUNT_FACTOR = 0.10
@@ -27,6 +27,7 @@ class AgentOptimizedDDQL(AbstractAgent):
             self.learn_rate = representation.learn_rate
             self.fp_features = self.__get_fp_features()
             self.model = ModelOptimized(learn_rate=self.learn_rate, num_configs=self.num_output)
+            self.target_model = ModelOptimized(learn_rate=self.learn_rate, num_configs=self.num_output)
         else:  # init from scratch
             num_configs = get_num_configs()
             self.actions = list(range(num_configs))
@@ -39,6 +40,7 @@ class AgentOptimizedDDQL(AbstractAgent):
 
             self.learn_rate = LEARN_RATE
             self.model = ModelOptimized(learn_rate=self.learn_rate, num_configs=num_configs)
+            self.target_model = ModelOptimized(learn_rate=self.learn_rate, num_configs=num_configs)
 
     def __get_fp_features(self):
         df_normal = pd.read_csv(os.path.join(TRAINING_CSV_FOLDER_PATH, "normal-behavior.csv"))
@@ -80,11 +82,15 @@ class AgentOptimizedDDQL(AbstractAgent):
 
         return weights1, weights2, bias_weights1, bias_weights2
 
-    def predict(self, weights1, weights2, bias_weights1, bias_weights2, epsilon, state):
+    def predict(self, weights1, weights2, bias_weights1, bias_weights2, epsilon, state, target=False):
         std_fp = AbstractAgent.standardize_fp(state)
         ready_fp = self.__preprocess_fp(std_fp)
-        hidden, q_values, selected_action = self.model.forward(weights1, weights2, bias_weights1, bias_weights2,
-                                                               epsilon, inputs=ready_fp)
+        if target:
+            hidden, q_values, selected_action = self.target_model.forward(weights1, weights2, bias_weights1, bias_weights2,
+                                                                         epsilon, inputs=ready_fp)
+        else:
+            hidden, q_values, selected_action = self.model.forward(weights1, weights2, bias_weights1, bias_weights2,
+                                                                  epsilon, inputs=ready_fp)
         return hidden, q_values, selected_action
 
     def update_weights(self, q_values, error, state, hidden, weights1, weights2, bias_weights1, bias_weights2):
@@ -98,11 +104,16 @@ class AgentOptimizedDDQL(AbstractAgent):
         return np.zeros((self.num_output, 1))
 
     def update_error(self, error, reward, selected_action, curr_q_values, next_q_values, is_done):
-        # print("AGENT: R sel selval best bestval", reward, selected_action, curr_q_values, next_q_values)
         if is_done:
             error[selected_action] = reward - curr_q_values[selected_action]
         else:
-            # off-policy
-            error[selected_action] = reward + (DISCOUNT_FACTOR * np.max(next_q_values)) - curr_q_values[selected_action]
-        # print("AGENT: err\n", error.T)
+            # Double Q-Learning: Use online network to select action, target network to evaluate
+            error[selected_action] = reward + (DISCOUNT_FACTOR * next_q_values[np.argmax(curr_q_values)]) - curr_q_values[selected_action]
         return error
+
+    def update_target_network(self, weights1, weights2, bias_weights1, bias_weights2):
+        # Copy weights from the online model to the target model
+        self.target_model.weights1 = weights1.copy()
+        self.target_model.weights2 = weights2.copy()
+        self.target_model.bias_weights1 = bias_weights1.copy()
+        self.target_model.bias_weights2 = bias_weights2.copy()
