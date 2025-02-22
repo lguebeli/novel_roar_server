@@ -15,7 +15,7 @@ LEARN_RATE = 0.0050
 DISCOUNT_FACTOR = 0.10
 
 
-class AgentOptimized(AbstractAgent):
+class AgentOptimizedDDQL(AbstractAgent):
     def __init__(self, representation=None):
         self.representation = representation
         if isinstance(representation, AgentRepresentation):  # build from representation

@@ -2,7 +2,7 @@
 **/fingerprint/
 **/fingerprints/
 **/storage/
-
+fingerprint_processing_pipelines/
 # Result and data files
 __data/**/*.json
 __data/**/*.out

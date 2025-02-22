@@ -20,7 +20,7 @@ EPSILON = 0.4
 DECAY_RATE = 0.01
 
 
-class ControllerOptimized(AbstractController):
+class ControllerDDQL(AbstractController):
     def loop_episodes(self, agent):
         start_timestamp = datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
         run_info = "p{}-{}e-{}s".format(get_prototype(), MAX_EPISODES_V8, SIM_CORPUS_SIZE_V8)
