@@ -31,6 +31,9 @@ class ControllerDDQL(AbstractController):
         reward_system = IdealADPerformanceReward(+1000, +0, -20)
         weights1, weights2, bias_weights1, bias_weights2 = agent.initialize_network()
 
+        # Initialize target network weights
+        target_weights1, target_weights2, target_bias_weights1, target_bias_weights2 = weights1.copy(), weights2.copy(), bias_weights1.copy(), bias_weights2.copy()
+
         # ==============================
         # Setup collectibles
         # ==============================
@@ -158,11 +161,11 @@ class ControllerDDQL(AbstractController):
                     log("Episode Q-Values:\n", curr_q_values)
                     last_q_values = curr_q_values
                 else:
-                    # predict next Q-values and action
-                    log("Predict next action.")
-                    next_hidden, next_q_values, next_action = agent.predict(weights1, weights2, bias_weights1,
-                                                                            bias_weights2, epsilon_episode,
-                                                                            state=next_state)
+                    # predict next Q-values and action using target network
+                    log("Predict next action using target network.")
+                    next_hidden, next_q_values, next_action = agent.predict(target_weights1, target_weights2, target_bias_weights1,
+                                                                            target_bias_weights2, epsilon_episode,
+                                                                            state=next_state, target=True)
                     log("Predicted next action", next_action)
 
                     # update error based on observed reward
@@ -196,6 +199,9 @@ class ControllerDDQL(AbstractController):
             all_summed_rewards.append(summed_reward)
             all_avg_rewards.append(summed_reward / steps)  # average reward over episode
             all_num_steps.append(steps)
+
+            # Update target network
+            agent.update_target_network(weights1, weights2, bias_weights1, bias_weights2)
 
             agent_file = AgentRepresentation.save_agent(weights1, weights2, bias_weights1, bias_weights2,
                                                         epsilon_episode, agent, description)
