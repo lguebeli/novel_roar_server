@@ -9,7 +9,7 @@ from agent.agent_representation import AgentRepresentation
 from environment.anomaly_detection.constructor import get_preprocessor
 from environment.settings import ALL_CSV_HEADERS, TRAINING_CSV_FOLDER_PATH
 from environment.state_handling import get_num_configs
-from v8.agent.model import ModelOptimized
+from v20.agent.model import ModelOptimized
 
 LEARN_RATE = 0.0050
 DISCOUNT_FACTOR = 0.10
