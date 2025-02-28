@@ -11,6 +11,8 @@ from v10.environment.controller import ControllerOptimizedQLearningIF
 from v98.environment.controller import ControllerOneStepEpisodeQLearning
 from v99.environment.controller import ControllerBruteForce
 from v20.environment.controller import ControllerDDQL
+from v21.environment.controller import ControllerDDQLwithPER
+from v22.environment.controller import ControllerIdealADSarsaTabular
 from environment.state_handling import get_prototype
 
 CONTROLLER = None
@@ -46,6 +48,10 @@ def get_controller():
             CONTROLLER = ControllerBruteForce()
         elif proto == "20":
             CONTROLLER = ControllerDDQL()
+        elif proto == "21":
+            CONTROLLER = ControllerDDQLwithPER()
+        elif proto == "22":
+            CONTROLLER = ControllerIdealADSarsaTabular()
         else:
             print("WARNING: Unknown prototype. Falling back to default controller v1!")
             CONTROLLER = ControllerManual()
