@@ -24,7 +24,7 @@ def get_preprocessor():
         proto = get_prototype()
         if proto in ["1", "2", "99"]:
             PREPROCESSOR = SimplePreprocessor()
-        elif proto in ["3", "4", "5", "6", "7", "8", "9", "10", "98", "20", "21", "22"]:
+        elif proto in ["3", "4", "5", "6", "7", "8", "9", "10", "98", "20", "21", "22", "23"]:
             PREPROCESSOR = AdvancedPreprocessor(__get_correlation_threshold())
         else:
             print("WARNING: Unknown prototype. Falling back to default simple preprocessor!")
@@ -43,7 +43,7 @@ def get_classifier():
     global CLASSIFIER
     if not CLASSIFIER:
         proto = get_prototype()
-        if proto in ["1", "2", "3", "4", "5", "6", "7", "8", "10", "98", "99", "20", "21", "22"]:
+        if proto in ["1", "2", "3", "4", "5", "6", "7", "8", "10", "98", "99", "20", "21", "22", "23"]:
             CLASSIFIER = IForest(random_state=42, contamination=CONTAMINATION_FACTOR)
         elif proto in ["9"]:
             CLASSIFIER = AutoEncoder(encoding_dim=[40, 20, 10, 20, 40], random_state=42,

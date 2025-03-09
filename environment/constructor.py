@@ -13,6 +13,7 @@ from v99.environment.controller import ControllerBruteForce
 from v20.environment.controller import ControllerDDQL
 from v21.environment.controller import ControllerDDQLwithPER
 from v22.environment.controller import ControllerIdealADSarsaTabular
+from v23.environment.controller import ControllerPPO
 from environment.state_handling import get_prototype
 
 CONTROLLER = None
@@ -52,6 +53,8 @@ def get_controller():
             CONTROLLER = ControllerDDQLwithPER()
         elif proto == "22":
             CONTROLLER = ControllerIdealADSarsaTabular()
+        elif proto == "23":
+            CONTROLLER = ControllerPPO()
         else:
             print("WARNING: Unknown prototype. Falling back to default controller v1!")
             CONTROLLER = ControllerManual()

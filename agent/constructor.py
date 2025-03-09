@@ -15,6 +15,7 @@ from v99.agent.agent import AgentBruteForce
 from v20.agent.agent import AgentOptimizedDDQL
 from v21.agent.agent import AgentOptimizedDDQLPER
 from v22.agent.agent import AgentIdealADSarsaTabular
+from v23.agent.agent import AgentPPO
 
 AGENT = None
 
@@ -53,6 +54,8 @@ def get_agent():
             AGENT = AgentOptimizedDDQLPER()
         elif proto == "22":
             AGENT = AgentIdealADSarsaTabular()
+        elif proto == "23":
+            AGENT = AgentPPO()
         else:
             print("WARNING: Unknown prototype. Falling back to default agent v1!")
             AGENT = AgentManual()
@@ -94,6 +97,8 @@ def build_agent_from_repr(representation):
         AGENT = AgentOptimizedDDQLPER(representation)
     elif proto == "22":
         AGENT = AgentIdealADSarsaTabular(representation)
+    elif proto == "23":
+        AGENT = AgentPPO(representation)
     else:
         print("WARNING: Unknown prototype. Falling back to default agent v1!")
         AGENT = AgentManual()
