@@ -1,112 +1,55 @@
 import numpy as np
 
-
 class ModelOptimized(object):
-    def __init__(self, learn_rate, num_configs):
-        # Initialize hyperparams
+    def __init__(self, learn_rate, num_configs, hidden_sizes):
         self.learn_rate = learn_rate
-
-        # Initialize action set
         self.allowed_actions = np.asarray(range(num_configs))
+        self.hidden_sizes = hidden_sizes  # List of hidden layer sizes, e.g., [64, 32]
+        self.num_layers = len(hidden_sizes) + 1  # Hidden layers + output layer
 
-    def forward(self, weights1, weights2, bias_weights1, bias_weights2, epsilon, inputs):
-        # print("MODEL: inputs", inputs.shape, inputs)
-        # print("MODEL: inputs min/max", inputs.shape, np.min(inputs), np.argmin(inputs), np.max(inputs), np.argmax(inputs))
+    def forward(self, weights_list, bias_weights_list, epsilon, inputs):
+        # Forward pass through multiple layers
+        activations = [inputs]  # Store activations for each layer
+        for i in range(self.num_layers):
+            pre_activation = np.dot(weights_list[i].T, activations[-1]) + bias_weights_list[i]
+            if i < self.num_layers - 1:  # Hidden layers use Logistic
+                activation = 1 / (1 + np.exp(-pre_activation))
+            else:  # Output layer uses SiLU
+                activation = pre_activation / (1 + np.exp(-pre_activation))
+            activations.append(activation)
 
-        # ==============================
-        # Q-VALUES
-        # ==============================
+        q_values = activations[-1]  # Q-values from output layer
+        hidden_list = activations[1:-1]  # Hidden layer outputs
 
-        # Forward pass through neural network to compute Q-values
-        # print("MODEL: w1", weights1.shape, weights1)
-        # print("MODEL: w1 min/max", weights1.shape, np.min(weights1), np.argmin(weights1), np.max(weights1), np.argmax(weights1))
-        # print("MODEL: bw1 min/max", bias_weights1.shape, np.min(bias_weights1), np.argmin(bias_weights1), np.max(bias_weights1), np.argmax(bias_weights1))
-        adaline1 = np.dot(weights1.T, inputs) + bias_weights1
-        # print("MODEL: ad1 dot", np.dot(weights1.T, inputs))
-        # print("MODEL: ad1 min/max", adaline1.shape, np.min(adaline1), np.argmin(adaline1), np.max(adaline1), np.argmax(adaline1))
+        # Epsilon-greedy policy
+        q_a = q_values[self.allowed_actions]
+        if np.random.random() < epsilon:
+            selected_action = self.allowed_actions[np.random.randint(self.allowed_actions.size)]
+        else:
+            selected_action = self.allowed_actions[np.argmax(q_a)]
 
-        hidden1 = 1 / (1 + np.exp(-adaline1))  # logistic activation
-        # hidden1 = adaline1 * (adaline1 > 0)  # ReLU activation, x if a > 0 else 0
-        # hidden1 = adaline1 / (1 + np.exp(-adaline1))  # SiLU activation, x*sig(x) = x/(1+e^-x)
+        return hidden_list, q_values, selected_action
 
-        # print("MODEL: hidden1 min/max", hidden1.shape, np.min(hidden1), np.argmin(hidden1), np.max(hidden1), np.argmax(hidden1))
-        # print("MODEL: w2", weights2.shape, weights2)
-        # print("MODEL: w2 min/max", weights2.shape, np.min(weights2), np.argmin(weights2), np.max(weights2), np.argmax(weights2))
-        # print("MODEL: bw2 min/max", bias_weights2.shape, np.min(bias_weights2), np.argmin(bias_weights2), np.max(bias_weights2), np.argmax(bias_weights2))
+    def backward(self, q_values, q_err, hidden_list, weights_list, bias_weights_list, inputs):
+        # Backpropagation through multiple layers
+        activations = [inputs] + hidden_list + [q_values]
+        deltas = [None] * self.num_layers
 
-        adaline2 = np.dot(weights2.T, hidden1) + bias_weights2
-        # print("MODEL: ad2 dot", np.dot(weights2.T, hidden1))
-        # print("MODEL: ad2 min/max", adaline2.shape, np.min(adaline2), np.argmin(adaline2), np.max(adaline2), np.argmax(adaline2))
+        # Output layer delta (SiLU derivative)
+        sig_q = 1 / (1 + np.exp(-q_values))
+        deltas[-1] = sig_q * (1 + q_values * (1 - sig_q)) * q_err
 
-        # q = 1 / (1 + np.exp(-adaline2))  # h2, logistic activation
-        # q = adaline2 * (adaline2 > 0)  # h2, ReLU activation, x if a > 0 else 0
-        q = adaline2 / (1 + np.exp(-adaline2))  # h2, SiLU activation, x*sig(x) = x/(1+e^-x)
+        # Hidden layer deltas (Logistic derivative)
+        for i in range(self.num_layers - 2, -1, -1):
+            hidden = activations[i + 1]
+            deltas[i] = hidden * (1 - hidden) * np.dot(weights_list[i + 1], deltas[i + 1])
 
-        # print("MODEL: Q", q.shape, "\n", q)
+        # Update weights and biases
+        new_weights_list = []
+        new_bias_weights_list = []
+        for i in range(self.num_layers):
+            delta_weights = np.outer(activations[i], deltas[i].T)
+            new_weights_list.append(weights_list[i] + self.learn_rate * delta_weights)
+            new_bias_weights_list.append(bias_weights_list[i] + self.learn_rate * deltas[i])
 
-        # ==============================
-        # POLICY
-        # ==============================
-
-        # Choose action based on epsilon-greedy policy
-        possible_a = self.allowed_actions  # technically an array of indexes
-        q_a = q[possible_a]
-
-        if np.random.random() < epsilon:  # explore randomly
-            sel_a = possible_a[np.random.randint(possible_a.size)]
-            # print("MODEL: random action", sel_a)
-        else:  # exploit greedily
-            argmax = np.argmax(q_a)
-            # print("MODEL: argmax", argmax, "of", q_a, "for", possible_a)
-            sel_a = possible_a[argmax]
-            # print("MODEL: greedy action", sel_a)
-
-        return hidden1, q, sel_a
-
-    def backward(self, q, q_err, hidden, weights1, weights2, bias_weights1, bias_weights2, inputs):
-        # Backpropagation of error through neural network
-
-        # ==============================
-        # COMPUTE DELTA
-        # ==============================
-
-        # print("MODEL back: inputs err", inputs.shape, q_err.shape, inputs.T, q_err.T, sep="\n")
-
-        delta2 = 1 / (1 + np.exp(-q)) * (1 + q*(1 - (1 / (1 + np.exp(-q))))) * q_err  # derivative SiLU: sig(x) * (1 + x(1 - sig(x)))
-        # delta2 = (q > 0) * q_err  # derivative ReLU: 1 if x > 0 else 0
-        # delta2 = q * (1 - q) * q_err  # derivative logistic: f(x) * (1 - f(x))
-
-        delta_weights2 = np.outer(hidden, delta2.T)
-        # print("MODEL back: d2", delta2.shape, delta2)
-        # print("MODEL back: d2 min/max", delta2.shape, np.min(delta2), np.argmin(delta2), np.max(delta2), np.argmax(delta2))
-        # print("MODEL back: dw2", delta_weights2.shape, delta_weights2)
-        # print("MODEL back: dw2 min/max", delta_weights2.shape, np.min(delta_weights2), np.argmin(delta_weights2), np.max(delta_weights2), np.argmax(delta_weights2))
-
-        # delta1 = 1 / (1 + np.exp(-hidden)) * (1 + hidden*(1 - (1 / (1 + np.exp(-hidden))))) * np.dot(weights2, delta2)  # derivative SiLU: sig(x) * (1 + x(1 - sig(x)))
-        # delta1 = (hidden > 0) * np.dot(weights2, delta2)  # derivative ReLU: 1 if q > 0 else 0
-        delta1 = hidden * (1 - hidden) * np.dot(weights2, delta2)  # derivative logistic: f(x) * (1 - f(x))
-
-        delta_weights1 = np.outer(inputs, delta1)
-        # print("MODEL back: d1", delta1.shape, delta1)
-        # print("MODEL back: d1 min/max", delta1.shape, np.min(delta1), np.argmin(delta1), np.max(delta1), np.argmax(delta1))
-        # print("MODEL back: dw1", delta_weights1.shape, delta_weights1)
-        # print("MODEL back: dw1 min/max", delta_weights1.shape, np.min(delta_weights1), np.argmin(delta_weights1), np.max(delta_weights1), np.argmax(delta_weights1))
-
-        # ==============================
-        # UPDATE WEIGHTS
-        # ==============================
-
-        # print("MODEL: weights1 before", weights1.shape, np.min(weights1), np.argmin(weights1), np.max(weights1), np.argmax(weights1))
-        # print("MODEL: weights2 before", weights2.shape, np.min(weights2), np.argmin(weights2), np.max(weights2), np.argmax(weights2))
-
-        weights1 += self.learn_rate * delta_weights1
-        weights2 += self.learn_rate * delta_weights2
-        bias_weights1 += self.learn_rate * delta1
-        bias_weights2 += self.learn_rate * delta2
-
-        # print("MODEL: weights1 after", weights1.shape, np.min(weights1), np.argmin(weights1), np.max(weights1), np.argmax(weights1))
-        # print("MODEL: weights2 after", weights2.shape, np.min(weights2), np.argmin(weights2), np.max(weights2), np.argmax(weights2))
-        # print("MODEL: bias1 after", bias_weights1.shape, np.min(bias_weights1), np.argmin(bias_weights1), np.max(bias_weights1), np.argmax(bias_weights1))
-        # print("MODEL: bias2 after", bias_weights2.shape, np.min(bias_weights2), np.argmin(bias_weights2), np.max(bias_weights2), np.argmax(bias_weights2))
-
-        return weights1, weights2, bias_weights1, bias_weights2
+        return new_weights_list, new_bias_weights_list

@@ -1,40 +1,42 @@
 import os
-
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import use as use_plot_backend
-
 from environment.state_handling import initialize_storage, cleanup_storage, get_storage_path
 
+def relu(x):
+    return np.maximum(0, x)         # ReLU activation function
 
-def act1(x):
-    return list(map(lambda v: v if v > 0 else 0, x))  # ReLU
+def logistic(x):
+    return 1 / (1 + np.exp(-x))     # Logistic (Sigmoid) activation function
 
+def silu(x):
+    return x / (1 + np.exp(-x))     # SiLU activation function.
 
-def act2(x):
-    return 1 / (1 + np.exp(-x))  # Logistic
-    # return x / (1 + np.exp(-x))  # SiLU
-
+def tanh(x):
+    return np.tanh(x)               # Tanh activation function.
 
 try:
     initialize_storage()
-    use_plot_backend("template")  # required for matplotlib, throws error otherwise
+    use_plot_backend("template")
 
     x_lim = 4
-    # description = "a1-{}--a2-{}--x-{}".format("ReLU", "SiLU", x_lim)
-    description = "a1-{}--a2-{}--x-{}".format("ReLU", "Logistic", x_lim)
+    description = "ReLU-SiLU-Tanh-xlim-{}".format(x_lim)
 
     x = np.linspace(-x_lim, x_lim, num=500)
 
-    plt.plot(x, act1(x))
-    plt.plot(x, act2(x))
-    # plt.plot(x, act2(x), c="red")
+    # Plot all four activation functions with distinct colors
+    plt.plot(x, relu(x), label="ReLU", color="purple")
+    plt.plot(x, logistic(x), label="Logistic", color="green")
+    plt.plot(x, silu(x), label="SiLU", color="red")
+    plt.plot(x, tanh(x), label="Tanh", color="blue")
 
-    # plt.legend(["ReLU", "SiLU"])
-    plt.legend(["ReLU", "Logistic"])
-
+    plt.legend()
     plt.xlim(-x_lim, x_lim)
     plt.grid()
+    plt.title("Activation Functions: ReLU, SiLU, Tanh")
+    plt.xlabel("x")
+    plt.ylabel("f(x)")
 
     fig_file = os.path.join(get_storage_path(), "activation-func={}.png".format(description))
     plt.savefig(fig_file)

@@ -9,19 +9,23 @@ from time import sleep, time
 import numpy as np
 from tqdm import tqdm
 
-from v25.agent.agent import AgentPPOIdealAD
-from v25.environment.controller import ControllerPPOIdealAD
-from v24.agent.agent import AgentPPO
-from v24.environment.controller import ControllerPPO
+from agent.agent_representation_mutlilayer import AgentRepresentationMultiLayer
+from agent.constructor import get_agent, build_agent_from_repr
+from api import create_app
+from environment.constructor import get_controller
 from environment.reward.abstract_reward import AbstractReward
 from environment.settings import EVALUATION_CSV_FOLDER_PATH
 from environment.state_handling import initialize_storage, cleanup_storage, set_prototype, get_num_configs, \
     get_storage_path, set_simulation, get_instance_number, setup_child_instance, is_api_running, set_api_running
 
-def create_app():
-    from flask import Flask
-    app = Flask(__name__)
-    return app
+"""
+Want to change evaluated prototype?
+1) adjust initial EPSILON (setup) to the one used in evaluated prototype (usually in controller)
+2) adjust the known best action (setup) if necessary (depending on AD and reward system)
+3) adjust the filename of the logfile (setup) to match the prototype settings (in controller/agent/model)
+4) set prototype to evaluated prototype number in setup below (start of try-block)
+5) adjust simulation settings if required (start of try-block)
+"""
 
 def start_api(instance_number):
     setup_child_instance(instance_number)
@@ -33,12 +37,14 @@ def start_api(instance_number):
 def kill_process(proc):
     print("kill Process", proc)
     proc.terminate()
+    print("killed Process", proc)
     timeout = 10
     start = time()
     while proc.is_alive() and time() - start < timeout:
         sleep(1)
     if proc.is_alive():
         proc.kill()
+        print("...we had to put it down", proc)
         sleep(2)
         if proc.is_alive():
             os.kill(proc.pid, signal.SIGKILL)
@@ -48,20 +54,15 @@ def kill_process(proc):
     else:
         print(proc, "now dead")
 
-def transform_fp(fp):
-    """Convert fingerprint string to NumPy array, matching controller.py."""
-    return np.array(list(map(float, fp.split(","))))  # Shape: (F,)
-
-def evaluate_agent(agent):
-    """Evaluate the agent's accuracy on normal and infected fingerprints."""
+def evaluate_agent(agent, weights_list, bias_weights_list, epsilon):
     accuracies_overall = {"total": 0}
     accuracies_configs = {}
     num_configs = get_num_configs()
 
-    for config in range(num_configs):
+    for config in range(num_configs):  # Ensure all keys exist for accessing through KNOWN_BEST_ACTION
         accuracies_overall[config] = 0
 
-    # Evaluate normal fingerprints
+    # Eval normal
     print("Normal")
     normal_fp_dir = os.path.join(EVALUATION_CSV_FOLDER_PATH, "normal")
     fp_files = os.listdir(normal_fp_dir)
@@ -69,51 +70,67 @@ def evaluate_agent(agent):
     for fp_file in tqdm(fp_files):
         with open(os.path.join(normal_fp_dir, fp_file)) as file:
             fp = file.readline()[1:-1].replace(" ", "")
-        state = transform_fp(fp)  # Shape: (F,)
-        selected_action = agent.evaluate_action(state)
+        state = transform_fp(fp)
 
-        accuracies_overall[selected_action] = accuracies_overall.get(selected_action, 0) + 1
+        # Predict next action using the multi-layer network
+        curr_hidden_list, curr_q_values, selected_action = agent.predict(weights_list, bias_weights_list, epsilon, state)
+
+        if selected_action not in accuracies_overall.keys():
+            accuracies_overall[selected_action] = 1
+        else:
+            accuracies_overall[selected_action] += 1
         accuracies_overall["total"] += 1
 
-        accuracies_configs["normal"][selected_action] = accuracies_configs["normal"].get(selected_action, 0) + 1
+        if selected_action not in accuracies_configs["normal"].keys():
+            accuracies_configs["normal"][selected_action] = 1
+        else:
+            accuracies_configs["normal"][selected_action] += 1
         accuracies_configs["normal"]["total"] += 1
 
-    # Evaluate infected fingerprints
+    # Eval infected
     for config in range(num_configs):
-        print(f"\nConfig {config}")
-        config_fp_dir = os.path.join(EVALUATION_CSV_FOLDER_PATH, f"infected-c{config}")
+        print("\nConfig", config)
+        config_fp_dir = os.path.join(EVALUATION_CSV_FOLDER_PATH, "infected-c{}".format(config))
         fp_files = os.listdir(config_fp_dir)
+
         accuracies_configs[config] = {"total": 0}
         for fp_file in tqdm(fp_files):
             with open(os.path.join(config_fp_dir, fp_file)) as file:
                 fp = file.readline()[1:-1].replace(" ", "")
-            state = transform_fp(fp)  # Shape: (F,)
-            selected_action = agent.evaluate_action(state)
+            state = transform_fp(fp)
 
-            accuracies_overall[selected_action] = accuracies_overall.get(selected_action, 0) + 1
+            # Predict next action using the multi-layer network
+            curr_hidden_list, curr_q_values, selected_action = agent.predict(weights_list, bias_weights_list, epsilon, state)
+
+            if selected_action not in accuracies_overall.keys():
+                accuracies_overall[selected_action] = 1
+            else:
+                accuracies_overall[selected_action] += 1
             accuracies_overall["total"] += 1
 
-            accuracies_configs[config][selected_action] = accuracies_configs[config].get(selected_action, 0) + 1
+            if selected_action not in accuracies_configs[config].keys():
+                accuracies_configs[config][selected_action] = 1
+            else:
+                accuracies_configs[config][selected_action] += 1
             accuracies_configs[config]["total"] += 1
-
     return accuracies_overall, accuracies_configs
 
 def find_agent_file(timestamp):
-    """Find the saved agent representation file."""
     storage_path = get_storage_path()
     files = os.listdir(storage_path)
-    filtered = [f for f in files if f.startswith(f"agent={timestamp}")]
-    if not filtered:
-        raise FileNotFoundError(f"No agent file found for timestamp {timestamp}")
-    return os.path.join(storage_path, filtered[0])
+    filtered = list(filter(lambda f: f.startswith("agent={}".format(timestamp)), files))
+    return os.path.join(storage_path, filtered.pop())
+
+def transform_fp(fp):
+    split_to_floats = list(map(lambda feat: float(feat), fp.split(",")))
+    return np.asarray(split_to_floats).reshape(-1, 1)  # Shape (F, 1)
 
 def print_accuracy_table(accuracies_overall, accuracies_configs, logs):
-    """Print and log accuracy tables."""
     num_configs = get_num_configs()
     print("----- Per Config -----")
     logs.append("----- Per Config -----")
 
-    # from normal states
+    # From normal states
     line = []
     key_keys = sorted(list(filter(lambda k: not isinstance(k, str), list(accuracies_configs["normal"].keys()))))
     for key in range(num_configs):
@@ -123,7 +140,7 @@ def print_accuracy_table(accuracies_overall, accuracies_configs, logs):
     print("Normal:\t", *line, sep="\t")
     logs.append("\t".join(["Normal:\t", *line]).strip())
 
-    # from infected states
+    # From infected states
     config_keys = sorted(list(filter(lambda k: not isinstance(k, str), list(accuracies_configs.keys()))))
     for config in config_keys:
         line = []
@@ -153,62 +170,61 @@ if __name__ == "__main__":
     # SETUP
     # ==============================
     total_start = time()
-    prototype_description = "p24-2000e=lr0.002-clip0.2-gamma0.99-lambda0.95-EInitial0.2-EDecay0.995-Epochs4-batch32"
+    prototype_description = "ZZ-p21-2000e=e0.4d0.01a0.0050y0.10=Log-SiLU=h64-32=he=IdealAD---TEST-deeper-NN"
+
+    EPSILON = 0.4
     KNOWN_BEST_ACTION = 3
 
     log_file = os.path.join(os.path.curdir, "storage",
-                            f"accuracy-report={datetime.now().strftime('%Y-%m-%d--%H-%M-%S')}={prototype_description}.txt")
+                            "accuracy-report={}={}.txt".format(datetime.now().strftime("%Y-%m-%d--%H-%M-%S"),
+                                                               prototype_description))
     logs = []
 
     print("========== PREPARE ENVIRONMENT ==========\nAD evaluation is written to log file directly")
+
     initialize_storage()
     procs = []
     try:
-        prototype_num = "24"  # Change this number to switch implementations
-        set_prototype(prototype_num)
-        simulated = True  # Set to False for real environment
+        set_prototype("21")
+        simulated = True
         set_simulation(simulated)
         np.random.seed(42)
 
-        if prototype_num == "25":
-            AgentClass = AgentPPOIdealAD
-            ControllerClass = ControllerPPOIdealAD
-        else:  #makes v24 as Default implementation (for all others than 25)
-            AgentClass = AgentPPO
-            ControllerClass = ControllerPPO
-
-        # Write initial log
+        # ==============================
+        # WRITE AD EVALUATION TO LOG FILE
+        # ==============================
         with open(log_file, "w+") as f:
             with redirect_stdout(f):
                 print("========== PREPARE ENVIRONMENT ==========")
                 AbstractReward.prepare_reward_computation()
 
-        # Evaluate untrained agent
+        # ==============================
+        # EVAL UNTRAINED AGENT
+        # ==============================
         print("\n========== MEASURE ACCURACY (INITIAL) ==========")
         logs.append("\n========== MEASURE ACCURACY (INITIAL) ==========")
 
-        agent = AgentClass()
-        print(f"Evaluating agent {agent} with settings {prototype_description}.\n")
-        logs.append(f"Evaluating agent {agent} with settings {prototype_description}.\n")
+        agent = get_agent()
+        print("Evaluating agent {} with settings {}.\n".format(agent, prototype_description))
+        logs.append("Evaluating agent {} with settings {}.\n".format(agent, prototype_description))
+        weights_list, bias_weights_list = agent.initialize_network()
         logs.append("Agent representation")
-        logs.append("> prototype: PPO")
-        logs.append(f"> weights1: {agent.weights1.tolist()}")
-        logs.append(f"> weights_policy: {agent.weights_policy.tolist()}")
-        logs.append(f"> weights_value: {agent.weights_value.tolist()}")
-        logs.append(f"> learn_rate: {agent.learn_rate}, clip_epsilon: {agent.clip_epsilon}, "
-                    f"gamma: {agent.gamma}, lambda_: {agent.lambda_}, value_coef: {agent.value_coef}, "
-                    f"entropy_coef: {agent.entropy_coef}, epochs: {agent.epochs}, batch_size: {agent.batch_size}")
+        logs.append("> prototype: {}".format(agent))
+        for i, (w, bw) in enumerate(zip(weights_list, bias_weights_list)):
+            logs.append("> weights{}: {}".format(i + 1, w.tolist()))
+            logs.append("> bias_weights{}: {}".format(i + 1, bw.tolist()))
+        logs.append("> epsilon: {}, learn_rate: {}, num_input: {}, num_output: {}".format(
+            EPSILON, agent.learn_rate, agent.num_input, agent.num_output))
 
         start = time()
-        accuracies_initial_overall, accuracies_initial_configs = evaluate_agent(agent)
+        accuracies_initial_overall, accuracies_initial_configs = evaluate_agent(agent, weights_list, bias_weights_list, EPSILON)
         duration = time() - start
-        print(f"\nEvaluation took %.3fs, roughly %.1fmin." % (duration, duration / 60))
-        logs.append(f"\nEvaluation took %.3fs, roughly %.1fmin." % (duration, duration / 60))
+        print("\nEvaluation took {}s, roughly {}min.".format("%.3f" % duration, "%.1f" % (duration / 60)))
+        logs.append("\nEvaluation took {}s, roughly {}min.".format("%.3f" % duration, "%.1f" % (duration / 60)))
 
         # ==============================
         # TRAINING AGENT
         # ==============================
-
         if not simulated:
             proc_api = Process(target=start_api, args=(get_instance_number(),))
             procs.append(proc_api)
@@ -220,42 +236,51 @@ if __name__ == "__main__":
         print("\n========== TRAIN AGENT ==========")
         logs.append("\n========== TRAIN AGENT ==========")
 
-        controller = ControllerClass()
+        controller = get_controller()
         training_start = time()
         timestamp = datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
-        controller.run_c2(agent, timestamp=timestamp)  # Train the agent
+        final_q_values, _ = controller.loop_episodes(agent)
         training_duration = time() - training_start
-        logs.append(f"Agent and plots timestamp: {timestamp}")
-        print(f"Training took %.3fs, roughly %.1fmin." % (training_duration, training_duration / 60))
-        logs.append(f"Training took %.3fs, roughly %.1fmin." % (training_duration, training_duration / 60))
+        logs.append("Agent and plots timestamp: {}".format(timestamp))
+        print("Training took {}s, roughly {}min.".format("%.3f" % training_duration, "%.1f" % (training_duration / 60)))
+        logs.append("Training took {}s, roughly {}min.".format("%.3f" % training_duration, "%.1f" % (training_duration / 60)))
 
         # ==============================
         # EVAL TRAINED AGENT
         # ==============================
-
         print("\n========== MEASURE ACCURACY (TRAINED) ==========")
         logs.append("\n========== MEASURE ACCURACY (TRAINED) ==========")
 
         with open(find_agent_file(timestamp), "r") as agent_file:
             repr_dict = json.load(agent_file)
-        agent = AgentPPO(representation=repr_dict)
-
+        representation = AgentRepresentationMultiLayer(
+            [np.array(w) for w in repr_dict["weights_list"]],
+            [np.array(bw) for bw in repr_dict["bias_weights_list"]],
+            repr_dict["epsilon"],
+            repr_dict["learn_rate"],
+            repr_dict["num_input"],
+            repr_dict["num_output"]
+        )
+        agent = build_agent_from_repr(representation)
+        final_epsilon = repr_dict["epsilon"]
+        weights_list, bias_weights_list = agent.initialize_network()
         logs.append("Trained agent representation")
-        logs.append("> prototype: PPO")
-        logs.append(f"> weights1: {agent.weights1.tolist()}")
-        logs.append(f"> weights_policy: {agent.weights_policy.tolist()}")
-        logs.append(f"> weights_value: {agent.weights_value.tolist()}")
-        logs.append(f"> learn_rate: {agent.learn_rate}, clip_epsilon: {agent.clip_epsilon}, "
-                    f"gamma: {agent.gamma}, lambda_: {agent.lambda_}, value_coef: {agent.value_coef}, "
-                    f"entropy_coef: {agent.entropy_coef}, epochs: {agent.epochs}, batch_size: {agent.batch_size}")
+        logs.append("> prototype: {}".format(agent))
+        for i, (w, bw) in enumerate(zip(weights_list, bias_weights_list)):
+            logs.append("> weights{}: {}".format(i + 1, w.tolist()))
+            logs.append("> bias_weights{}: {}".format(i + 1, bw.tolist()))
+        logs.append("> epsilon: {}, learn_rate: {}, num_input: {}, num_output: {}".format(
+            final_epsilon, agent.learn_rate, agent.num_input, agent.num_output))
 
         start = time()
-        accuracies_trained_overall, accuracies_trained_configs = evaluate_agent(agent)
+        accuracies_trained_overall, accuracies_trained_configs = evaluate_agent(agent, weights_list, bias_weights_list, final_epsilon)
         duration = time() - start
-        print(f"\nEvaluation took %.3fs, roughly %.1fmin." % (duration, duration / 60))
-        logs.append(f"\nEvaluation took %.3fs, roughly %.1fmin." % (duration, duration / 60))
+        print("\nEvaluation took {}s, roughly {}min.".format("%.3f" % duration, "%.1f" % (duration / 60)))
+        logs.append("\nEvaluation took {}s, roughly {}min.".format("%.3f" % duration, "%.1f" % (duration / 60)))
 
-        # Compute accuracy tables
+        # ==============================
+        # COMPUTE ACCURACY TABLES
+        # ==============================
         print("\n========== ACCURACY TABLE (INITIAL) ==========")
         logs.append("\n========== ACCURACY TABLE (INITIAL) ==========")
         logs = print_accuracy_table(accuracies_initial_overall, accuracies_initial_configs, logs)
@@ -264,29 +289,34 @@ if __name__ == "__main__":
         logs.append("\n========== ACCURACY TABLE (TRAINED) ==========")
         logs = print_accuracy_table(accuracies_trained_overall, accuracies_trained_configs, logs)
 
-        # Show results
+        # ==============================
+        # SHOW RESULTS
+        # ==============================
         print("\n========== RESULTS ==========")
         logs.append("\n========== RESULTS ==========")
 
         val_initial = accuracies_initial_overall.get(KNOWN_BEST_ACTION, 0)
-        #known_best_initial = f"%05.2f%% ({val_initial}/{accuracies_initial_overall['total']})"
         known_best_initial = "{}% ({}/{})".format("%05.2f" % (val_initial / accuracies_initial_overall["total"] * 100),
                                                   val_initial, accuracies_initial_overall["total"])
-
         val_trained = accuracies_trained_overall.get(KNOWN_BEST_ACTION, 0)
-        #known_best_trained = f"%05.2f%% ({val_trained}/{accuracies_trained_overall['total']})"
-        known_best_trained = "{}% ({}/{})".format("%05.2f" % (val_trained / accuracies_initial_overall["total"] * 100),
-                                                  val_trained, accuracies_initial_overall["total"])
-        print(f"For known best action {KNOWN_BEST_ACTION}: from {known_best_initial} to {known_best_trained}.")
-        logs.append(f"For known best action {KNOWN_BEST_ACTION}: from {known_best_initial} to {known_best_trained}.")
+        known_best_trained = "{}% ({}/{})".format("%05.2f" % (val_trained / accuracies_trained_overall["total"] * 100),
+                                                  val_trained, accuracies_trained_overall["total"])
+        print("For known best action {}: from {} to {}.".format(KNOWN_BEST_ACTION, known_best_initial, known_best_trained))
+        logs.append("For known best action {}: from {} to {}.".format(KNOWN_BEST_ACTION, known_best_initial, known_best_trained))
+
+        print("Final Q-Values:\n{}".format(final_q_values))
+        logs.append("Final Q-Values:\n{}".format(final_q_values))
 
         total_duration = time() - total_start
-        print(f"Accuracy computation took %.3fs in total, roughly %.1fmin." % (total_duration, total_duration / 60))
-        logs.append(f"Accuracy computation took %.3fs in total, roughly %.1fmin." % (total_duration, total_duration / 60))
+        print("Accuracy computation took {}s in total, roughly {}min.".format("%.3f" % total_duration, "%.1f" % (total_duration / 60)))
+        logs.append("Accuracy computation took {}s in total, roughly {}min.".format("%.3f" % total_duration, "%.1f" % (total_duration / 60)))
 
-        # Write logs
+        # ==============================
+        # WRITE LOGS TO LOG FILE
+        # ==============================
         with open(log_file, "a") as file:
-            file.writelines([l + "\n" for l in logs])
+            log_lines = list(map(lambda l: l + "\n", logs))
+            file.writelines(log_lines)
 
     finally:
         for proc in procs:

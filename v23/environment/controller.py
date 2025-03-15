@@ -2,60 +2,52 @@ import json
 import os
 from datetime import datetime
 from time import sleep, time
+
 import numpy as np
 from tqdm import tqdm
-from v23.agent.agent import AgentPPO
+
+from v23.agent.agent import AgentIdealADSarsaTabular  # Import AgentIdealADSarsaTabular class
+from agent.agent_representation import AgentRepresentation
 from api.configurations import map_to_ransomware_configuration, send_config
 from environment.reward.ideal_AD_performance_reward import IdealADPerformanceReward
-from environment.settings import MAX_EPISODES_V23, SINGLE_EPISODE_LENGTH_V23
+from environment.settings import MAX_EPISODES_V23, SIM_CORPUS_SIZE_V23
 from environment.state_handling import is_fp_ready, set_fp_ready, is_rw_done, collect_fingerprint, is_simulation, \
     set_rw_done, collect_rate, get_prototype, is_api_running, get_storage_path, get_agent_representation_path
 from utilities.plots import plot_average_results
 from utilities.simulate import simulate_sending_fp, simulate_sending_rw_done
 
 DEBUG_PRINTING = False
+EPSILON = 0.1
+DECAY_RATE = 0.01
 
-class ControllerPPO:
-    def run_c2(self, agent=None):
-        """Run the C2 server for PPO training with an optional agent."""
-        try:
-            print("==============================\nPrepare Reward Computation\n==============================")
-            if not is_simulation():
-                print("\nWaiting for API...")
-                while not is_api_running():
-                    sleep(1)
-            print("\n==============================\nStart Training\n==============================")
-            np.random.seed(42)
-            training_agent = agent if agent is not None else AgentPPO()
-            self.loop_episodes(training_agent)
-        except Exception as e:
-            print(f"Error in run_c2: {e}")
-            raise
-
+class ControllerIdealADSarsaTabular:
     def loop_episodes(self, agent):
-        """Run the PPO training loop with the provided agent."""
         start_timestamp = datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
-        run_info = f"p{get_prototype()}-{MAX_EPISODES_V23}e-{SINGLE_EPISODE_LENGTH_V23}s"
-        description = f"{start_timestamp}={run_info}"
+        run_info = "p{}-{}e-{}s".format(get_prototype(), MAX_EPISODES_V23, SIM_CORPUS_SIZE_V23)
+        description = "{}={}".format(start_timestamp, run_info)
+        agent_file = None
 
         reward_system = IdealADPerformanceReward(+1000, +0, -20)
-        self.agent = agent
 
         all_rewards = []
         all_summed_rewards = []
         all_avg_rewards = []
         all_num_steps = []
+
         num_total_steps = 0
         all_start = time()
 
         eps_iter = range(1, MAX_EPISODES_V23 + 1) if DEBUG_PRINTING else tqdm(range(1, MAX_EPISODES_V23 + 1))
         for episode in eps_iter:
             set_rw_done(False)
+            epsilon_episode = EPSILON / (1 + DECAY_RATE * (episode - 1))
+
             last_action = -1
             reward_store = []
             summed_reward = 0
-            steps = 0
+            steps = 1
             sim_encryption_progress = 0
+            eps_start = time()
 
             log("Wait for initial FP...")
             if is_simulation():
@@ -66,144 +58,118 @@ class ControllerPPO:
             set_fp_ready(False)
 
             state = self.transform_fp(curr_fp)
-            states, actions, log_probs, values, rewards, dones = [], [], [], [], [], []
+            selected_action, q_values = agent.predict(epsilon_episode, state)
+            log("Predicted action {}. Episode {} step {}.".format(selected_action, episode, steps))
 
             while not is_rw_done():
-                action, log_prob, value = agent.act(state)
-                steps += 1
-                log(f"Selected action {action}. Episode {episode} step {steps}.")
-
-                if action != last_action:
-                    config = map_to_ransomware_configuration(action)
+                if selected_action != last_action:
+                    log("Sending new action {} to client.".format(selected_action))
+                    config = map_to_ransomware_configuration(selected_action)
                     if not is_simulation():
-                        send_config(action, config)
-                    last_action = action
+                        send_config(selected_action, config)
+                last_action = selected_action
 
                 if is_simulation():
-                    simulate_sending_fp(action)
+                    simulate_sending_fp(selected_action)
                 while not (is_fp_ready() or is_rw_done()):
-                    sleep(0.5)
-                next_fp = collect_fingerprint() if is_fp_ready() else state
+                    sleep(.5)
+
+                if is_rw_done():
+                    next_fp = curr_fp
+                else:
+                    next_fp = collect_fingerprint()
                 next_state = self.transform_fp(next_fp)
                 set_fp_ready(False)
 
                 rate = collect_rate()
                 sim_encryption_progress += rate
-                if is_simulation() and sim_encryption_progress >= SINGLE_EPISODE_LENGTH_V23:
-                    if action == 3:  # Only action 3 ends with +1000
-                        simulate_sending_rw_done()
-                        reward, detected = reward_system.compute_reward(action, is_rw_done())
-                    else:
-                        reward = 0  # Neutral reward, no +1000
-                        detected = False
-                        set_rw_done(True)
-                else:
-                    reward, detected = reward_system.compute_reward(action, is_rw_done())
 
-                print(f"Episode {episode}, Step {steps}, Action {action}, Reward {reward}")
-                reward_store.append((action, reward))
+                if is_simulation() and sim_encryption_progress >= SIM_CORPUS_SIZE_V23:
+                    simulate_sending_rw_done()
+
+                reward, detected = reward_system.compute_reward(selected_action, is_rw_done())
+                reward_store.append((selected_action, reward))
                 summed_reward += reward
                 if detected:
-                    set_rw_done(True)
+                    set_rw_done()
 
-                states.append(state)
-                actions.append(action)
-                log_probs.append(log_prob)
-                values.append(value)
-                rewards.append(reward)
-                dones.append(is_rw_done())
+                if is_rw_done():
+                    next_action = None
+                    next_q_value = None
+                else:
+                    next_action, next_q_values = agent.predict(epsilon_episode, next_state)
+                    next_q_value = next_q_values[next_action]
+                    steps += 1
+
+                agent.update_q_table(state, selected_action, reward, next_state, next_action, is_rw_done())
+
+                curr_fp = next_fp
+                selected_action = next_action
                 state = next_state
 
+            eps_end = time()
             num_total_steps += steps
             all_rewards.append(reward_store)
             all_summed_rewards.append(summed_reward)
             all_avg_rewards.append(summed_reward / steps)
             all_num_steps.append(steps)
 
-            states = np.array(states)
-            actions = np.array(actions)
-            log_probs = np.array(log_probs)
-            values = np.array(values)
-            rewards = np.array(rewards)
-            dones = np.array(dones)
-
-            returns = self.compute_returns(rewards, dones, agent.gamma)
-            advantages = self.compute_gae(rewards, values, dones, states, agent.gamma, agent.lambda_)
-            agent.update(states, actions, log_probs, advantages, returns)
-
-            # Increment episode counter for entropy decay
-            agent.current_episode += 1
+            # Now use the agent instance to call save_q_table
+            agent_file = agent.save_q_table(description=description)
 
         all_end = time()
-        print(f"steps total {num_total_steps} avg {num_total_steps / MAX_EPISODES_V23}")
+        print("steps total", num_total_steps, "avg", num_total_steps / MAX_EPISODES_V23)
         print("==============================")
+        print("Saving trained agent to file...")
+        print("- Agent saved:", agent_file)
+
         print("Generating plots...")
         results_plots_file = plot_average_results(all_summed_rewards, all_avg_rewards, all_num_steps, MAX_EPISODES_V23,
                                                   description)
-        print(f"- Plots saved: {results_plots_file}")
-        results_store_file = self.save_results_to_file(all_summed_rewards, all_avg_rewards, all_num_steps, description)
-        print(f"- Results saved: {results_store_file}")
+        print("- Plots saved:", results_plots_file)
+        results_store_file = self.save_results_to_file(all_summed_rewards, all_avg_rewards, all_num_steps,
+                                                       description)
+        print("- Results saved:", results_store_file)
+        return None, all_rewards
 
-        agent_repr = {
-            "num_input": agent.num_input,
-            "num_hidden": agent.num_hidden,
-            "num_output": agent.num_output,
-            "learn_rate": agent.learn_rate,
-            "clip_epsilon": agent.clip_epsilon,
-            "gamma": agent.gamma,
-            "lambda_": agent.lambda_,
-            "value_coef": agent.value_coef,
-            "entropy_coef_initial": agent.entropy_coef_initial,
-            "entropy_coef_decay": agent.entropy_coef_decay,
-            "epochs": agent.epochs,
-            "batch_size": agent.batch_size,
-            "weights1": agent.weights1.tolist(),
-            "weights_policy": agent.weights_policy.tolist(),
-            "weights_value": agent.weights_value.tolist(),
-            "fp_features": agent.fp_features,
-            "mean": agent.mean.tolist(),
-            "std": agent.std.tolist()
-        }
-        agent_file = os.path.join(get_storage_path(), f"agent={start_timestamp}.json")
-        with open(agent_file, "w") as f:
-            json.dump(agent_repr, f)
-        print(f"- Agent representation saved: {agent_file}")
+    def run_c2(self):
+        print("==============================\nPrepare Reward Computation\n==============================")
+        if not is_simulation():
+            print("\nWaiting for API...")
+            while not is_api_running():
+                sleep(1)
+        print("\n==============================\nStart Training\n==============================")
+        np.random.seed(42)
 
-    def transform_fp(self, fp):
-        """Convert fingerprint string to NumPy array."""
-        return np.asarray(list(map(float, fp.split(","))))
+        representation_path = get_agent_representation_path()
+        if representation_path and os.path.exists(representation_path):
+            with open(representation_path, "r") as agent_file:
+                repr_dict = json.load(agent_file)
+            representation = AgentRepresentation(repr_dict["weights1"], repr_dict["weights2"],
+                                                 repr_dict["bias_weights1"], repr_dict["bias_weights2"],
+                                                 repr_dict["epsilon"], repr_dict["learn_rate"],
+                                                 repr_dict["num_input"], repr_dict["num_hidden"],
+                                                 repr_dict["num_output"])
+            agent = AgentRepresentation.build_agent_from_repr(representation)
+        else:
+            # Create agent from scratch if no pre-trained model exists
+            agent = AgentIdealADSarsaTabular()  # Initialize AgentIdealADSarsaTabular
 
-    def compute_returns(self, rewards, dones, gamma):
-        """Compute discounted returns."""
-        T = len(rewards)
-        returns = np.zeros(T)
-        g = 0
-        for t in range(T - 1, -1, -1):
-            g = rewards[t] + gamma * g * (1 - dones[t])
-            returns[t] = g
-        return returns
+        self.loop_episodes(agent)
+        print("\n==============================\n! Done !\n==============================")
 
-    def compute_gae(self, rewards, values, dones, states, gamma, lambda_):
-        """Compute Generalized Advantage Estimation."""
-        T = len(rewards)
-        last_value = 0 if dones[-1] else self.agent.forward(states[-1])[1][0, 0]
-        values = np.append(values, last_value)
-        deltas = rewards + gamma * values[1:] * (1 - dones) - values[:-1]
-        advantages = np.zeros(T)
-        a = 0
-        for t in range(T - 1, -1, -1):
-            a = deltas[t] + gamma * lambda_ * (1 - dones[t]) * a
-            advantages[t] = a
-        return advantages
+    @staticmethod
+    def transform_fp(fp):
+        return np.asarray(list(map(float, fp.split(",")))).reshape(-1, 1)
 
-    def save_results_to_file(self, all_summed_rewards, all_avg_rewards, all_num_steps, run_description):
-        """Save training results to a file."""
+    @staticmethod
+    def save_results_to_file(all_summed_rewards, all_avg_rewards, all_num_steps, run_description):
         results_content = json.dumps({
             "summed_rewards": all_summed_rewards,
             "avg_rewards": all_avg_rewards,
             "num_steps": all_num_steps
         }, indent=4)
-        results_file = os.path.join(get_storage_path(), f"results-store={run_description}.txt")
+        results_file = os.path.join(get_storage_path(), "results-store={}.txt".format(run_description))
         with open(results_file, "w") as file:
             file.write(results_content)
         return results_file

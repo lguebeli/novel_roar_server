@@ -7,7 +7,7 @@ from agent.agent_representation import AgentRepresentation
 from api.configurations import map_to_ransomware_configuration, send_config
 from api.ransomware import send_reset_corpus, send_terminate
 from environment.abstract_controller import AbstractController
-from environment.reward.ideal_AD_performance_reward import IdealADPerformanceReward
+from environment.reward.performance_reward import PerformanceReward
 from environment.settings import MAX_EPISODES_V20, SIM_CORPUS_SIZE_V20
 from environment.state_handling import is_fp_ready, set_fp_ready, is_rw_done, collect_fingerprint, is_simulation, \
     set_rw_done, collect_rate, get_prototype
@@ -28,7 +28,7 @@ class ControllerDDQL(AbstractController):
         agent_file = None
         simulated = is_simulation()
 
-        reward_system = IdealADPerformanceReward(+1000, +0, -20)
+        reward_system = PerformanceReward(+1000, +0, -20)
         weights1, weights2, bias_weights1, bias_weights2 = agent.initialize_network()
 
         # Initialize target network weights
@@ -132,7 +132,7 @@ class ControllerDDQL(AbstractController):
 
                 log("Computing reward for next FP.")
                 is_done = is_rw_done()
-                reward, detected = reward_system.compute_reward(selected_action, is_done)
+                reward, detected = reward_system.compute_reward(next_state, is_done)
                 log("Computed reward", reward)
                 reward_store.append((selected_action, reward))
                 summed_reward += reward

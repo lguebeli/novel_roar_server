@@ -1,3 +1,5 @@
+#import os
+#os.environ['OPENBLAS_NUM_THREADS'] = '20'
 from argparse import ArgumentParser
 from multiprocessing import Process
 from time import sleep

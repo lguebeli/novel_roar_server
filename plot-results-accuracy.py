@@ -4,7 +4,7 @@ import os
 import matplotlib.pyplot as plt
 
 acc_report_folder_path = "./storage"
-acc_report_file_template = "accuracy-report=*=p10-acc-{}=e0.2d0.01a0.0050y0.30=Log-SiLU=h25=xavier.txt"
+acc_report_file_template = "accuracy-report=2025-03-14--09-42-18=p20-2000e=e0.4d0.01a0.0050y0.10=Log-SiLU=h40=he=NormalAD.txt"
 max_episodes = 7000
 
 all_accuracies = []

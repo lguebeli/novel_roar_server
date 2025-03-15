@@ -6,14 +6,13 @@ from v5.environment.controller import ControllerIdealADQLearning
 from v6.environment.controller import ControllerSarsa
 from v7.environment.controller import ControllerIdealADSarsa
 from v8.environment.controller import ControllerOptimized
-from v9.environment.controller import ControllerOptimizedQLearningAE
-from v10.environment.controller import ControllerOptimizedQLearningIF
-from v98.environment.controller import ControllerOneStepEpisodeQLearning
-from v99.environment.controller import ControllerBruteForce
+
 from v20.environment.controller import ControllerDDQL
-from v21.environment.controller import ControllerDDQLwithPER
-from v22.environment.controller import ControllerIdealADSarsaTabular
-from v23.environment.controller import ControllerPPO
+from v21.environment.controller import ControllerDDQLIdealAD
+from v22.environment.controller import ControllerSarsaTabular
+from v23.environment.controller import ControllerIdealADSarsaTabular
+from v24.environment.controller import ControllerPPO
+from v25.environment.controller import ControllerPPOIdealAD
 from environment.state_handling import get_prototype
 
 CONTROLLER = None
@@ -39,22 +38,19 @@ def get_controller():
             CONTROLLER = ControllerIdealADSarsa()
         elif proto == "8":
             CONTROLLER = ControllerOptimized()
-        elif proto == "9":
-            CONTROLLER = ControllerOptimizedQLearningAE()
-        elif proto == "10":
-            CONTROLLER = ControllerOptimizedQLearningIF()
-        elif proto == "98":
-            CONTROLLER = ControllerOneStepEpisodeQLearning()
-        elif proto == "99":
-            CONTROLLER = ControllerBruteForce()
+
         elif proto == "20":
             CONTROLLER = ControllerDDQL()
         elif proto == "21":
-            CONTROLLER = ControllerDDQLwithPER()
+            CONTROLLER = ControllerDDQLIdealAD()
         elif proto == "22":
-            CONTROLLER = ControllerIdealADSarsaTabular()
+            CONTROLLER = ControllerSarsaTabular()
         elif proto == "23":
+            CONTROLLER = ControllerIdealADSarsaTabular()
+        elif proto == "24":
             CONTROLLER = ControllerPPO()
+        elif proto == "25":
+            CONTROLLER = ControllerPPOIdealAD()
         else:
             print("WARNING: Unknown prototype. Falling back to default controller v1!")
             CONTROLLER = ControllerManual()

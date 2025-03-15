@@ -6,10 +6,11 @@ from time import sleep, time
 import numpy as np
 from tqdm import tqdm
 
-from v22.agent.agent import AgentIdealADSarsaTabular  # Import AgentIdealADSarsaTabular class
+from v22.agent.agent import AgentSarsaTabular
 from agent.agent_representation import AgentRepresentation
 from api.configurations import map_to_ransomware_configuration, send_config
-from environment.reward.ideal_AD_performance_reward import IdealADPerformanceReward
+from environment.anomaly_detection.anomaly_detection import train_anomaly_detection
+from environment.reward.performance_reward import PerformanceReward
 from environment.settings import MAX_EPISODES_V22, SIM_CORPUS_SIZE_V22
 from environment.state_handling import is_fp_ready, set_fp_ready, is_rw_done, collect_fingerprint, is_simulation, \
     set_rw_done, collect_rate, get_prototype, is_api_running, get_storage_path, get_agent_representation_path
@@ -20,14 +21,42 @@ DEBUG_PRINTING = False
 EPSILON = 0.1
 DECAY_RATE = 0.01
 
-class ControllerIdealADSarsaTabular:
+class ControllerSarsaTabular:
+    def run_c2(self):
+        print("==============================\nPrepare Reward Computation\n==============================")
+        train_anomaly_detection()
+        if not is_simulation():
+            print("\nWaiting for API...")
+            while not is_api_running():
+                sleep(1)
+        print("\n==============================\nStart Training\n==============================")
+        np.random.seed(42)
+
+        representation_path = get_agent_representation_path()
+        if representation_path and os.path.exists(representation_path):
+            with open(representation_path, "r") as agent_file:
+                repr_dict = json.load(agent_file)
+            representation = AgentRepresentation(repr_dict["weights1"], repr_dict["weights2"],
+                                                 repr_dict["bias_weights1"], repr_dict["bias_weights2"],
+                                                 repr_dict["epsilon"], repr_dict["learn_rate"],
+                                                 repr_dict["num_input"], repr_dict["num_hidden"],
+                                                 repr_dict["num_output"])
+            agent = AgentRepresentation.build_agent_from_repr(representation)
+        else:
+            # Create agent from scratch if no pre-trained model exists
+            agent = AgentSarsaTabular()
+
+        self.loop_episodes(agent)
+        print("\n==============================\n! Done !\n==============================")
+
+
     def loop_episodes(self, agent):
         start_timestamp = datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
         run_info = "p{}-{}e-{}s".format(get_prototype(), MAX_EPISODES_V22, SIM_CORPUS_SIZE_V22)
         description = "{}={}".format(start_timestamp, run_info)
         agent_file = None
 
-        reward_system = IdealADPerformanceReward(+1000, +0, -20)
+        reward_system = PerformanceReward(+1000, +0, -20)
 
         all_rewards = []
         all_summed_rewards = []
@@ -87,7 +116,8 @@ class ControllerIdealADSarsaTabular:
                 if is_simulation() and sim_encryption_progress >= SIM_CORPUS_SIZE_V22:
                     simulate_sending_rw_done()
 
-                reward, detected = reward_system.compute_reward(selected_action, is_rw_done())
+                reward, detected = reward_system.compute_reward(next_state, is_rw_done())
+                #reward, detected = reward_system.compute_reward(selected_action, is_rw_done())
                 reward_store.append((selected_action, reward))
                 summed_reward += reward
                 if detected:
@@ -131,32 +161,6 @@ class ControllerIdealADSarsaTabular:
                                                        description)
         print("- Results saved:", results_store_file)
         return None, all_rewards
-
-    def run_c2(self):
-        print("==============================\nPrepare Reward Computation\n==============================")
-        if not is_simulation():
-            print("\nWaiting for API...")
-            while not is_api_running():
-                sleep(1)
-        print("\n==============================\nStart Training\n==============================")
-        np.random.seed(42)
-
-        representation_path = get_agent_representation_path()
-        if representation_path and os.path.exists(representation_path):
-            with open(representation_path, "r") as agent_file:
-                repr_dict = json.load(agent_file)
-            representation = AgentRepresentation(repr_dict["weights1"], repr_dict["weights2"],
-                                                 repr_dict["bias_weights1"], repr_dict["bias_weights2"],
-                                                 repr_dict["epsilon"], repr_dict["learn_rate"],
-                                                 repr_dict["num_input"], repr_dict["num_hidden"],
-                                                 repr_dict["num_output"])
-            agent = AgentRepresentation.build_agent_from_repr(representation)
-        else:
-            # Create agent from scratch if no pre-trained model exists
-            agent = AgentIdealADSarsaTabular()  # Initialize AgentIdealADSarsaTabular
-
-        self.loop_episodes(agent)
-        print("\n==============================\n! Done !\n==============================")
 
     @staticmethod
     def transform_fp(fp):

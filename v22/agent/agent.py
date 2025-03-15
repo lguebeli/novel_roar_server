@@ -8,10 +8,10 @@ from environment.settings import ALL_CSV_HEADERS, TRAINING_CSV_FOLDER_PATH
 from environment.state_handling import get_num_configs, get_storage_path
 import json
 
-LEARN_RATE = 0.1
+LEARN_RATE = 0.0050
 DISCOUNT_FACTOR = 0.75
 
-class AgentIdealADSarsaTabular:
+class AgentSarsaTabular:
     def __init__(self, representation=None):
         self.representation = representation
         if isinstance(representation, AgentRepresentation):  # build from representation

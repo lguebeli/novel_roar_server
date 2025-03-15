@@ -1,6 +1,10 @@
 Flask==3.0.2
-matplotlib
+matplotlib==3.10.0
 pyod==2.0.3
-tensorflow
-tinydb
-tqdm
+tensorflow==2.18.0
+tinydb==4.8.2
+tqdm==4.67.1
+numpy==2.0.2
+pandas==2.2.3
+wheel==0.45.1
+Werkzeug==3.1.3
