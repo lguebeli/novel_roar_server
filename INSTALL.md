@@ -28,30 +28,30 @@ The constants of all other files are typically located at the top of the file, u
 If nothing is indicated and there are constants further down in the file, it may be advisable not to change them.
 Handle with care and at your own risk of breaking stuff! 
 
-| File                                                 | Constant                                                                                                       |
-|------------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
-| `environment/anomaly_detection/anomaly-detection.py` | - Contamination factor                                                                                         |
-| `environment/settings.py`                            | - CSV folder path<br>- Verify CSV headers<br>- Client IP address<br>- AD features<br>- C&C simulation settings |
-| `vX/agent/agent.py`                                  | - Agent specific constants and starting values ()                                                              |
-| `vX/agent/model.py`                                  | - Model specific constants and starting values                                                                 |
-| `vX/environment/controller.py`                       | - Episode specific constants and values (orchestration)                                                        |
+| File                                                 | Constant                                                                                                                                               |
+|------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `environment/anomaly_detection/anomaly-detection.py` | - Contamination factor                                                                                                                                 |
+| `environment/settings.py`                            | - CSV folder path<br>- Verify CSV headers<br>- Client IP address<br>- AD features<br>- C&C simulation settings<br>- Prototype specific Hyperparameters |
+| `vX/agent/agent.py`                                  | - Agent specific constants and starting values ()                                                                                                      |
+| `vX/agent/model.py`                                  | - Model specific constants and starting values                                                                                                         |
+| `vX/environment/controller.py`                       | - Episode specific constants and values (orchestration)                                                                                                |
 
 To be able to used auxiliary scripts, there are other constants contained in the files listed below that may require adjustments - depending on the script to be run.
 
-| File                                                | Constant                                                                                                       |
-|-----------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
-| `environment/reward/ideal_AD_performance_reward.py` | - Detected configurations (only check if original set was altered)                                             |
-| `environment/abstract_controller.py`                | - Wait for user confirmation (default False)                                                                   |
-| `environment/state_handling.py`                     | - Folder names (DANGER ZONE!)                                                                                  |
-| `environment/settings.py`                           | - CSV folder path<br>- Verify CSV headers<br>- Client IP address<br>- AD features<br>- C&C simulation settings |
-| `utilities/simulate.py`                             | - Configuration settings for unlimited encryption rate                                                         |
-| `accuracy.py`                                       | - Follow instructions at the top                                                                               |
-| `accuracy_pretrained.py`                            | - Follow instructions at the top                                                                               |
-| `find-avg-rate.py`                                  | - Metrics folder path (default training set folder)                                                            |
-| `fp-to-csv.py`                                      | - CSV file names<br>- Verify CSV headers                                                                       |
-| `plot-activation-func.py`                           | - Activation functions<br>- Plot axis range and descriptions                                                   |
-| `plot-perf-reward-func.py`                          | - Reward functions<br>- Plot axis range and descriptions                                                       |
-| `select-fingerprints-test-set.py`                   | - Fingerprint folders (source and target)                                                                      |
+| File                                                | Constant                                                                                                                                               |
+|-----------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `environment/reward/ideal_AD_performance_reward.py` | - Detected configurations (only check if original set was altered)                                                                                     |
+| `environment/abstract_controller.py`                | - Wait for user confirmation (default False)                                                                                                           |
+| `environment/state_handling.py`                     | - Folder names (DANGER ZONE!)                                                                                                                          |
+| `environment/settings.py`                           | - CSV folder path<br>- Verify CSV headers<br>- Client IP address<br>- AD features<br>- C&C simulation settings<br>- Prototype specific Hyperparameters |
+| `utilities/simulate.py`                             | - Configuration settings for unlimited encryption rate                                                                                                 |
+| `accuracy.py`                                       | - Follow instructions at the top                                                                                                                       |
+| `accuracy_pretrained.py`                            | - Follow instructions at the top                                                                                                                       |
+| `find-avg-rate.py`                                  | - Metrics folder path (default training set folder)                                                                                                    |
+| `fp-to-csv.py`                                      | - CSV file names<br>- Verify CSV headers                                                                                                               |
+| `plot-activation-func.py`                           | - Activation functions<br>- Plot axis range and descriptions                                                                                           |
+| `plot-perf-reward-func.py`                          | - Reward functions<br>- Plot axis range and descriptions                                                                                               |
+| `select-fingerprints-test-set.py`                   | - Fingerprint folders (source and target)                                                                                                              |
 
 Other files should technically not require any changes to configurations as they import the requirements from the settings file.
 But then again, some files or configurations may have been overlooked.

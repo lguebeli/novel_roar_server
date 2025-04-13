@@ -5,12 +5,12 @@ import pandas as pd
 from agent.abstract_agent import AbstractAgent
 from agent.agent_representation_mutlilayer import AgentRepresentationMultiLayer
 from environment.anomaly_detection.constructor import get_preprocessor
-from environment.settings import ALL_CSV_HEADERS, TRAINING_CSV_FOLDER_PATH
+from environment.settings import ALL_CSV_HEADERS, TRAINING_CSV_FOLDER_PATH, LEARN_RATE_V21, DISCOUNT_FACTOR_V21
 from environment.state_handling import get_num_configs
 from v21.agent.model import ModelOptimized
 
-LEARN_RATE = 0.0050
-DISCOUNT_FACTOR = 0.10
+LEARN_RATE = LEARN_RATE_V21
+DISCOUNT_FACTOR = DISCOUNT_FACTOR_V21
 
 class AgentDDQLIdealAD(AbstractAgent):
     def __init__(self, representation=None, hidden_sizes=None):
@@ -19,7 +19,7 @@ class AgentDDQLIdealAD(AbstractAgent):
         if hidden_sizes is None:
             num_configs = get_num_configs()
             self.num_input = len(self.__get_fp_features())
-            hidden_sizes = [round(self.num_input * 0.8 / 5) * 5, round(self.num_input * 0.4 / 5) * 5]  # e.g., [64, 32]
+            hidden_sizes = [round(self.num_input * 2), round(self.num_input)]
         self.hidden_sizes = hidden_sizes
 
         if isinstance(representation, AgentRepresentationMultiLayer):
@@ -82,7 +82,7 @@ class AgentDDQLIdealAD(AbstractAgent):
     def update_weights(self, q_values, error, state, hidden_list, weights_list, bias_weights_list):
         std_fp = AbstractAgent.standardize_fp(state)
         ready_fp = self.__preprocess_fp(std_fp)
-        new_weights_list, new_bias_weights_list = self.model.backward(q_values, error, hidden_list, weights_list, bias_weights_list, inputs=ready_fp)
+        new_weights_list, new_bias_weights_list = self.model.backward(q_values, error, hidden_list, weights_list, bias_weights_list, inputs=ready_fp, learn_rate=self.learn_rate)
         return new_weights_list, new_bias_weights_list
 
     def init_error(self):

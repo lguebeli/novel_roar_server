@@ -1,17 +1,39 @@
 import numpy as np
-import os
+import tensorflow as tf
 import pandas as pd
+import os
 from environment.anomaly_detection.constructor import get_preprocessor
-from environment.settings import ALL_CSV_HEADERS, TRAINING_CSV_FOLDER_PATH
 from environment.state_handling import get_num_configs
+from environment.settings import (
+    ALL_CSV_HEADERS,
+    TRAINING_CSV_FOLDER_PATH,
+    LEARN_RATE_V25,
+    CLIP_EPSILON_V25,
+    GAMMA_V25,
+    LAMBDA_V25,
+    VALUE_COEF_V25,
+    ENTROPY_COEF_INITIAL_V25,
+    ENTROPY_COEF_DECAY_V25,
+    MIN_ENTROPY_COEF_V25,
+    EPOCHS_V25,
+    BATCH_SIZE_V25,
+)
 
-class AgentPPOIdealAD:
+
+class AgentPPOIdealAD(tf.keras.Model):
     def __init__(self, representation=None, current_episode=0):
-        """Initialize the PPO agent with optional representation and episode counter."""
+        super(AgentPPOIdealAD, self).__init__()
         self.current_episode = current_episode
+
+        # Define headers once for consistency
+        self.headers = ALL_CSV_HEADERS.split(",")
+        self.num_headers = len(self.headers)
+
         if representation:
+            # Load from representation
             self.num_input = representation["num_input"]
-            self.num_hidden = representation["num_hidden"]
+            self.num_hidden1 = representation["num_hidden1"]
+            self.num_hidden2 = representation["num_hidden2"]
             self.num_output = representation["num_output"]
             self.actions = list(range(self.num_output))
             self.learn_rate = representation["learn_rate"]
@@ -21,149 +43,206 @@ class AgentPPOIdealAD:
             self.value_coef = representation["value_coef"]
             self.entropy_coef_initial = representation["entropy_coef_initial"]
             self.entropy_coef_decay = representation["entropy_coef_decay"]
+            self.min_entropy_coef = representation["min_entropy_coef"]
             self.epochs = representation["epochs"]
             self.batch_size = representation["batch_size"]
-            self.weights1 = np.array(representation["weights1"])
-            self.weights_policy = np.array(representation["weights_policy"])
-            self.weights_value = np.array(representation["weights_value"])
             self.fp_features = representation["fp_features"]
-            self.mean = np.array(representation["mean"])
-            self.std = np.array(representation["std"])
+            self.min = np.array(representation["min"])
+            self.max = np.array(representation["max"])
+            # Build model and set weights
+            self._build_model()
+            dummy_input = tf.zeros((1, self.num_headers), dtype=tf.float32)
+            self.call(dummy_input)
+            self.set_weights_from_dict(representation)
         else:
+            # Initialize with default parameters
             num_configs = get_num_configs()
             self.actions = list(range(num_configs))
-            self.fp_features, self.mean, self.std = self.__get_fp_features()
+            # Load raw data and compute min/max for all features
+            raw_df = pd.read_csv(os.path.join(TRAINING_CSV_FOLDER_PATH, "normal-behavior.csv"))
+            self.min = raw_df.min().values
+            self.max = raw_df.max().values
+            # Get preprocessed feature list
+            preprocessor = get_preprocessor()
+            ready_dataset = preprocessor.preprocess_dataset(raw_df)
+            self.fp_features = ready_dataset.columns.tolist()
             self.num_input = len(self.fp_features)
-            self.num_hidden = round(self.num_input * 1.0)
+            self.num_hidden1 = round(self.num_input * 2)
+            self.num_hidden2 = round(self.num_input * 0.5)
             self.num_output = num_configs
-            self.learn_rate = 0.002
-            self.clip_epsilon = 0.2
-            self.gamma = 0.99
-            self.lambda_ = 0.95
-            self.value_coef = 0.5
-            self.entropy_coef_initial = 0.2
-            self.entropy_coef_decay = 0.995  # Decay factor per episode
-            self.epochs = 4
-            self.batch_size = 32
-            self.weights1 = np.random.randn(self.num_input, self.num_hidden) * 0.01
-            self.weights_policy = np.random.randn(self.num_hidden, self.num_output) * 0.01
-            self.weights_value = np.random.randn(self.num_hidden, 1) * 0.01
+            self.learn_rate = LEARN_RATE_V25
+            self.clip_epsilon = CLIP_EPSILON_V25
+            self.gamma = GAMMA_V25
+            self.lambda_ = LAMBDA_V25
+            self.value_coef = VALUE_COEF_V25
+            self.entropy_coef_initial = ENTROPY_COEF_INITIAL_V25
+            self.entropy_coef_decay = ENTROPY_COEF_DECAY_V25
+            self.min_entropy_coef = MIN_ENTROPY_COEF_V25
+            self.epochs = EPOCHS_V25
+            self.batch_size = BATCH_SIZE_V25
+            self._build_model()
+            dummy_input = tf.zeros((1, self.num_headers), dtype=tf.float32)
+            self.call(dummy_input)
+
+        self.optimizer = tf.keras.optimizers.Adam(learning_rate=self.learn_rate)
+
+    def _build_model(self):
+        """Define the neural network architecture."""
+        self.hidden1 = tf.keras.layers.Dense(
+            self.num_hidden1, activation=tf.nn.leaky_relu,
+            kernel_initializer='he_normal'
+        )
+        self.hidden2 = tf.keras.layers.Dense(
+            self.num_hidden2, activation=tf.nn.leaky_relu,
+            kernel_initializer='he_normal'
+        )
+        self.policy = tf.keras.layers.Dense(
+            self.num_output, activation=None,
+            kernel_initializer='he_normal'
+        )
+        self.value = tf.keras.layers.Dense(
+            1, activation=None,
+            kernel_initializer='he_normal'
+        )
+
+    def set_weights_from_dict(self, representation):
+        """Set model weights from a dictionary."""
+        self.hidden1.kernel.assign(np.array(representation["weights_input_hidden1"]))
+        self.hidden1.bias.assign(np.array(representation["bias_hidden1"]))
+        self.hidden2.kernel.assign(np.array(representation["weights_hidden1_hidden2"]))
+        self.hidden2.bias.assign(np.array(representation["bias_hidden2"]))
+        self.policy.kernel.assign(np.array(representation["weights_hidden2_policy"]))
+        self.policy.bias.assign(np.array(representation["bias_policy"]))
+        self.value.kernel.assign(np.array(representation["weights_hidden2_value"]))
+        self.value.bias.assign(np.array(representation["bias_value"]))
+
+    def get_weights_dict(self):
+        """Return weights as a dictionary for saving."""
+        return {
+            "num_input": self.num_input,
+            "num_hidden1": self.num_hidden1,
+            "num_hidden2": self.num_hidden2,
+            "num_output": self.num_output,
+            "learn_rate": self.learn_rate,
+            "clip_epsilon": self.clip_epsilon,
+            "gamma": self.gamma,
+            "lambda_": self.lambda_,
+            "value_coef": self.value_coef,
+            "entropy_coef_initial": self.entropy_coef_initial,
+            "entropy_coef_decay": self.entropy_coef_decay,
+            "min_entropy_coef": self.min_entropy_coef,
+            "epochs": self.epochs,
+            "batch_size": self.batch_size,
+            "weights_input_hidden1": self.hidden1.kernel.numpy().tolist(),
+            "bias_hidden1": self.hidden1.bias.numpy().tolist(),
+            "weights_hidden1_hidden2": self.hidden2.kernel.numpy().tolist(),
+            "bias_hidden2": self.hidden2.bias.numpy().tolist(),
+            "weights_hidden2_policy": self.policy.kernel.numpy().tolist(),
+            "bias_policy": self.policy.bias.numpy().tolist(),
+            "weights_hidden2_value": self.value.kernel.numpy().tolist(),
+            "bias_value": self.value.bias.numpy().tolist(),
+            "fp_features": self.fp_features,
+            "min": self.min.tolist(),
+            "max": self.max.tolist()
+        }
 
     @property
     def entropy_coef(self):
-        """Compute decayed entropy coefficient."""
-        return self.entropy_coef_initial * (self.entropy_coef_decay ** self.current_episode)
+        """Calculate the decayed entropy coefficient with a minimum value."""
+        return max(self.min_entropy_coef, self.entropy_coef_initial * (self.entropy_coef_decay ** self.current_episode))
 
-    def __get_fp_features(self):
-        """Get selected fingerprint features and compute mean/std from normal behavior."""
-        df_normal = pd.read_csv(os.path.join(TRAINING_CSV_FOLDER_PATH, "normal-behavior.csv"))
-        preprocessor = get_preprocessor()
-        ready_dataset = preprocessor.preprocess_dataset(df_normal)
-        mean = ready_dataset.mean().values
-        std = ready_dataset.std().values + 1e-8
-        return ready_dataset.columns.tolist(), mean, std
-
-    def __preprocess_fp(self, fp):
-        """Preprocess fingerprint to select relevant features."""
-        headers = ALL_CSV_HEADERS.split(",")
-        indexes = [headers.index(header) for header in self.fp_features]
-        return fp[:, indexes]
+    def _preprocess_fp(self, fp):
+        """Select relevant features from the fingerprint."""
+        indexes = [self.headers.index(header) for header in self.fp_features if header in self.headers]
+        return tf.gather(fp, indexes, axis=-1)
 
     def standardize_fp(self, fp):
-        """Standardize fingerprint using fixed mean and std from normal behavior."""
-        if fp.ndim == 1:
-            fp = fp.reshape(1, -1)
-        return (fp - self.mean) / self.std
+        """Standardize the fingerprint using min-max scaling on full input."""
+        if tf.rank(fp) == 1:
+            fp = tf.expand_dims(fp, 0)
+        return (fp - self.min) / (self.max - self.min + 1e-6)
 
-    def softmax(self, logits):
-        """Compute softmax probabilities."""
-        exp_logits = np.exp(logits - np.max(logits, axis=-1, keepdims=True))
-        return exp_logits / np.sum(exp_logits, axis=-1, keepdims=True)
-
-    def forward(self, state):
+    def call(self, inputs, training=False):
         """Forward pass through the network."""
-        if state.ndim == 1:
-            state = state.reshape(1, -1)
-        selected_fp = self.__preprocess_fp(state)
-        standardized_fp = self.standardize_fp(selected_fp)
-
-        #Tanh activation function
-        hidden = np.tanh(np.dot(standardized_fp, self.weights1))
-        policy_logits = np.dot(hidden, self.weights_policy)
-        value = np.dot(hidden, self.weights_value)
-        return policy_logits, value, hidden, standardized_fp
+        x = self.standardize_fp(inputs)  # Standardize full input first
+        x = self._preprocess_fp(x)       # Then select features
+        hidden1 = self.hidden1(x)
+        hidden2 = self.hidden2(hidden1)
+        policy_logits = self.policy(hidden2)
+        value = self.value(hidden2)
+        return policy_logits, value
 
     def act(self, state):
-        """Select an action using the current policy."""
-        policy_logits, value, _, _ = self.forward(state)
-        probs = self.softmax(policy_logits)[0]
-        action = np.random.choice(self.num_output, p=probs)
-        log_prob = np.log(probs[action] + 1e-10)
-        return action, log_prob, value[0, 0]
+        """Select an action stochastically based on the policy."""
+        state = tf.convert_to_tensor(state, dtype=tf.float32)
+        if state.shape[0] != self.num_headers:
+            state = tf.pad(state, [[0, self.num_headers - state.shape[0]]], mode='CONSTANT') if state.shape[0] < self.num_headers else state[:self.num_headers]
+        state = tf.expand_dims(state, 0)  # Add batch dimension: (1, num_headers)
+
+        policy_logits, value = self.call(state)
+        probs = tf.nn.softmax(policy_logits)[0]
+        action = tf.random.categorical(tf.expand_dims(probs, 0), 1)[0, 0]
+        action = tf.clip_by_value(action, 0, self.num_output - 1)  # Ensure action is in bounds
+        log_prob = tf.math.log(probs[action] + 1e-10)
+        return int(action), float(log_prob), float(value[0])
 
     def evaluate_action(self, state):
-        """Select the most probable action deterministically for evaluation."""
-        policy_logits, _, _, _ = self.forward(state)
-        return np.argmax(policy_logits[0])
+        """Deterministically select the most probable action for evaluation."""
+        state = tf.convert_to_tensor(state, dtype=tf.float32)
+        if state.shape[0] != self.num_headers:
+            state = tf.pad(state, [[0, self.num_headers - state.shape[0]]], mode='CONSTANT') if state.shape[0] < self.num_headers else state[:self.num_headers]
+        state = tf.expand_dims(state, 0)
+        policy_logits, _ = self.call(state)
+        probs = tf.nn.softmax(policy_logits)[0]  # Use softmax probabilities
+        return int(tf.argmax(probs))
 
-    def update(self, states, actions, log_probs_old, advantages, returns):
-        """Update the policy and value networks using PPO."""
-        states = np.array(states)
-        actions = np.array(actions)
-        log_probs_old = np.array(log_probs_old)
-        advantages = (advantages - np.mean(advantages)) / (np.std(advantages) + 1e-8)
-        returns = np.array(returns).reshape(-1, 1)
-
-        # Penalize non-3 actions at episode end if reward is high
-        T = len(actions)
-        if T > 1 and returns[T-1] >= 500 and actions[T-1] != 3:
-            advantages[T-1] -= 1000  # Strong penalty for non-3
-            returns[T-1] = 0  # Reset to neutral
+    def update(self, states, actions, log_probs_old, old_values, advantages, returns):
+        """Update the policy and value networks using PPO with TensorFlow."""
+        states = tf.convert_to_tensor(states, dtype=tf.float32)
+        actions = tf.convert_to_tensor(actions, dtype=tf.int32)
+        log_probs_old = tf.convert_to_tensor(log_probs_old, dtype=tf.float32)
+        old_values = tf.convert_to_tensor(old_values, dtype=tf.float32)
+        advantages = tf.convert_to_tensor(advantages, dtype=tf.float32)
+        returns = tf.convert_to_tensor(returns, dtype=tf.float32)
 
         for _ in range(self.epochs):
-            perm = np.random.permutation(len(states))
-            states = states[perm]
-            actions = actions[perm]
-            log_probs_old = log_probs_old[perm]
-            advantages = advantages[perm]
-            returns = returns[perm]
+            indices = tf.random.shuffle(tf.range(tf.shape(states)[0]))
+            states = tf.gather(states, indices)
+            actions = tf.gather(actions, indices)
+            log_probs_old = tf.gather(log_probs_old, indices)
+            old_values = tf.gather(old_values, indices)
+            advantages = tf.gather(advantages, indices)
+            returns = tf.gather(returns, indices)
 
             for start in range(0, len(states), self.batch_size):
                 end = min(start + self.batch_size, len(states))
-                states_mb = states[start:end]
-                actions_mb = actions[start:end]
-                log_probs_old_mb = log_probs_old[start:end]
-                advantages_mb = advantages[start:end]
-                returns_mb = returns[start:end]
+                batch_states = states[start:end]
+                batch_actions = actions[start:end]
+                batch_log_probs_old = log_probs_old[start:end]
+                batch_old_values = old_values[start:end]
+                batch_advantages = advantages[start:end]
+                batch_returns = returns[start:end]
 
-                policy_logits, value, hidden, ready_fp = self.forward(states_mb)
-                probs = self.softmax(policy_logits)
-                log_probs_new = np.log(probs[range(len(actions_mb)), actions_mb] + 1e-10)
+                with tf.GradientTape() as tape:
+                    policy_logits, value = self.call(batch_states)
+                    # Stable log probability calculation
+                    log_probs_new = -tf.nn.sparse_softmax_cross_entropy_with_logits(
+                        labels=batch_actions, logits=policy_logits
+                    )
+                    ratio = tf.exp(log_probs_new - batch_log_probs_old)
+                    surr1 = ratio * batch_advantages
+                    surr2 = tf.clip_by_value(ratio, 1 - self.clip_epsilon, 1 + self.clip_epsilon) * batch_advantages
+                    policy_loss = -tf.minimum(surr1, surr2)
+                    probs = tf.nn.softmax(policy_logits)
+                    entropy = -tf.reduce_sum(probs * tf.math.log(probs + 1e-10), axis=-1)
+                    # Value loss with clipping
+                    value_pred_clipped = batch_old_values + tf.clip_by_value(
+                        value - batch_old_values, -self.clip_epsilon, self.clip_epsilon
+                    )
+                    value_losses = tf.square(value - batch_returns)
+                    value_losses_clipped = tf.square(value_pred_clipped - batch_returns)
+                    value_loss = 0.5 * tf.reduce_mean(tf.maximum(value_losses, value_losses_clipped))
+                    total_loss = tf.reduce_mean(policy_loss - self.entropy_coef * entropy) + self.value_coef * value_loss
 
-                ratio = np.exp(log_probs_new - log_probs_old_mb)
-                surr1 = ratio * advantages_mb
-                surr2 = np.clip(ratio, 1 - self.clip_epsilon, 1 + self.clip_epsilon) * advantages_mb
-                policy_loss = -np.minimum(surr1, surr2)
-
-                entropy = -np.sum(probs * np.log(probs + 1e-10), axis=1)
-                value_error = returns_mb - value
-                value_loss = np.mean(value_error ** 2)
-                total_policy_loss = policy_loss - self.entropy_coef * entropy  # Use decayed entropy_coef
-                total_loss = np.mean(total_policy_loss) + self.value_coef * value_loss
-
-                one_hot = np.eye(self.num_output)[actions_mb]
-                dlogits = probs - one_hot
-                policy_error = total_policy_loss[:, np.newaxis] * dlogits
-
-                delta_policy = policy_error
-                delta_value = value_error
-                total_delta = np.dot(delta_policy, self.weights_policy.T) + np.dot(delta_value * self.value_coef, self.weights_value.T)
-                delta_hidden = total_delta * (1 - hidden**2)
-
-                self.weights1 += self.learn_rate * np.dot(ready_fp.T, delta_hidden)
-                self.weights_policy += self.learn_rate * np.dot(hidden.T, delta_policy)
-                self.weights_value += self.learn_rate * np.dot(hidden.T, delta_value)
-
-                self.weights1 = np.clip(self.weights1, -10, 10)
-                self.weights_policy = np.clip(self.weights_policy, -10, 10)
-                self.weights_value = np.clip(self.weights_value, -10, 10)
+                gradients = tape.gradient(total_loss, self.trainable_variables)
+                self.optimizer.apply_gradients(zip(gradients, self.trainable_variables))

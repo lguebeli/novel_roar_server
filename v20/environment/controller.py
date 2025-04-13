@@ -1,14 +1,13 @@
 from datetime import datetime
 from time import sleep, time
-
-from tqdm import tqdm  # add progress bar to episodes
+from tqdm import tqdm
 
 from agent.agent_representation import AgentRepresentation
 from api.configurations import map_to_ransomware_configuration, send_config
 from api.ransomware import send_reset_corpus, send_terminate
 from environment.abstract_controller import AbstractController
 from environment.reward.performance_reward import PerformanceReward
-from environment.settings import MAX_EPISODES_V20, SIM_CORPUS_SIZE_V20
+from environment.settings import MAX_EPISODES_V20, SIM_CORPUS_SIZE_V20, EPSILON_V20, DECAY_RATE_V20
 from environment.state_handling import is_fp_ready, set_fp_ready, is_rw_done, collect_fingerprint, is_simulation, \
     set_rw_done, collect_rate, get_prototype
 from utilities.plots import plot_average_results
@@ -16,8 +15,8 @@ from utilities.simulate import simulate_sending_fp, simulate_sending_rw_done
 
 DEBUG_PRINTING = False
 
-EPSILON = 0.4
-DECAY_RATE = 0.01
+EPSILON = EPSILON_V20
+DECAY_RATE = DECAY_RATE_V20
 
 
 class ControllerDDQL(AbstractController):
@@ -28,7 +27,7 @@ class ControllerDDQL(AbstractController):
         agent_file = None
         simulated = is_simulation()
 
-        reward_system = PerformanceReward(+1000, +0, -20)
+        reward_system = PerformanceReward(+10, +0, -0.2)
         weights1, weights2, bias_weights1, bias_weights2 = agent.initialize_network()
 
         # Initialize target network weights
@@ -47,6 +46,11 @@ class ControllerDDQL(AbstractController):
         num_total_steps = 0
         all_start = time()
 
+        base_lr = 0.005  # Initial learning rate
+        decay_rate = 0.95  # Decay factor (95% of previous value)
+        decay_steps = 10  # Decay every 10 episodes
+
+
         eps_iter = range(1, MAX_EPISODES_V20 + 1) if DEBUG_PRINTING else tqdm(range(1, MAX_EPISODES_V20 + 1))
         for episode in eps_iter:
             # ==============================
@@ -54,8 +58,9 @@ class ControllerDDQL(AbstractController):
             # ==============================
 
             set_rw_done(False)
-
             epsilon_episode = EPSILON / (1 + DECAY_RATE * (episode - 1))  # decay epsilon, episode 1-based
+
+            agent.learn_rate = base_lr * (decay_rate ** (episode // decay_steps))
 
             last_action = -1
             reward_store = []

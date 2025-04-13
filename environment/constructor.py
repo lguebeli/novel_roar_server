@@ -11,7 +11,7 @@ from v20.environment.controller import ControllerDDQL
 from v21.environment.controller import ControllerDDQLIdealAD
 from v22.environment.controller import ControllerSarsaTabular
 from v23.environment.controller import ControllerIdealADSarsaTabular
-from v24.environment.controller import ControllerPPO
+from v24.environment.controller import ControllerPPONormalAD
 from v25.environment.controller import ControllerPPOIdealAD
 from environment.state_handling import get_prototype
 
@@ -48,7 +48,7 @@ def get_controller():
         elif proto == "23":
             CONTROLLER = ControllerIdealADSarsaTabular()
         elif proto == "24":
-            CONTROLLER = ControllerPPO()
+            CONTROLLER = ControllerPPONormalAD()
         elif proto == "25":
             CONTROLLER = ControllerPPOIdealAD()
         else:

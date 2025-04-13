@@ -6,15 +6,15 @@ from api.configurations import map_to_ransomware_configuration, send_config
 from api.ransomware import send_reset_corpus, send_terminate
 from environment.abstract_controller import AbstractController
 from environment.reward.ideal_AD_performance_reward import IdealADPerformanceReward
-from environment.settings import MAX_EPISODES_V21, SIM_CORPUS_SIZE_V21
+from environment.settings import MAX_EPISODES_V21, SIM_CORPUS_SIZE_V21, EPSILON_V21, DECAY_RATE_V21
 from environment.state_handling import is_fp_ready, set_fp_ready, is_rw_done, collect_fingerprint, is_simulation, \
     set_rw_done, collect_rate, get_prototype
 from utilities.plots import plot_average_results
 from utilities.simulate import simulate_sending_fp, simulate_sending_rw_done
 
 DEBUG_PRINTING = False
-EPSILON = 0.4
-DECAY_RATE = 0.01
+EPSILON = EPSILON_V21
+DECAY_RATE = DECAY_RATE_V21
 
 class ControllerDDQLIdealAD(AbstractController):
     def loop_episodes(self, agent):
@@ -24,7 +24,7 @@ class ControllerDDQLIdealAD(AbstractController):
         agent_file = None
         simulated = is_simulation()
 
-        reward_system = IdealADPerformanceReward(+1000, +0, -20)
+        reward_system = IdealADPerformanceReward(+10, +0, -0.2)
         weights_list, bias_weights_list = agent.initialize_network()
         target_weights_list = [w.copy() for w in weights_list]
         target_bias_weights_list = [bw.copy() for bw in bias_weights_list]
@@ -37,10 +37,20 @@ class ControllerDDQLIdealAD(AbstractController):
         num_total_steps = 0
         all_start = time()
 
+        base_lr = 0.005  # Initial learning rate
+        decay_rate = 0.95  # Decay factor (95% of previous value)
+        decay_steps = 10  # Decay every 10 episodes
+
         eps_iter = range(1, MAX_EPISODES_V21 + 1) if DEBUG_PRINTING else tqdm(range(1, MAX_EPISODES_V21 + 1))
         for episode in eps_iter:
+            # ==============================
+            # Setup environment
+            # ==============================
+
             set_rw_done(False)
             epsilon_episode = EPSILON / (1 + DECAY_RATE * (episode - 1))
+
+            agent.learn_rate = base_lr * (decay_rate ** (episode // decay_steps))
 
             last_action = -1
             reward_store = []
@@ -49,6 +59,8 @@ class ControllerDDQLIdealAD(AbstractController):
             sim_encryption_progress = 0
             eps_start = time()
 
+            # accept initial FP
+            log("Wait for initial FP...")
             if simulated:
                 simulate_sending_fp(0)
             while not is_fp_ready():
@@ -56,10 +68,20 @@ class ControllerDDQLIdealAD(AbstractController):
             curr_fp = collect_fingerprint()
             set_fp_ready(False)
 
+            log("Loop episode...")
             while True:
+                log("==================================================")
+                # ==============================
+                # Predict action
+                # ==============================
+
                 state = AbstractController.transform_fp(curr_fp)
                 curr_hidden_list, curr_q_values, selected_action = agent.predict(weights_list, bias_weights_list, epsilon_episode, state=state)
                 steps += 1
+
+                # ==============================
+                # Take step and observe new state
+                # ==============================
 
                 if selected_action != last_action:
                     config = map_to_ransomware_configuration(selected_action)
@@ -78,6 +100,10 @@ class ControllerDDQLIdealAD(AbstractController):
                 rate = collect_rate()
                 sim_encryption_progress += rate
 
+                # ==============================
+                # Observe reward for new state
+                # ==============================
+
                 if simulated and sim_encryption_progress >= SIM_CORPUS_SIZE_V21:
                     simulate_sending_rw_done()
 
@@ -89,6 +115,10 @@ class ControllerDDQLIdealAD(AbstractController):
                     if not is_done and not simulated:
                         send_reset_corpus()
                     set_rw_done()
+
+                # ==============================
+                # Next Q-values, error, and learning
+                # ==============================
 
                 error = agent.init_error()
                 if is_rw_done():
@@ -104,16 +134,24 @@ class ControllerDDQLIdealAD(AbstractController):
                     break
                 curr_fp = next_fp
 
+            # ========== END OF EPISODE ==========
+            eps_end = time()
+            log("Episode {} took: {}s, roughly {}min.".format(episode, "%.3f" % (eps_end - eps_start),
+                                                              "%.1f" % ((eps_end - eps_start) / 60)))
             num_total_steps += steps
             all_rewards.append(reward_store)
             all_summed_rewards.append(summed_reward)
             all_avg_rewards.append(summed_reward / steps)
             all_num_steps.append(steps)
 
+            # Update target network
             agent.update_target_network(weights_list, bias_weights_list)
             agent_file = AgentRepresentationMultiLayer.save_agent(weights_list, bias_weights_list, epsilon_episode, agent, description)
 
+        # ========== END OF TRAINING ==========
         all_end = time()
+        log("All episodes took: {}s, roughly {}min.".format("%.3f" % (all_end - all_start),
+                                                            "%.1f" % ((all_end - all_start) / 60)))
         print("steps total", num_total_steps, "avg", num_total_steps / MAX_EPISODES_V21)
         print("==============================")
         print("Saving trained agent to file...")

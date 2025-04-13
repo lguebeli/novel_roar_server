@@ -26,6 +26,9 @@ class IdealADPerformanceReward(AbstractReward):
             reward = self.r_done
         else:
             # print("REWARD: hid", rate, s * math.log(rate/s+1), self.r_hidden)
+
             reward = 100 * math.log(0.01*rate + 1) + abs(self.r_hidden)  # 100 * ln(0.01*r + 1) + h
+            #reward = 10 * math.log(rate + 1) + abs(self.r_hidden)  # ln(r+1) + h
+
         # print("REWARD: result", reward)
         return round(reward, 5), anomalous

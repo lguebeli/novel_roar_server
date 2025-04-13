@@ -1,3 +1,5 @@
+import tensorflow as tf
+tf.keras.utils.set_random_seed(42)
 import json
 import os
 import signal
@@ -5,18 +7,18 @@ from contextlib import redirect_stdout
 from datetime import datetime
 from multiprocessing import Process
 from time import sleep, time
-
-import numpy as np
-from tqdm import tqdm
-
 from v25.agent.agent import AgentPPOIdealAD
 from v25.environment.controller import ControllerPPOIdealAD
-from v24.agent.agent import AgentPPO
-from v24.environment.controller import ControllerPPO
+from v24.agent.agent import AgentPPONormalAD
+from v24.environment.controller import ControllerPPONormalAD
 from environment.reward.abstract_reward import AbstractReward
-from environment.settings import EVALUATION_CSV_FOLDER_PATH
 from environment.state_handling import initialize_storage, cleanup_storage, set_prototype, get_num_configs, \
     get_storage_path, set_simulation, get_instance_number, setup_child_instance, is_api_running, set_api_running
+from environment.evaluation.evaluation_ppo import evaluate_agent  # Import for early stopping
+
+# Early stopping parameters
+PATIENCE = 5  # Number of evaluation checks without improvement
+EVAL_FREQ = 1000  # Evaluate every 1000 episodes
 
 def create_app():
     from flask import Flask
@@ -48,64 +50,17 @@ def kill_process(proc):
     else:
         print(proc, "now dead")
 
-def transform_fp(fp):
-    """Convert fingerprint string to NumPy array, matching controller.py."""
-    return np.array(list(map(float, fp.split(","))))  # Shape: (F,)
-
-def evaluate_agent(agent):
-    """Evaluate the agent's accuracy on normal and infected fingerprints."""
-    accuracies_overall = {"total": 0}
-    accuracies_configs = {}
-    num_configs = get_num_configs()
-
-    for config in range(num_configs):
-        accuracies_overall[config] = 0
-
-    # Evaluate normal fingerprints
-    print("Normal")
-    normal_fp_dir = os.path.join(EVALUATION_CSV_FOLDER_PATH, "normal")
-    fp_files = os.listdir(normal_fp_dir)
-    accuracies_configs["normal"] = {"total": 0}
-    for fp_file in tqdm(fp_files):
-        with open(os.path.join(normal_fp_dir, fp_file)) as file:
-            fp = file.readline()[1:-1].replace(" ", "")
-        state = transform_fp(fp)  # Shape: (F,)
-        selected_action = agent.evaluate_action(state)
-
-        accuracies_overall[selected_action] = accuracies_overall.get(selected_action, 0) + 1
-        accuracies_overall["total"] += 1
-
-        accuracies_configs["normal"][selected_action] = accuracies_configs["normal"].get(selected_action, 0) + 1
-        accuracies_configs["normal"]["total"] += 1
-
-    # Evaluate infected fingerprints
-    for config in range(num_configs):
-        print(f"\nConfig {config}")
-        config_fp_dir = os.path.join(EVALUATION_CSV_FOLDER_PATH, f"infected-c{config}")
-        fp_files = os.listdir(config_fp_dir)
-        accuracies_configs[config] = {"total": 0}
-        for fp_file in tqdm(fp_files):
-            with open(os.path.join(config_fp_dir, fp_file)) as file:
-                fp = file.readline()[1:-1].replace(" ", "")
-            state = transform_fp(fp)  # Shape: (F,)
-            selected_action = agent.evaluate_action(state)
-
-            accuracies_overall[selected_action] = accuracies_overall.get(selected_action, 0) + 1
-            accuracies_overall["total"] += 1
-
-            accuracies_configs[config][selected_action] = accuracies_configs[config].get(selected_action, 0) + 1
-            accuracies_configs[config]["total"] += 1
-
-    return accuracies_overall, accuracies_configs
-
 def find_agent_file(timestamp):
-    """Find the saved agent representation file."""
+    """Find the saved agent representation file, preferring the best agent."""
     storage_path = get_storage_path()
-    files = os.listdir(storage_path)
-    filtered = [f for f in files if f.startswith(f"agent={timestamp}")]
-    if not filtered:
+    best_agent_file = os.path.join(storage_path, f"agent={timestamp}-best.json")
+    final_agent_file = os.path.join(storage_path, f"agent={timestamp}.json")
+    if os.path.exists(best_agent_file):
+        return best_agent_file
+    elif os.path.exists(final_agent_file):
+        return final_agent_file
+    else:
         raise FileNotFoundError(f"No agent file found for timestamp {timestamp}")
-    return os.path.join(storage_path, filtered[0])
 
 def print_accuracy_table(accuracies_overall, accuracies_configs, logs):
     """Print and log accuracy tables."""
@@ -113,7 +68,6 @@ def print_accuracy_table(accuracies_overall, accuracies_configs, logs):
     print("----- Per Config -----")
     logs.append("----- Per Config -----")
 
-    # from normal states
     line = []
     key_keys = sorted(list(filter(lambda k: not isinstance(k, str), list(accuracies_configs["normal"].keys()))))
     for key in range(num_configs):
@@ -123,7 +77,6 @@ def print_accuracy_table(accuracies_overall, accuracies_configs, logs):
     print("Normal:\t", *line, sep="\t")
     logs.append("\t".join(["Normal:\t", *line]).strip())
 
-    # from infected states
     config_keys = sorted(list(filter(lambda k: not isinstance(k, str), list(accuracies_configs.keys()))))
     for config in config_keys:
         line = []
@@ -153,7 +106,7 @@ if __name__ == "__main__":
     # SETUP
     # ==============================
     total_start = time()
-    prototype_description = "p24-2000e=lr0.002-clip0.2-gamma0.99-lambda0.95-EInitial0.2-EDecay0.995-Epochs4-batch32"
+    prototype_description = "p25-50e=lr0.0001-clip0.1-g0.99-l0.95-EInit0.5-EDec0.995-Epochs5-batch32"
     KNOWN_BEST_ACTION = 3
 
     log_file = os.path.join(os.path.curdir, "storage",
@@ -164,37 +117,42 @@ if __name__ == "__main__":
     initialize_storage()
     procs = []
     try:
-        prototype_num = "24"  # Change this number to switch implementations
+        prototype_num = "25"        #Set this to your Prototype number (24 or 25)
         set_prototype(prototype_num)
-        simulated = True  # Set to False for real environment
+        simulated = True
         set_simulation(simulated)
-        np.random.seed(42)
 
-        if prototype_num == "25":
+        if prototype_num == "25":   #leave this as it is
             AgentClass = AgentPPOIdealAD
             ControllerClass = ControllerPPOIdealAD
-        else:  #makes v24 as Default implementation (for all others than 25)
-            AgentClass = AgentPPO
-            ControllerClass = ControllerPPO
+        else:
+            AgentClass = AgentPPONormalAD
+            ControllerClass = ControllerPPONormalAD
 
-        # Write initial log
         with open(log_file, "w+") as f:
             with redirect_stdout(f):
                 print("========== PREPARE ENVIRONMENT ==========")
                 AbstractReward.prepare_reward_computation()
 
-        # Evaluate untrained agent
+        # ==============================
+        # EVAL UNTRAINED AGENT
+        # ==============================
         print("\n========== MEASURE ACCURACY (INITIAL) ==========")
         logs.append("\n========== MEASURE ACCURACY (INITIAL) ==========")
 
         agent = AgentClass()
+        accuracies_initial_overall, accuracies_initial_configs = evaluate_agent(agent)
         print(f"Evaluating agent {agent} with settings {prototype_description}.\n")
         logs.append(f"Evaluating agent {agent} with settings {prototype_description}.\n")
         logs.append("Agent representation")
         logs.append("> prototype: PPO")
-        logs.append(f"> weights1: {agent.weights1.tolist()}")
-        logs.append(f"> weights_policy: {agent.weights_policy.tolist()}")
-        logs.append(f"> weights_value: {agent.weights_value.tolist()}")
+
+        weights_dict = agent.get_weights_dict()
+        logs.append(f"> weights_input_hidden1: {weights_dict['weights_input_hidden1']}")
+        logs.append(f"> weights_hidden1_hidden2: {weights_dict['weights_hidden1_hidden2']}")
+        logs.append(f"> weights_hidden2_policy: {weights_dict['weights_hidden2_policy']}")
+        logs.append(f"> weights_hidden2_value: {weights_dict['weights_hidden2_value']}")
+
         logs.append(f"> learn_rate: {agent.learn_rate}, clip_epsilon: {agent.clip_epsilon}, "
                     f"gamma: {agent.gamma}, lambda_: {agent.lambda_}, value_coef: {agent.value_coef}, "
                     f"entropy_coef: {agent.entropy_coef}, epochs: {agent.epochs}, batch_size: {agent.batch_size}")
@@ -208,7 +166,6 @@ if __name__ == "__main__":
         # ==============================
         # TRAINING AGENT
         # ==============================
-
         if not simulated:
             proc_api = Process(target=start_api, args=(get_instance_number(),))
             procs.append(proc_api)
@@ -223,7 +180,7 @@ if __name__ == "__main__":
         controller = ControllerClass()
         training_start = time()
         timestamp = datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
-        controller.run_c2(agent, timestamp=timestamp)  # Train the agent
+        controller.run_c2(agent, timestamp=timestamp, patience=PATIENCE, eval_freq=EVAL_FREQ)
         training_duration = time() - training_start
         logs.append(f"Agent and plots timestamp: {timestamp}")
         print(f"Training took %.3fs, roughly %.1fmin." % (training_duration, training_duration / 60))
@@ -232,19 +189,22 @@ if __name__ == "__main__":
         # ==============================
         # EVAL TRAINED AGENT
         # ==============================
-
         print("\n========== MEASURE ACCURACY (TRAINED) ==========")
         logs.append("\n========== MEASURE ACCURACY (TRAINED) ==========")
 
         with open(find_agent_file(timestamp), "r") as agent_file:
             repr_dict = json.load(agent_file)
-        agent = AgentPPO(representation=repr_dict)
+        agent = AgentClass(representation=repr_dict)
 
         logs.append("Trained agent representation")
         logs.append("> prototype: PPO")
-        logs.append(f"> weights1: {agent.weights1.tolist()}")
-        logs.append(f"> weights_policy: {agent.weights_policy.tolist()}")
-        logs.append(f"> weights_value: {agent.weights_value.tolist()}")
+
+        weights_dict = agent.get_weights_dict()
+        logs.append(f"> weights_input_hidden1: {weights_dict['weights_input_hidden1']}")
+        logs.append(f"> weights_hidden1_hidden2: {weights_dict['weights_hidden1_hidden2']}")
+        logs.append(f"> weights_hidden2_policy: {weights_dict['weights_hidden2_policy']}")
+        logs.append(f"> weights_hidden2_value: {weights_dict['weights_hidden2_value']}")
+
         logs.append(f"> learn_rate: {agent.learn_rate}, clip_epsilon: {agent.clip_epsilon}, "
                     f"gamma: {agent.gamma}, lambda_: {agent.lambda_}, value_coef: {agent.value_coef}, "
                     f"entropy_coef: {agent.entropy_coef}, epochs: {agent.epochs}, batch_size: {agent.batch_size}")
@@ -269,14 +229,11 @@ if __name__ == "__main__":
         logs.append("\n========== RESULTS ==========")
 
         val_initial = accuracies_initial_overall.get(KNOWN_BEST_ACTION, 0)
-        #known_best_initial = f"%05.2f%% ({val_initial}/{accuracies_initial_overall['total']})"
         known_best_initial = "{}% ({}/{})".format("%05.2f" % (val_initial / accuracies_initial_overall["total"] * 100),
                                                   val_initial, accuracies_initial_overall["total"])
-
         val_trained = accuracies_trained_overall.get(KNOWN_BEST_ACTION, 0)
-        #known_best_trained = f"%05.2f%% ({val_trained}/{accuracies_trained_overall['total']})"
-        known_best_trained = "{}% ({}/{})".format("%05.2f" % (val_trained / accuracies_initial_overall["total"] * 100),
-                                                  val_trained, accuracies_initial_overall["total"])
+        known_best_trained = "{}% ({}/{})".format("%05.2f" % (val_trained / accuracies_trained_overall["total"] * 100),
+                                                  val_trained, accuracies_trained_overall["total"])
         print(f"For known best action {KNOWN_BEST_ACTION}: from {known_best_initial} to {known_best_trained}.")
         logs.append(f"For known best action {KNOWN_BEST_ACTION}: from {known_best_initial} to {known_best_trained}.")
 
@@ -284,7 +241,6 @@ if __name__ == "__main__":
         print(f"Accuracy computation took %.3fs in total, roughly %.1fmin." % (total_duration, total_duration / 60))
         logs.append(f"Accuracy computation took %.3fs in total, roughly %.1fmin." % (total_duration, total_duration / 60))
 
-        # Write logs
         with open(log_file, "a") as file:
             file.writelines([l + "\n" for l in logs])
 

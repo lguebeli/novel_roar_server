@@ -3,41 +3,60 @@ import numpy as np
 import pandas as pd
 
 from agent.agent_representation import AgentRepresentation
+from environment.settings import LEARN_RATE_V23, DISCOUNT_FACTOR_V23
 from environment.anomaly_detection.constructor import get_preprocessor
 from environment.settings import ALL_CSV_HEADERS, TRAINING_CSV_FOLDER_PATH
 from environment.state_handling import get_num_configs, get_storage_path
 import json
 
-LEARN_RATE = 0.0050
-DISCOUNT_FACTOR = 0.75
+LEARN_RATE = LEARN_RATE_V23
+DISCOUNT_FACTOR = DISCOUNT_FACTOR_V23
 
 class AgentIdealADSarsaTabular:
     def __init__(self, representation=None):
         self.representation = representation
-        if isinstance(representation, AgentRepresentation):  # build from representation
+        if isinstance(representation, AgentRepresentation):
             self.actions = list(range(representation.num_output))
             self.learn_rate = representation.learn_rate
-        else:  # init from scratch
+            self.fp_features = representation.get("fp_features", self.__get_fp_features()[0])
+            self.min = np.array(representation.get("min", self.__get_fp_features()[1]))
+            self.max = np.array(representation.get("max", self.__get_fp_features()[2]))
+        else:
             num_configs = get_num_configs()
             self.actions = list(range(num_configs))
             self.learn_rate = LEARN_RATE
+            self.fp_features, self.min, self.max = self.__get_fp_features()
 
         self.q_table = {}  # Q-table: key = state, value = array of Q-values for each action
-        self.fp_features = self.__get_fp_features()
 
     def __get_fp_features(self):
+        """Get selected fingerprint features and compute min/max for all features from normal behavior."""
         df_normal = pd.read_csv(os.path.join(TRAINING_CSV_FOLDER_PATH, "normal-behavior.csv"))
+        min_vals = df_normal.min().values  # Min for all features from raw data
+        max_vals = df_normal.max().values  # Max for all features from raw data
         preprocessor = get_preprocessor()
         ready_dataset = preprocessor.preprocess_dataset(df_normal)
-        return ready_dataset.columns
+        fp_features = ready_dataset.columns.tolist()
+        return fp_features, min_vals, max_vals
 
     def __preprocess_fp(self, fp):
+        """Select relevant features from the fingerprint."""
         headers = ALL_CSV_HEADERS.split(",")
         indexes = [headers.index(header) for header in self.fp_features]
-        return fp[indexes]
+        return fp[:, indexes]
+
+    def standardize_fp(self, fp):
+        """Standardize the full fingerprint using min-max scaling, then select relevant features."""
+        if fp.ndim == 1:
+            fp = fp.reshape(1, -1)
+        standardized_fp = (fp - self.min) / (self.max - self.min + 1e-6)
+        selected_fp = self.__preprocess_fp(standardized_fp)
+        return selected_fp
 
     def discretize_state(self, state):
-        return tuple(np.round(state, decimals=1).astype(float).flatten())
+        """Discretize the selected standardized state."""
+        standardized_state = self.standardize_fp(state)
+        return tuple(np.round(standardized_state, decimals=2).astype(float).flatten())
 
     def predict(self, epsilon, state):
         d_state = self.discretize_state(state)
@@ -49,7 +68,6 @@ class AgentIdealADSarsaTabular:
             action = np.random.choice(self.actions)
         else:  # Exploit
             action = np.argmax(q_values)
-
         return action, q_values
 
     def update_q_table(self, state, action, reward, next_state, next_action, done):
@@ -64,25 +82,14 @@ class AgentIdealADSarsaTabular:
         target = reward + DISCOUNT_FACTOR * next_q
         self.q_table[d_state][action] += self.learn_rate * (target - current_q)
 
-    def init_error(self):
-        return np.zeros(len(self.actions))
-
-    def update_error(self, error, reward, selected_action, selected_q_value, next_action, next_q_value, is_done):
-        if is_done:
-            error[selected_action] = reward - selected_q_value
-        else:
-            error[selected_action] = reward + (DISCOUNT_FACTOR * next_q_value) - selected_q_value
-        return error
-
     def save_q_table(self, description="sarsa_q_table"):
         """Saves the Q-table as a JSON file."""
-        # Convert the keys of the q_table (tuples) to strings
-        q_table_serializable = {str(key): value.tolist() for key, value in self.q_table.items()}
-
+        q_table_serializable = {
+            ",".join(map(str, key)): value.tolist() for key, value in self.q_table.items()
+        }
         q_table_path = os.path.join(get_storage_path(), f"{description}.json")
         with open(q_table_path, "w") as file:
             json.dump(q_table_serializable, file)
-        #print(f"Q-table saved at: {q_table_path}")
         return q_table_path
 
     def load_q_table(self, q_table_path):
@@ -90,11 +97,9 @@ class AgentIdealADSarsaTabular:
         if os.path.exists(q_table_path):
             with open(q_table_path, "r") as file:
                 q_table_serializable = json.load(file)
-
-            # Convert the keys back from strings to tuples
-            self.q_table = {tuple(map(float, key.strip("()").split(", "))): np.array(value)
-                            for key, value in q_table_serializable.items()}
-
-            #print(f"Q-table loaded from: {q_table_path}")
+            self.q_table = {
+                tuple(map(float, key.split(","))): np.array(value)
+                for key, value in q_table_serializable.items()
+            }
         else:
             print("No existing Q-table found, starting fresh.")

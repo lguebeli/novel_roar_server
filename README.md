@@ -1,25 +1,21 @@
 # ROAR - Server
-Master thesis on Ransomware Optimized with AI for Resource-constrained devices.\
-_The official title of this thesis is "AI-powered Ransomware to Optimize its Impact on IoT Spectrum Sensors"._
+Bachelor thesis on Ransomware Optimized with AI for Resource-constrained devices.\
+_The official title of this thesis is "Novel Reinforcement Learning-powered Ransomware"._
 
-It is generally advised to first consult the corresponding report of this master thesis.
+It is generally advised to first consult the corresponding report of this bachelor thesis.
 The report motivates the thesis and introduces the required background.
 It further explains the development, reasoning, and results of each prototype in great detail.
 
 This repository contains the RL Agent and command and control (C&C) part of ROAR.
-There is [another repository](https://github.com/jluech/roar_client) for the underlying ransomware.
 
+The Bachelor thesis extended a previous work, and the initial codebase of this project was adopted and extended from the original project by [jluech](https://github.com/jluech) under the MIT license. The original repository can be found [here](https://github.com/jluech/RansomAI/tree/master).
 
-
-
+Note: This README only covers the extensions made, for the other parts refer to the previous work.
 
 ## Setup ROAR Framework
 
 For detailed information regarding quick setup or advanced usage, please refer to the [INSTALL](./INSTALL.md) instructions.
 When the setup is complete, continue with this file to receive an overview of the repository content and instructions on how to launch the server or auxiliary scripts.
-
-
-
 
 
 ## Structure
@@ -44,16 +40,13 @@ These folders include the `fingerprints` folder, used for saving received finger
 
 The prototype-specific components are stored in a folder of their respective prototype version, i.e., `vX/` for prototype version `X`.
 In there you can find all files that overwrite certain behavior or are otherwise specific to this prototype.
-The components are arranged the same way the global components are arranged, for example, the prototype-specific implementation of the `ControllerOptimized` for prototype version 8 is stored in the `v8/environment` package.
-
-
-
+The components are arranged the same way the global components are arranged, for example, the prototype-specific implementation of the `Controller` for prototype version 21 is stored in the `v21/environment` package.
 
 
 ## Prototypes
 
 This table contains high-level summaries of the prototype versions for an RL agent contained in this repository.
-For more details, please refer to the report of this master thesis.
+Those Prototypes were adopted for later comparison with the new implementations:
 
 | Prototype | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 |-----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -65,12 +58,17 @@ For more details, please refer to the report of this master thesis.
 | 6         | Comparing Algorithms: implement the SARSA algorithm to compare the results with previous Q-learning versions. This version is based on prototype 4 but replaces Q-learning with SARSA.                                                                                                                                                                                                                                                                                 |
 | 7         | Ideal AD in SARSA: adopt the ideal AD introduced in prototype 5. This version is based on prototype 6 but applies the same changes as version 5 did compared to version 4.                                                                                                                                                                                                                                                                                             |
 | 8         | Optimizing Performance: combine findings of experiments with all previous prototypes to optimize speed and accuracy. Prototype can be evaluated in simulation (offline) and based on fingerprints received directly from a target device (online). The prior prototypes would theoretically also be able to support online training, but possibly occurring bugs (most certainly) have not been addressed for them.                                                    |
-| 20        | DDQL with normal AD Behaviour                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| 21        | DDQL with ideal AD Behaviour                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| 22        | SARSA without Neural Network (Tabluar version) with normal AD behaviour                                                                                                                                                                                                                                                                                                                                                                                                |
-| 23        | SARSA without Neural Network (Tabluar version) with ideal AD behaviour                                                                                                                                                                                                                                                                                                                                                                                                 |
-| 24        | PPO algorithm with normal AD Behaviour                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| 25        | PPO algorithm with ideal AD Behaviour                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+
+These prototypes were newly implemented in this thesis:
+
+| Prototype | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+|-----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 20        | DDQL with Normal AD Behavior: Implements the Double Deep Q-Learning (DDQL) algorithm while utilizing the anomaly detection (AD) system in its standard form.                                                                                                                                                                                                                                                                                                           |
+| 21        | DDQL with Ideal AD Behavior: Extends version 20 by incorporating ideal AD Behaviour and introducing a second hidden layer in the Neural network.                                                                                                                                                                                                                                                                                                                       |
+| 22        | Tabular SARSA with Normal AD Behavior: Implements SARSA without a neural network, relying on a tabular approach for state-action values.                                                                                                                                                                                                                                                                                                                               |
+| 23        | Tabular SARSA with Ideal AD Behavior: Builds upon version 22 by replacing the standard AD system with ideal AD behaviour                                                                                                                                                                                                                                                                                                                                               |
+| 24        | PPO Algorithm with Normal AD Behavior: Introduces the Proximal Policy Optimization (PPO) reinforcement learning algorithm, using the standard AD system to evaluate actions.                                                                                                                                                                                                                                                                                           |
+| 25        | PPO Algorithm with Ideal AD Behavior: Enhances version 24 by incorporating the ideal AD Behaviour                                                                                                                                                                                                                                                                                                                                                                      |
 
 
 
@@ -121,8 +119,6 @@ Also, the fingerprints for state representation are not received from the client
 
 
 
-
-
 ## Auxiliary Scripts
 Additionally, there are some auxiliary scripts used for everything around the C2 server.
 If a script does not require any parameters or flags, it may also be run in an IDE of your choice for your convenience.
@@ -142,13 +138,17 @@ This time, however, the expected results are much better than before and clearly
 To avoid unwanted influences, the evaluation of agent performance is done using a dedicated evaluation set of fingerprints instead of the regular training set of fingerprints.
 In addition, during both evaluation phases, the agent is only predicting actions but not learning from its choices, such that the evaluation set can still be considered "never seen before".
 
-Run the script as follows: `python3 accuracy.py`
+Run the script as follows: `python3 NAME_OF_SCRIPT.py`
+For different Implementations, different Scripts need to be used.
 
-If you want to evaluate and improve a pretrained instance of an agent, you can divert to the second accuracy script.
-Make sure to adjust the path to the `AgentRepresentation` file you want to evaluate in the setup section of the script.
+| Prototype | Accuracy Script     |
+|-----------|---------------------|
+| 1-8       | `accuracy.py`       |
+| 20        | `accuracy.py`       | 
+| 21        | `accuracy_DDQL.py`  |
+| 22-23     | `accuracy_SARSA.py` | 
+| 24-25     | `accuracy_PPO.py`   |
 
-Run the script the same as the other: `python3 accuracy_pretrained.py`
-- **WARNING**: _The second script has not been properly evaluated yet! Although it should work in theory, it was never actually tested so far._
 
 ### Convert Fingerprints to CSV Files
 Run this script to convert the collected fingerprints from the target device to a CSV file for further usage, e.g., in simulated execution or in combination with the [data pipelines](./__data/fingerprint_processing_pipelines.zip).
@@ -163,17 +163,6 @@ Finally, the script will evaluate all collected fingerprints that still reside i
 This is especially helpful during collection as to detect unexpected behavior or results as early as possible.
 
 Run the script as follows: `python3 evaluate_AD.py`
-
-### Find Average Encryption Rate of Configurations
-
-The environment simulation relies on the encryption rate of every ransomware configuration to compute the performance reward.
-However, no fixed value is available for configurations with unlimited encryption rate.
-Accordingly, manually determining and configuring the average encryption rate for ransomware configurations with unlimited rates is required.
-This is what this script is for:
-it iterates over all collected encryption metrics for each configuration, extracts the reported encryption rate, and computes the average.
-The reported average rate can then be manually configured in the [simulation file](./utilities/simulate.py).
-
-Run the script as follows: `python3 find_avg_rate.py`
 
 ### Plot Activation Function
 

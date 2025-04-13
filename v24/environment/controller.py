@@ -3,45 +3,41 @@ import os
 from datetime import datetime
 from time import sleep, time
 import numpy as np
+import tensorflow as tf
 from tqdm import tqdm
-from v24.agent.agent import AgentPPO
+from v24.agent.agent import AgentPPONormalAD
 from api.configurations import map_to_ransomware_configuration, send_config
-from environment.anomaly_detection.anomaly_detection import train_anomaly_detection
 from environment.reward.performance_reward import PerformanceReward
 from environment.settings import MAX_EPISODES_V24, SINGLE_EPISODE_LENGTH_V24
 from environment.state_handling import is_fp_ready, set_fp_ready, is_rw_done, collect_fingerprint, is_simulation, \
     set_rw_done, collect_rate, get_prototype, is_api_running, get_storage_path
-from utilities.plots import plot_average_results
 from utilities.simulate import simulate_sending_fp, simulate_sending_rw_done
+from utilities.plots import plot_average_results
+from environment.evaluation.evaluation_ppo import evaluate_agent  # Import for early stopping
 
 DEBUG_PRINTING = False
 
-class ControllerPPO:
-    def run_c2(self, agent=None, timestamp=None):
+class ControllerPPONormalAD:
+    def run_c2(self, agent=None, timestamp=None, patience=5, eval_freq=1000):
         if timestamp is None:
             timestamp = datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
-        try:
-            print("==============================\nPrepare Reward Computation\n==============================")
-            train_anomaly_detection()
-            if not is_simulation():
-                print("\nWaiting for API...")
-                while not is_api_running():
-                    sleep(1)
-            print("\n==============================\nStart Training\n==============================")
-            np.random.seed(42)
-            training_agent = agent if agent is not None else AgentPPO()
-            self.loop_episodes(training_agent, timestamp)
-        except Exception as e:
-            print(f"Error in run_c2: {e}")
-            raise
+        print("==============================\nPrepare Reward Computation\n==============================")
+        if not is_simulation():
+            print("\nWaiting for API...")
+            while not is_api_running():
+                sleep(1)
+        print("\n==============================\nStart Training\n==============================")
+        tf.random.set_seed(42)
+        np.random.seed(42)
+        training_agent = agent if agent is not None else AgentPPONormalAD()
+        self.loop_episodes(training_agent, timestamp, patience, eval_freq)
 
-    def loop_episodes(self, agent, timestamp):
-        """Run the PPO training loop with the provided agent."""
+    def loop_episodes(self, agent, timestamp, patience, eval_freq):
         start_timestamp = timestamp
         run_info = f"p{get_prototype()}-{MAX_EPISODES_V24}e-{SINGLE_EPISODE_LENGTH_V24}s"
         description = f"{start_timestamp}={run_info}"
 
-        reward_system = PerformanceReward(+1000, +0, -20)
+        reward_system = PerformanceReward(+10, +0, -0.2)
         self.agent = agent
 
         all_rewards = []
@@ -51,8 +47,11 @@ class ControllerPPO:
         num_total_steps = 0
         all_start = time()
 
-        eps_iter = range(1, MAX_EPISODES_V24 + 1) if DEBUG_PRINTING else tqdm(range(1, MAX_EPISODES_V24 + 1))
-        for episode in eps_iter:
+        best_accuracy = -1
+        patience_counter = 0
+        KNOWN_BEST_ACTION = 3
+
+        for episode in tqdm(range(1, MAX_EPISODES_V24 + 1)):
             set_rw_done(False)
             last_action = -1
             reward_store = []
@@ -93,15 +92,12 @@ class ControllerPPO:
                 rate = collect_rate()
                 sim_encryption_progress += rate
 
-                # REWARD Logic
                 if is_simulation() and sim_encryption_progress >= SINGLE_EPISODE_LENGTH_V24:
                     simulate_sending_rw_done()
                     reward, detected = reward_system.compute_reward(next_state, is_rw_done())
                 else:
                     reward, detected = reward_system.compute_reward(next_state, is_rw_done())
 
-
-                #print(f"Episode {episode}, Step {steps}, Action {action}, Reward {reward}")
                 reward_store.append((action, reward))
                 summed_reward += reward
                 if detected:
@@ -130,10 +126,27 @@ class ControllerPPO:
 
             returns = self.compute_returns(rewards, dones, agent.gamma)
             advantages = self.compute_gae(rewards, values, dones, states, agent.gamma, agent.lambda_)
-            agent.update(states, actions, log_probs, advantages, returns)
+            agent.update(states, actions, log_probs, values, advantages, returns)
 
-            # Increment episode counter for entropy decay
             agent.current_episode += 1
+
+            # Early stopping logic
+            if episode % eval_freq == 0:
+                accuracies_overall, _ = evaluate_agent(agent)
+                current_accuracy = accuracies_overall.get(KNOWN_BEST_ACTION, 0) / accuracies_overall["total"]
+                if current_accuracy > best_accuracy:
+                    best_accuracy = current_accuracy
+                    # Save the best agent
+                    with open(os.path.join(get_storage_path(), f"agent={timestamp}-best.json"), "w") as f:
+                        json.dump(agent.get_weights_dict(), f)
+                    patience_counter = 0
+                    print(f"Episode {episode}: New best accuracy {current_accuracy:.4f}")
+                else:
+                    patience_counter += 1
+                    print(f"Episode {episode}: Accuracy {current_accuracy:.4f}, Patience {patience_counter}/{patience}")
+                    if patience_counter >= patience:
+                        print(f"Early stopping triggered at episode {episode}")
+                        break
 
         all_end = time()
         log("All episodes took: {}s, roughly {}min.".format("%.3f" % (all_end - all_start),
@@ -141,43 +154,22 @@ class ControllerPPO:
         print(f"steps total {num_total_steps} avg {num_total_steps / MAX_EPISODES_V24}")
         print("==============================")
         print("Generating plots...")
-        results_plots_file = plot_average_results(all_summed_rewards, all_avg_rewards, all_num_steps, MAX_EPISODES_V24,
+        results_plots_file = plot_average_results(all_summed_rewards, all_avg_rewards, all_num_steps, episode,
                                                   description)
         print(f"- Plots saved: {results_plots_file}")
         results_store_file = self.save_results_to_file(all_summed_rewards, all_avg_rewards, all_num_steps, description)
         print(f"- Results saved: {results_store_file}")
 
-        agent_repr = {
-            "num_input": agent.num_input,
-            "num_hidden": agent.num_hidden,
-            "num_output": agent.num_output,
-            "learn_rate": agent.learn_rate,
-            "clip_epsilon": agent.clip_epsilon,
-            "gamma": agent.gamma,
-            "lambda_": agent.lambda_,
-            "value_coef": agent.value_coef,
-            "entropy_coef_initial": agent.entropy_coef_initial,
-            "entropy_coef_decay": agent.entropy_coef_decay,
-            "epochs": agent.epochs,
-            "batch_size": agent.batch_size,
-            "weights1": agent.weights1.tolist(),
-            "weights_policy": agent.weights_policy.tolist(),
-            "weights_value": agent.weights_value.tolist(),
-            "fp_features": agent.fp_features,
-            "mean": agent.mean.tolist(),
-            "std": agent.std.tolist()
-        }
-        agent_file = os.path.join(get_storage_path(), f"agent={start_timestamp}.json")
+        # Save the final agent
+        agent_file = os.path.join(get_storage_path(), f"agent={timestamp}.json")
         with open(agent_file, "w") as f:
-            json.dump(agent_repr, f)
+            json.dump(agent.get_weights_dict(), f)
         print(f"- Agent representation saved: {agent_file}")
 
     def transform_fp(self, fp):
-        """Convert fingerprint string to NumPy array."""
-        return np.asarray(list(map(float, fp.split(","))))
+        return np.array(list(map(float, fp.split(","))))
 
     def compute_returns(self, rewards, dones, gamma):
-        """Compute discounted returns."""
         T = len(rewards)
         returns = np.zeros(T)
         g = 0
@@ -187,9 +179,8 @@ class ControllerPPO:
         return returns
 
     def compute_gae(self, rewards, values, dones, states, gamma, lambda_):
-        """Compute Generalized Advantage Estimation."""
         T = len(rewards)
-        last_value = 0 if dones[-1] else self.agent.forward(states[-1])[1][0, 0]
+        last_value = 0 if dones[-1] else self.agent.call(tf.convert_to_tensor(states[-1], dtype=tf.float32))[1][0, 0]
         values = np.append(values, last_value)
         deltas = rewards + gamma * values[1:] * (1 - dones) - values[:-1]
         advantages = np.zeros(T)
@@ -197,10 +188,11 @@ class ControllerPPO:
         for t in range(T - 1, -1, -1):
             a = deltas[t] + gamma * lambda_ * (1 - dones[t]) * a
             advantages[t] = a
-        return advantages
+
+        final_advantages = (advantages - np.mean(advantages)) / (np.std(advantages) + 1e-8)  # Already normalized
+        return final_advantages
 
     def save_results_to_file(self, all_summed_rewards, all_avg_rewards, all_num_steps, run_description):
-        """Save training results to a file."""
         results_content = json.dumps({
             "summed_rewards": all_summed_rewards,
             "avg_rewards": all_avg_rewards,
@@ -214,3 +206,7 @@ class ControllerPPO:
 def log(*args):
     if DEBUG_PRINTING:
         print(*args)
+
+if __name__ == "__main__":
+    controller = ControllerPPONormalAD()
+    controller.run_c2()

@@ -14,7 +14,7 @@ from v20.agent.agent import AgentDDQL
 from v21.agent.agent import AgentDDQLIdealAD
 from v22.agent.agent import AgentSarsaTabular
 from v23.agent.agent import AgentIdealADSarsaTabular
-from v24.agent.agent import AgentPPO
+from v24.agent.agent import AgentPPONormalAD
 from v25.agent.agent import AgentPPOIdealAD
 
 AGENT = None
@@ -50,7 +50,7 @@ def get_agent():
         elif proto == "23":
             AGENT = AgentIdealADSarsaTabular()
         elif proto == "24":
-            AGENT = AgentPPO()
+            AGENT = AgentPPONormalAD()
         elif proto == "25":
             AGENT = AgentPPOIdealAD()
         else:
@@ -92,9 +92,9 @@ def build_agent_from_repr(representation):
         elif proto == "23":
             AGENT = AgentIdealADSarsaTabular(representation)
         elif proto == "24":
-            AGENT = AgentPPO()
+            AGENT = AgentPPONormalAD(representation)
         elif proto == "25":
-            AGENT = AgentPPOIdealAD()
+            AGENT = AgentPPOIdealAD(representation)
         else:
             print("WARNING: Unknown prototype. Falling back to default agent v1!")
             AGENT = AgentManual()
