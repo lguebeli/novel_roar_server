@@ -13,28 +13,28 @@ def logistic(x):
 def silu(x):
     return x / (1 + np.exp(-x))     # SiLU activation function.
 
-def tanh(x):
-    return np.tanh(x)               # Tanh activation function.
+def leaky_relu(x, alpha=0.2):
+    return np.where(x > 0, x, alpha * x)  # Leaky ReLU activation function
 
 try:
     initialize_storage()
     use_plot_backend("template")
 
     x_lim = 4
-    description = "ReLU-SiLU-Tanh-xlim-{}".format(x_lim)
+    description = "ReLu-Log-SiLU-LeReLU-{}".format(x_lim)
 
     x = np.linspace(-x_lim, x_lim, num=500)
 
     # Plot all four activation functions with distinct colors
-    plt.plot(x, relu(x), label="ReLU", color="purple")
+    plt.plot(x, relu(x), label="ReLU", color="red")
     plt.plot(x, logistic(x), label="Logistic", color="green")
     plt.plot(x, silu(x), label="SiLU", color="red")
-    plt.plot(x, tanh(x), label="Tanh", color="blue")
+    plt.plot(x, leaky_relu(x), label="Leaky ReLU", color="blue")
 
     plt.legend()
     plt.xlim(-x_lim, x_lim)
     plt.grid()
-    plt.title("Activation Functions: ReLU, SiLU, Tanh")
+    plt.title("Activation Functions: ReLU, Logarithmic, SiLU, LeakyReLu")
     plt.xlabel("x")
     plt.ylabel("f(x)")
 

@@ -106,7 +106,7 @@ if __name__ == "__main__":
     # SETUP
     # ==============================
     total_start = time()
-    prototype_description = "p25-50e=lr0.0001-clip0.1-g0.99-l0.95-EInit0.5-EDec0.995-Epochs5-batch32"
+    prototype_description = "p25-10_000e=lr0.0001-clip0.1-g0.99-l0.95-EInit0.5-EDec0.995-Epochs5-batch32"
     KNOWN_BEST_ACTION = 3
 
     log_file = os.path.join(os.path.curdir, "storage",

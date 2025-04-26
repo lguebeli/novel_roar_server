@@ -170,7 +170,7 @@ if __name__ == "__main__":
     # SETUP
     # ==============================
     total_start = time()
-    prototype_description = "p21-10_000e=e0.4d0.09a0.005y0.10=Log-SiLU=h100-50=he=IdealAD"
+    prototype_description = "p21-1000e=e0.4d0.09a0.005y0.10=Log-SiLU=h100-50=he=IdealAD"
 
     EPSILON = 0.4
     KNOWN_BEST_ACTION = 3

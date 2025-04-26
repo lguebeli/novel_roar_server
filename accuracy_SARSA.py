@@ -157,7 +157,7 @@ def print_accuracy_table(accuracies_overall, accuracies_configs, logs):
 
 if __name__ == "__main__":
     total_start = time()
-    prototype_description = "p23-500e=e0.1d0.9a0.005y0.01=Tabular=IdealAD"
+    prototype_description = "p23-1000e=e0.1d0.9a0.005y0.01=Tabular=IdealAD"
     KNOWN_BEST_ACTION = 3
 
     log_file = os.path.join(os.path.curdir, "storage",
