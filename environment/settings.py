@@ -56,7 +56,7 @@ SIM_CORPUS_SIZE_V6 = 4000
 MAX_EPISODES_V7 = 10_000
 SIM_CORPUS_SIZE_V7 = 4000
 
-MAX_EPISODES_V8 = 10_000
+MAX_EPISODES_V8 = 500
 SIM_CORPUS_SIZE_V8 = 4000
 
 """Hyperparameters for V20 (DDQL mit Normal AD)"""
@@ -65,7 +65,7 @@ DISCOUNT_FACTOR_V20 = 0.9
 EPSILON_V20 = 0.4
 DECAY_RATE_V20 = 0.01
 SIM_CORPUS_SIZE_V20 = 4000
-MAX_EPISODES_V20 = 1000
+MAX_EPISODES_V20 = 300
 
 """Hyperparameters for V21 (DDQL mit Ideal AD)"""
 LEARN_RATE_V21 = 0.005
@@ -81,7 +81,7 @@ DISCOUNT_FACTOR_V22 = 0.9
 EPSILON_V22 = 0.1
 DECAY_RATE_V22 = 0.01
 SIM_CORPUS_SIZE_V22 = 4000
-MAX_EPISODES_V22 = 100
+MAX_EPISODES_V22 = 1000
 
 """Hyperparameters for V23 (Sarsa mit Ideal AD)"""
 LEARN_RATE_V23 = 0.005
@@ -89,7 +89,7 @@ DISCOUNT_FACTOR_V23 = 0.9
 EPSILON_V23 = 0.1
 DECAY_RATE_V23 = 0.01
 SIM_CORPUS_SIZE_V23 = 4000
-MAX_EPISODES_V23 = 1000
+MAX_EPISODES_V23 = 100
 
 """Hyperparameters for V24 (PPO mit Normal AD)"""
 LEARN_RATE_V24 = 0.0001                 # Optimizer step size
@@ -103,7 +103,7 @@ MIN_ENTROPY_COEF_V24 = 0.0001           # Keep some exploration
 EPOCHS_V24 = 5                          # Training passes per batch
 BATCH_SIZE_V24 = 32                     # Samples per training step
 SINGLE_EPISODE_LENGTH_V24 = 4000
-MAX_EPISODES_V24 = 1000
+MAX_EPISODES_V24 = 10_000
 
 """Hyperparameters for V25 (PPO mit Ideal AD)"""
 LEARN_RATE_V25 = 0.0001                 # Optimizer step size
@@ -117,4 +117,4 @@ MIN_ENTROPY_COEF_V25 = 0.0001           # Keep some exploration
 EPOCHS_V25 = 5                          # Training passes per batch
 BATCH_SIZE_V25 = 32                     # Samples per training step
 SINGLE_EPISODE_LENGTH_V25 = 4000
-MAX_EPISODES_V25 = 10_000
+MAX_EPISODES_V25 = 100

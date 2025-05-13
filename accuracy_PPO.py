@@ -16,6 +16,15 @@ from environment.state_handling import initialize_storage, cleanup_storage, set_
     get_storage_path, set_simulation, get_instance_number, setup_child_instance, is_api_running, set_api_running
 from environment.evaluation.evaluation_ppo import evaluate_agent  # Import for early stopping
 
+"""
+Want to change evaluated prototype?
+1) adjust the known best action (setup) if necessary (depending on AD and reward system)
+2) adjust the filename of the logfile (setup) to match the prototype settings (in controller/agent/model)
+3) set prototype to evaluated prototype number in setup below (start of try-block)
+4) set the parameters for the early stopping mechanism
+"""
+
+
 # Early stopping parameters
 PATIENCE = 5  # Number of evaluation checks without improvement
 EVAL_FREQ = 1000  # Evaluate every 1000 episodes
@@ -106,7 +115,7 @@ if __name__ == "__main__":
     # SETUP
     # ==============================
     total_start = time()
-    prototype_description = "p25-10_000e=lr0.0001-clip0.1-g0.99-l0.95-EInit0.5-EDec0.995-Epochs5-batch32"
+    prototype_description = "p25-100e=lr0.0001-clip0.1-g0.99-l0.95-EInit0.5-EDec0.995-Epochs5-batch32"
     KNOWN_BEST_ACTION = 3
 
     log_file = os.path.join(os.path.curdir, "storage",

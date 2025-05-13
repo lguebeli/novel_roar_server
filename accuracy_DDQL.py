@@ -20,11 +20,9 @@ from environment.state_handling import initialize_storage, cleanup_storage, set_
 
 """
 Want to change evaluated prototype?
-1) adjust initial EPSILON (setup) to the one used in evaluated prototype (usually in controller)
+1) adjust initial EPSILON (setup) to the one used in evaluated prototype (usually in settings.py)
 2) adjust the known best action (setup) if necessary (depending on AD and reward system)
 3) adjust the filename of the logfile (setup) to match the prototype settings (in controller/agent/model)
-4) set prototype to evaluated prototype number in setup below (start of try-block)
-5) adjust simulation settings if required (start of try-block)
 """
 
 def start_api(instance_number):
@@ -185,7 +183,7 @@ if __name__ == "__main__":
     initialize_storage()
     procs = []
     try:
-        set_prototype("21")
+        set_prototype("21") # Don't change the Prototype number, as this script is only for v21
         simulated = True
         set_simulation(simulated)
         np.random.seed(42)

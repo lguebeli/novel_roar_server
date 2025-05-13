@@ -33,8 +33,8 @@ Handle with care and at your own risk of breaking stuff!
 | `environment/anomaly_detection/anomaly-detection.py` | - Contamination factor                                                                                                                                 |
 | `environment/settings.py`                            | - CSV folder path<br>- Verify CSV headers<br>- Client IP address<br>- AD features<br>- C&C simulation settings<br>- Prototype specific Hyperparameters |
 | `vX/agent/agent.py`                                  | - Agent specific constants and starting values ()                                                                                                      |
-| `vX/agent/model.py`                                  | - Model specific constants and starting values                                                                                                         |
 | `vX/environment/controller.py`                       | - Episode specific constants and values (orchestration)                                                                                                |
+| `vX/agent/model.py`                                  | - Model specific constants and starting values (only in DQL and DDQL, in PPO the NN implementation is directly in the agent.py)                        |
 
 To be able to used auxiliary scripts, there are other constants contained in the files listed below that may require adjustments - depending on the script to be run.
 

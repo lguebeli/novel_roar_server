@@ -181,7 +181,7 @@ if __name__ == "__main__":
     # SETUP
     # ==============================
     total_start = time()
-    prototype_description = "p20-100e=e0.4d0.09a0.005y0.1=Log-SiLU=h40=he=NormalAD"
+    prototype_description = "p20-300e=e0.4d0.09a0.005y0.1=Log-SiLU=h40=he=IdealAD"
 
     EPSILON = 0.4
     KNOWN_BEST_ACTION = 3
@@ -196,7 +196,7 @@ if __name__ == "__main__":
     initialize_storage()
     procs = []
     try:
-        set_prototype("20")
+        set_prototype("20") #change the Prototype number here!
         simulated = True
         set_simulation(simulated)
         np.random.seed(42)

@@ -20,8 +20,9 @@ from environment.state_handling import initialize_storage, cleanup_storage, set_
 
 """
 Want to change evaluated prototype?
-1) Adjust the filename of the logfile (setup) to match the SARSA prototype settings.
-2) Set prototype to evaluated prototype number in setup below (start of try-block).
+1) adjust the known best action (setup) if necessary (depending on AD and reward system)
+2) Adjust the filename of the logfile (setup) to match the SARSA prototype settings.
+3) Set prototype to evaluated prototype number in setup below (start of try-block).
 """
 
 def start_api(instance_number):
@@ -157,8 +158,8 @@ def print_accuracy_table(accuracies_overall, accuracies_configs, logs):
 
 if __name__ == "__main__":
     total_start = time()
-    prototype_description = "p23-1000e=e0.1d0.9a0.005y0.01=Tabular=IdealAD"
-    KNOWN_BEST_ACTION = 3
+    prototype_description = "p23-100e=e0.1d0.9a0.005y0.01=Tabular=IdealAD"  #change the description here
+    KNOWN_BEST_ACTION = 3                                                   #change the KBA here
 
     log_file = os.path.join(os.path.curdir, "storage",
                             f"accuracy-report={datetime.now().strftime('%Y-%m-%d--%H-%M-%S')}={prototype_description}.txt")
@@ -168,13 +169,13 @@ if __name__ == "__main__":
     initialize_storage()
     procs = []
     try:
-        prototype_num = "23"  # Change this number to switch implementations
+        prototype_num = "23"     # Change this number to switch implementations (22 or 23)
         set_prototype(prototype_num)
         simulated = True
         set_simulation(simulated)
         np.random.seed(42)
 
-        if prototype_num == "22":
+        if prototype_num == "22": # Don't change this number!
             AgentClass = AgentSarsaTabular
             eps = EPSILON_V22
         else:
